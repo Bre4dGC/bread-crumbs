@@ -1,36 +1,59 @@
 #pragma once
+#include <stddef.h>
 
 typedef enum {
 	T_ILLEGAL,  // unknown
 	T_IDENT,    // identificator
-	T_EOF       // end of file
+	T_EOF,      // end of file
 } TServiceType;
 
 typedef enum {
-    T_MUL,      // *
-	T_DIV,      // /
-	T_ADD,      // +
-	T_SUB,      // -
-	T_ASSIGN,   // =
-	T_EQ,       // ==
-	T_NEQ,      // !=
-	T_LT,       // <
-	T_HT,       // >
-	T_LTEQ,     // <=
-	T_HTEQ,     // >=
-	T_POINT,    // .
-	T_COMMA,    // ,
-	T_COLON,    // :
+    T_PLUS,     // +
+    T_MINUS,    // -
+    T_ASTERISK, // *
+    T_SLASH,    // /
+    T_PERCENT,  // %
+    T_ASSIGN,   // =
+    T_DOT,      // .
+    T_COMMA,    // ,
+    T_COLON,    // :
+    T_LT,       // <
+    T_GT,       // >
+    T_LTE,      // <=
+    T_GTE,      // >=
+    T_EQ,       // ==
+    T_NEQ,      // !=
+    T_ADD,      // +=
+	T_SUB,      // -=
+    T_MUL,      // *=
+	T_DIV,      // /=
+    T_AND,      // &&
+    T_OR,       // ||
+    T_ELLIP,    // ..
 } TOperatorType;
 
 typedef enum {
     T_IF,       // if
-	T_ELIF,     // elif
-	T_ELSE,     // else
-	T_WHILE,    // while
-	T_FOR,      // for
-	T_FUNC,     // fn
-	T_STRUCT    // struct
+    T_ELSE,     // else
+    T_ELIF,     // elif
+    T_FOR,      // for
+    T_DO,       // do
+    T_WHILE,    // while
+    T_FUNC,     // func
+    T_RETURN,   // return
+    T_BREAK,    // break
+    T_CONTINUE, // continue
+    T_DEFAULT,  // default
+    T_MATCH,    // match
+    T_CASE,     // case
+    T_STRUCT,   // struct
+    T_ENUM,     // enum
+    T_UNION,    // union
+    T_IMPORT,   // import
+	T_TYPE,     // type
+	T_TRAIT,    // trait
+	T_TRY,      // try
+	T_CATCH,    // catch
 } TKeywordType;
 
 typedef enum {
@@ -40,7 +63,14 @@ typedef enum {
     T_RCURLY,   // }
     T_LSQUARE,  // [
     T_RSQUARE,  // ]
+    T_LANGLE,   // <
+    T_RANGLE,   // >
 } TParenType;
+
+typedef enum {
+    T_QUOTE,    // "
+    T_SQUOTE,   // '
+} TDelimiterType;
 
 typedef enum {
     /* basic types */
@@ -54,34 +84,56 @@ typedef enum {
 } TDataType;
 
 typedef enum {
-    T_LIST, T_STACK, T_MAP, T_VECTOR, T_TUPLE, T_ARRAY, T_SET
-} TCollectionType;
-
-typedef enum {
     T_VAR, T_CONST, T_FINAL, T_STATIC, T_PUBLIC, T_PRIVATE
 } TModifierType;
 
 typedef enum {
-    TYPE_SERVICE, TYPE_OPERATOR, TYPE_KEYWORD, TYPE_PAREN, TYPE_DATATYPE, TYPE_COLLECTION, TYPE_MODIFIER
+    T_LIST, T_STACK, T_MAP, T_VECTOR, T_TUPLE, T_ARRAY, T_SET
+} TCollectionType;
+
+typedef enum {
+    TOK_SERVICE,    // TServiceType
+    TOK_OPERATOR,   // TOperatorType
+    TOK_KEYWORD,    // TKeywordType
+    TOK_PAREN,      // TParenType
+    TOK_DELIMITER,  // TDelimiterType
+    TOK_DATATYPE,   // TDataType
+    TOK_MODIFIER,   // TModifierType
+    TOK_COLLECTION, // TCollectionType
 } TokenTypeTag;
 
+typedef const struct {
+    TOperatorType type;
+    char *literal;
+} Operator;
+
+typedef const struct {
+    TKeywordType type;
+    char *literal;
+} Keyword;
+
 typedef struct {
-    const TokenTypeTag ttag;
+    TokenTypeTag tag;
 	union {
-        TServiceType service_type;
-        TOperatorType operation_type;
-        TKeywordType keyword_type;
-        TParenType paren_type;
-        TDataType data_type;
-        TCollectionType collections_type;
-        TModifierType modifire_type;
+	    TServiceType service;
+        TOperatorType oper;
+        TKeywordType keyword;
+        TParenType paren;
+        TDelimiterType delim;
+        TDataType dtype;
+        TModifierType modifier;
+        TCollectionType collection;
 	};
-	const char *literal;
+	char *literal;
 } Token;
 
 typedef struct {
     char *input;
-    char currch;
-    int pos;
-    int nextpos;
+    size_t pos;
+    size_t nextpos;
+    char ch;
 } Lexer;
+
+Lexer lex_new(const char *input);
+Token lex_next_tok(Lexer *lexer);
+void lex_free(Lexer *lexer);
