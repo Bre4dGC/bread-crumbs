@@ -1,8 +1,9 @@
 #pragma once
 #include <stddef.h>
+#include <wchar.h>
 
 typedef enum {
-	T_ILLEGAL,  // unknown
+	T_UNKNOWN,  // unknown
 	T_IDENT,    // identificator
 	T_EOF,      // end of file
 } TServiceType;
@@ -24,9 +25,9 @@ typedef enum {
     T_EQ,       // ==
     T_NEQ,      // !=
     T_ADD,      // +=
-	T_SUB,      // -=
+    T_SUB,      // -=
     T_MUL,      // *=
-	T_DIV,      // /=
+    T_DIV,      // /=
     T_AND,      // &&
     T_OR,       // ||
     T_ELLIP,    // ..
@@ -50,10 +51,10 @@ typedef enum {
     T_ENUM,     // enum
     T_UNION,    // union
     T_IMPORT,   // import
-	T_TYPE,     // type
-	T_TRAIT,    // trait
-	T_TRY,      // try
-	T_CATCH,    // catch
+    T_TYPE,     // type
+    T_TRAIT,    // trait
+    T_TRY,      // try
+    T_CATCH,    // catch
 } TKeywordType;
 
 typedef enum {
@@ -75,7 +76,7 @@ typedef enum {
 typedef enum {
     /* basic types */
     T_INT, T_UINT, T_FLOAT,
-	T_VOID, T_BOOL, T_STR,
+    T_VOID, T_BOOL, T_STR, T_UNI, T_TENSOR,
 
     /* exact types */
     T_INT8,    T_INT16,  T_INT32,  T_INT64,
@@ -92,30 +93,30 @@ typedef enum {
 } TCollectionType;
 
 typedef enum {
-    TOK_SERVICE,    // TServiceType
-    TOK_OPERATOR,   // TOperatorType
-    TOK_KEYWORD,    // TKeywordType
-    TOK_PAREN,      // TParenType
-    TOK_DELIMITER,  // TDelimiterType
-    TOK_DATATYPE,   // TDataType
-    TOK_MODIFIER,   // TModifierType
-    TOK_COLLECTION, // TCollectionType
-} TokenTypeTag;
+    TYPE_SERVICE,    // TServiceType
+    TYPE_OPERATOR,   // TOperatorType
+    TYPE_KEYWORD,    // TKeywordType
+    TYPE_PAREN,      // TParenType
+    TYPE_DELIMITER,  // TDelimiterType
+    TYPE_DATATYPE,   // TDataType
+    TYPE_MODIFIER,   // TModifierType
+    TYPE_COLLECTION, // TCollectionType
+} T_TypeTag;
 
-typedef const struct {
+typedef struct {
     TOperatorType type;
     char *literal;
 } Operator;
 
-typedef const struct {
+typedef struct {
     TKeywordType type;
     char *literal;
 } Keyword;
 
 typedef struct {
-    TokenTypeTag tag;
+    T_TypeTag tag;
 	union {
-	    TServiceType service;
+        TServiceType service;
         TOperatorType oper;
         TKeywordType keyword;
         TParenType paren;
@@ -123,8 +124,8 @@ typedef struct {
         TDataType dtype;
         TModifierType modifier;
         TCollectionType collection;
-	};
-	char *literal;
+	} data;
+	wchar_t *literal;
 } Token;
 
 typedef struct {
@@ -132,8 +133,12 @@ typedef struct {
     size_t pos;
     size_t nextpos;
     char ch;
+    size_t line;
+    size_t column;
 } Lexer;
 
-Lexer lex_new(const char *input);
+Lexer* lex_new(const char *input);
 Token lex_next_tok(Lexer *lexer);
 void lex_free(Lexer *lexer);
+Token tok_new(T_TypeTag ttag, wchar_t *liter);
+void tok_free(Token *token);

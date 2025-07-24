@@ -4,7 +4,6 @@
 
 #include "../include/lexer.h"
 
-Token token;
 Lexer lexer = {.input=NULL, .pos=0, .nextpos=1, .ch=0};
 
 const Operator operators[] = {
@@ -16,9 +15,9 @@ const Operator operators[] = {
 	{T_SUB,   "-="},
 	{T_MUL,   "*="},
 	{T_DIV,   "/="},
-    {T_AND,   "&&"},
-    {T_OR,    "||"},
-    {T_ELLIP, ".."},
+	{T_AND,   "&&"},
+	{T_OR,    "||"},
+	{T_ELLIP, ".."},
 };
 
 const Keyword keywords[] = {
@@ -48,78 +47,110 @@ const Keyword keywords[] = {
 const size_t operators_count = sizeof(operators) / sizeof(Operator);
 const size_t keywords_count = sizeof(keywords) / sizeof(Keyword);
 
+void read_ch(Lexer *lex)
+{
+    if(lex->nextpos >= strlen(lex->input)) {
+        lex->ch = 0;
+    }
+    else {
+        lex->ch = lex->input[lex->nextpos];
+    }
+    lex->pos = lex->nextpos;
+    lex->nextpos++;
+}
+
+void skip_space(Lexer *lex)
+{
+    while(1){
+        switch(lex->ch){
+            case ' ': case '\t': case '\r':
+                read_ch(lex);
+                break;
+            case '\n':
+                read_ch(lex);
+                lex->line++;
+                break;
+            case '#':
+                while(lex->ch != '\n' || lex->ch != '\0'){
+                    read_ch(lex);
+                }
+                break;
+            default:
+                return;
+        }
+    }
+}
+
 Lexer* lex_new(const char *input)
 {
-    if(!lexer.input) free(lexer.input);
-    lexer.input = (char *)malloc(sizeof(input)+1);
-    strcpy(lexer.input, input);
-    lexer.pos = lexer.nextpos;
-    lexer.nextpos += 1;
-    lexer.ch = input[lexer.pos];
-    return &lexer;
+    Lexer *lexer = (Lexer*)malloc(sizeof(Lexer));
+    if (!lexer) return NULL;
+
+    size_t len = strlen(input);
+    lexer->input = (char*)malloc(len + 1);
+    if (!lexer->input) {
+        free(lexer);
+        return NULL;
+    }
+
+    strcpy(lexer->input, input);
+
+    lexer->pos = 0;
+    lexer->nextpos = 1;
+    lexer->ch = input[0];
+    lexer->line = 1;
+    lexer->column = 1;
+
+    return lexer;
 }
 
-char* lex_read_id(Lexer *lexer)
+int lex_peekch(const Lexer *lex, char exp_ch)
 {
-    return NULL;
-}
-
-char* lex_read_num(Lexer *lexer)
-{
-    return NULL;
-}
-
-char* lex_read_str(Lexer *lexer, const TDelimiterType quote_type)
-{
-    return NULL;
-}
-
-int lex_peek_ch(const Lexer *lexer, char exp_ch)
-{
-    if(lexer->input[lexer->nextpos] == exp_ch)
+    if(lex->input[lex->nextpos] == exp_ch) {
         return 0;
-    else
+    }
+    else {
         return -1;
-}
-
-void lex_skip_space(Lexer *lexer)
-{
-    while(isspace(lexer->ch)) lexer->pos++;
-    if(lexer->ch == '#') {
-        // lexer = lex_new(); return;
     }
 }
 
-Token tok_new(const TokenTypeTag tag, int type)
+void lex_free(Lexer *lex)
 {
-
-}
-
-Token lex_next_tok(Lexer *lexer)
-{
-    lex_skip_space(lexer);
-
-    // if (lexer->input[lexer->pos] == '\0') {
-    //     token.tag = TOK_SERVICE;
-    //     return toke;
-    // }
-
-    switch (lexer->ch) {
-        case '+':
-            if(lex_peek_ch(lexer, '=')){
-                token = tok_new(TOK_OPERATOR, T_ADD);
-            }
-            else {
-                token = tok_new(TOK_OPERATOR, T_PLUS);
-            }
-            break;
+    if (lex) {
+        free(lex->input);
+        free(lex);
     }
 }
 
-Token lex_oper_tok()
-
-void lex_free(Lexer *lexer)
+Token tok_new(T_TypeTag ttag, wchar_t *liter)
 {
-    free(lexer->input);
-    free(lexer);
+
+}
+
+void tok_free(Token *tok)
+{
+    if(tok) {
+        free(tok->literal);
+        free(tok);
+    }
+}
+
+char* lex_readident(Lexer *lex)
+{
+
+}
+
+char* lex_readnum(Lexer *lex)
+{
+
+}
+
+char* lex_readstr(Lexer *lex)
+{
+
+}
+
+Token lex_nexttok(Lexer *lexer)
+{
+
 }
