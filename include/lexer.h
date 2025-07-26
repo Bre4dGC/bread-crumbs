@@ -18,8 +18,8 @@ typedef enum {
     T_DOT,      // .
     T_COMMA,    // ,
     T_COLON,    // :
-    T_LT,       // <
-    T_GT,       // >
+    T_LANGLE,   // <
+    T_RANGLE,   // >
     T_LTE,      // <=
     T_GTE,      // >=
     T_EQ,       // ==
@@ -30,7 +30,8 @@ typedef enum {
     T_DIV,      // /=
     T_AND,      // &&
     T_OR,       // ||
-    T_ELLIP,    // ..
+    T_RANGE,    // ..
+    T_RETTYPE,  // ->
 } TOperatorType;
 
 typedef enum {
@@ -50,6 +51,7 @@ typedef enum {
     T_STRUCT,   // struct
     T_ENUM,     // enum
     T_UNION,    // union
+    T_IMPL,     // impl
     T_IMPORT,   // import
     T_TYPE,     // type
     T_TRAIT,    // trait
@@ -64,8 +66,6 @@ typedef enum {
     T_RCURLY,   // }
     T_LSQUARE,  // [
     T_RSQUARE,  // ]
-    T_LANGLE,   // <
-    T_RANGLE,   // >
 } TParenType;
 
 typedef enum {
@@ -104,13 +104,8 @@ typedef enum {
 } T_TypeTag;
 
 typedef struct {
-    TOperatorType type;
     char *literal;
-} Operator;
-
-typedef struct {
-    TKeywordType type;
-    char *literal;
+    int type;
 } Keyword;
 
 typedef struct {
@@ -124,7 +119,7 @@ typedef struct {
         TDataType dtype;
         TModifierType modifier;
         TCollectionType collection;
-	} data;
+	};
 	wchar_t *literal;
 } Token;
 
@@ -132,13 +127,18 @@ typedef struct {
     char *input;
     size_t pos;
     size_t nextpos;
-    char ch;
+    wchar_t ch;
     size_t line;
     size_t column;
 } Lexer;
 
 Lexer* lex_new(const char *input);
-Token lex_next_tok(Lexer *lexer);
+Token tok_new(const T_TypeTag ttag, const int value, const wchar_t *literal);
+Token tok_next(Lexer *lexer);
+
 void lex_free(Lexer *lexer);
-Token tok_new(T_TypeTag ttag, wchar_t *liter);
 void tok_free(Token *token);
+
+char* readident(Lexer *lexer);
+char* readnum(Lexer *lexer);
+wchar_t* readstr(Lexer *lexer);
