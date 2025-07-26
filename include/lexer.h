@@ -133,12 +133,12 @@ typedef struct {
 } Lexer;
 
 Lexer* lex_new(const char *input);
-Token tok_new(const T_TypeTag ttag, const int value, const wchar_t *literal);
+Token tok_new(const T_TypeTag tag, const int value, const wchar_t *literal);
 Token tok_next(Lexer *lexer);
 
 void lex_free(Lexer *lexer);
 void tok_free(Token *token);
 
-char* readident(Lexer *lexer);
-char* readnum(Lexer *lexer);
-wchar_t* readstr(Lexer *lexer);
+static wchar_t* readident(Lexer *lexer);
+static wchar_t* readnum(Lexer *lexer);
+static wchar_t* readstr(Lexer *lexer);

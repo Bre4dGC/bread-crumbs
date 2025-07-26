@@ -1,3 +1,5 @@
+#include <stdio.h> // remove after test
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -116,42 +118,53 @@ int lex_peekch(const Lexer *lex, char exp_ch)
     }
 }
 
-Token tok_new(const T_TypeTag ttag, const int value, const wchar_t *literal)
+Token tok_new(const T_TypeTag tag, const int lit_tag, const wchar_t *literal)
 {
     Token token = {
-        .tag = ttag,
+        .tag = tag,
         .literal = wcsdup(literal)
     };
 
-    switch(ttag) {
+    printf("TOKEN: ");
+    switch(tag) {
         case TYPE_SERVICE:
-            token.service = (TServiceType)value;
+            token.service = (TServiceType)lit_tag;
+            printf("Service");
             break;
         case TYPE_OPERATOR:
-            token.oper = (TOperatorType)value;
+            token.oper = (TOperatorType)lit_tag;
+            printf("Operator");
             break;
         case TYPE_KEYWORD:
-            token.keyword = (TKeywordType)value;
+            token.keyword = (TKeywordType)lit_tag;
+            printf("Keyword");
             break;
         case TYPE_PAREN:
-            token.paren = (TParenType)value;
+            token.paren = (TParenType)lit_tag;
+            printf("Paren");
             break;
         case TYPE_DELIMITER:
-            token.delim = (TDelimiterType)value;
+            token.delim = (TDelimiterType)lit_tag;
+            printf("Delimiter");
             break;
         case TYPE_DATATYPE:
-            token.dtype = (TDataType)value;
+            token.dtype = (TDataType)lit_tag;
+            printf("Datatype");
             break;
         case TYPE_MODIFIER:
-            token.modifier = (TModifierType)value;
+            token.modifier = (TModifierType)lit_tag;
+            printf("Modifier");
             break;
         case TYPE_COLLECTION:
-            token.collection = (TCollectionType)value;
+            token.collection = (TCollectionType)lit_tag;
+            printf("Collection");
             break;
         default:
             token.service = T_UNKNOWN;
+            printf("UNKNOWN");
             break;
     }
+    wprintf(L"\nValue: %s\n\n", token.literal);
 
     return token;
 }
@@ -195,16 +208,19 @@ Token tok_next(Lexer *lexer)
         case L']': token = tok_new(TYPE_OPERATOR, T_RSQUARE, ch_str);
             break;
         case L'"':
-            tok_new(TYPE_DELIMITER, T_QUOTE, L"\"");
+            token = tok_new(TYPE_DELIMITER, T_QUOTE, L"\"");
             token.literal = wcsdup(readstr(lexer));
-            tok_new(TYPE_DELIMITER, T_QUOTE, L"\"");
+            token = tok_new(TYPE_DELIMITER, T_QUOTE, L"\"");
+            break;
+        case L'\0':
+            token = tok_new(TYPE_SERVICE, T_EOF, L"\0");
             break;
         default:
             if(isalpha(lexer->ch)){
-                readident(lexer);
+                token.literal = readident(lexer);
             }
             else if(isdigit(lexer->ch)){
-                readnum(lexer);
+                token.literal = readnum(lexer);
             }
             else{
                 token = tok_new(TYPE_SERVICE, T_UNKNOWN, ch_str);
@@ -214,36 +230,20 @@ Token tok_next(Lexer *lexer)
     return token;
 }
 
-void lex_free(Lexer *lex)
-{
-    if (lex) {
-        free(lex->input);
-        free(lex);
-    }
-}
-
-void tok_free(Token *tok)
-{
-    if(tok) {
-        free(tok->literal);
-        free(tok);
-    }
-}
-
-char* readident(Lexer *lexer)
+static wchar_t* readident(Lexer *lexer)
 {
 
 }
 
-char* readnum(Lexer *lexer)
+static wchar_t* readnum(Lexer *lexer)
 {
 
 }
 
-wchar_t* readstr(Lexer *lexer) {
+static wchar_t* readstr(Lexer *lexer) {
     size_t capacity = 32;
     size_t length = 0;
-    char *buffer = malloc(capacity);
+    wchar_t *buffer = malloc(capacity);
     if (!buffer) return NULL;
 
     read_ch(lexer);
@@ -284,4 +284,20 @@ wchar_t* readstr(Lexer *lexer) {
 
     buffer[length] = '\0';
     return buffer;
+}
+
+void lex_free(Lexer *lex)
+{
+    if (lex) {
+        free(lex->input);
+        free(lex);
+    }
+}
+
+void tok_free(Token *tok)
+{
+    if(tok) {
+        free(tok->literal);
+        free(tok);
+    }
 }
