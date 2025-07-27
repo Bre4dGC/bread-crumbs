@@ -233,7 +233,7 @@ var mean = math_stats.mean([1, 2, 3, 4, 5])  // 3.0
 crumbs run script.bc  
 
 # Compilation  
-bread compile script.bc -o script.exe  
+crumbs compile script.bc -o script.exe  
 ./script.exe  
 ```  
 ---  
