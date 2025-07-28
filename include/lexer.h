@@ -3,7 +3,7 @@
 #include <wchar.h>
 
 typedef enum {
-	T_UNKNOWN,  // unknown
+	T_ILLEGAL,  // unknown
 	T_IDENT,    // identificator
 	T_EOF,      // end of file
 } TServiceType;
@@ -60,12 +60,9 @@ typedef enum {
 } TKeywordType;
 
 typedef enum {
-    T_LROUND,   // (
-    T_RROUND,   // )
-    T_LCURLY,   // {
-    T_RCURLY,   // }
-    T_LSQUARE,  // [
-    T_RSQUARE,  // ]
+    T_LPAREN, T_RPAREN,     // ()
+    T_LBRACE, T_RBRACE,     // {}
+    T_LBRACKET, T_RBRACKET, // []
 } TParenType;
 
 typedef enum {
@@ -104,7 +101,7 @@ typedef enum {
 } T_TypeTag;
 
 typedef struct {
-    char *literal;
+    wchar_t *literal;
     int type;
 } Keyword;
 
@@ -124,21 +121,27 @@ typedef struct {
 } Token;
 
 typedef struct {
-    char *input;
+    wchar_t *input;
+    wchar_t ch;
     size_t pos;
     size_t nextpos;
-    wchar_t ch;
     size_t line;
     size_t column;
 } Lexer;
 
-Lexer* lex_new(const char *input);
+Lexer* lex_new(const wchar_t *input);
 Token tok_new(const T_TypeTag tag, const int value, const wchar_t *literal);
 Token tok_next(Lexer *lexer);
 
 void lex_free(Lexer *lexer);
 void tok_free(Token *token);
 
-static wchar_t* readident(Lexer *lexer);
-static wchar_t* readnum(Lexer *lexer);
-static wchar_t* readstr(Lexer *lexer);
+static Token handle_oper(Lexer *lexer, const wchar_t *ch_str);
+static Token handle_paren(Lexer *lexer, const wchar_t *ch_str);
+static Token handle_num(Lexer *lexer);
+static Token handle_ident(Lexer *lexer);
+static Token handle_str(Lexer *lexer);
+
+static wchar_t* read_ident(Lexer *lexer);
+static wchar_t* read_num(Lexer *lexer);
+static wchar_t* read_str(Lexer *lexer);

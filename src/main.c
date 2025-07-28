@@ -1,66 +1,67 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <wchar.h>
 
 #include "../include/lexer.h"
 #include "../include/parser.h"
 
 int repl_mode();
 int run_mode(const char *src);
+int compile_mode(const char *src);
 
 int main(int argc, char *argv[])
 {
+    // interpreter
     if(strcmp(argv[1], "run")) {
         run_mode(argv[2]);
     }
-
-    // for JIT-compiler
+    // JIT-compiler
     else if(strcmp(argv[1], "compile")) {
-        printf("JIT-compiler not able yet :(");
+        compile_mode(argv[2]);
     }
-
-    // for package manager
-    else if(strcmp(argv[1], "install")) {
-        printf("Package Manager not able yet :(");
-    }
-
+    // single line
     else {
         repl_mode();
     }
-
     return 0;
 }
 
 int repl_mode()
 {
+    Lexer *lexer;
+    Token *token = (Token *)malloc(sizeof(Token));
     while(1){
-        char input[128];
+        wchar_t input[128];
 
         printf(">> ");
-        fgets(input, sizeof(input), stdin);
+        fgetws(input, sizeof(input), stdin);
 
         if(input[0] == '\n') continue;
-        else if(strcmp(input, "#quit")) break;
-        else if(strcmp(input, "#run")) {
-            // TODO: implement run the code command
-        }
-        else if(strcmp(input, "#clear")) {
-            // TODO: implement the clear repl command
-        }
+        else if(wcscmp(input, L":quit")) break;
         else {
-            Lexer *lexer = lex_new(input);
-            Token *token = (Token *)malloc(sizeof(Token));
-            for(int i = 0; token->service != T_EOF; ++i){
-                token[i] = tok_next(lexer);
-                token = (Token *)realloc(token, sizeof(Token *));
-            }
-            lex_free(lexer);
-            tok_free(token);
+            // TODO: implement executing
         }
     }
+    lex_free(lexer);
+    tok_free(token);
+    return 0;
 }
 
 int run_mode(const char *src)
 {
     // TODO: implement interpreter mode
+    return 0;
+}
+
+int compile_mode(const char *src)
+{
+    printf("JIT-compiler not able yet :(");
+    return 0;
+}
+
+int package_install(const char *pk_name)
+{
+    printf("Package Manager not able yet :(");
+    return 0;
 }
