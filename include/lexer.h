@@ -20,16 +20,19 @@ typedef enum {
     T_COLON,    // :
     T_LANGLE,   // <
     T_RANGLE,   // >
-    T_LTE,      // <=
-    T_GTE,      // >=
+    T_NOT,      // !
+    T_AND,      // &&
+    T_OR,       // ||
     T_EQ,       // ==
     T_NEQ,      // !=
+    T_LTE,      // <=
+    T_GTE,      // >=
+    T_INCREM,   // ++
+    T_DECREM,   // --
     T_ADD,      // +=
     T_SUB,      // -=
     T_MUL,      // *=
     T_DIV,      // /=
-    T_AND,      // &&
-    T_OR,       // ||
     T_RANGE,    // ..
     T_RETTYPE,  // ->
 } TOperatorType;
@@ -103,6 +106,12 @@ typedef enum {
 typedef struct {
     wchar_t *literal;
     int type;
+    int precedence;
+} Operator;
+
+typedef struct {
+    wchar_t *literal;
+    int type;
 } Keyword;
 
 typedef struct {
@@ -136,8 +145,8 @@ Token tok_next(Lexer *lexer);
 void lex_free(Lexer *lexer);
 void tok_free(Token *token);
 
-static Token handle_oper(Lexer *lexer, const wchar_t *ch_str);
-static Token handle_paren(Lexer *lexer, const wchar_t *ch_str);
+static Token handle_oper(Lexer *lexer);
+static Token handle_paren(Lexer *lexer);
 static Token handle_num(Lexer *lexer);
 static Token handle_ident(Lexer *lexer);
 static Token handle_str(Lexer *lexer);

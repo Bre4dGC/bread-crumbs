@@ -35,19 +35,14 @@ const char* token_type_to_str(T_TypeTag tag) {
 
 Lexer lexer = {.input=NULL, .pos=0, .nextpos=1, .ch=0};
 
-const Keyword operators[] = {
-    {L"+=", T_ADD},
-    {L"-=", T_SUB},
-    {L"*=", T_MUL},
-    {L"/=", T_DIV},
-    {L"&&", T_AND},
-    {L"||", T_OR},
-    {L"==", T_EQ},
-    {L"!=", T_NEQ},
-    {L"<=", T_LTE},
-    {L">=", T_GTE},
-    {L"..", T_RANGE},
-    {L"->", T_RETTYPE}
+const Operator operators[] = {
+    {L"++", T_INCREM}, {L"--", T_DECREM},
+    {L"+=", T_ADD},    {L"-=", T_SUB},
+    {L"*=", T_MUL},    {L"/=", T_DIV},
+    {L"&&", T_AND},    {L"||", T_OR},
+    {L"==", T_EQ},     {L"!=", T_NEQ},
+    {L"<=", T_LTE},    {L">=", T_GTE},
+    {L"..", T_RANGE},  {L"->", T_RETTYPE},
 };
 
 const Keyword keywords[] = {
@@ -134,7 +129,15 @@ Lexer* lex_new(const wchar_t *input)
     return lexer;
 }
 
-int peekch(const Lexer *lexer, char exp_ch)
+wchar_t peek_ch(const Lexer *lexer)
+{
+    if (lexer->nextpos < wcslen(lexer->input)) {
+        return lexer->input[lexer->nextpos];
+    }
+    return L'\0';
+}
+
+int peek_exp_ch(const Lexer *lexer, char exp_ch)
 {
     if(lexer->input[lexer->nextpos] == exp_ch) {
         return 0;
@@ -187,14 +190,15 @@ Token tok_next(Lexer *lexer)
 
     switch(lexer->ch) {
         case L'+': case L'-': case L'*': case L'/':
-        case L'=': case L'.': case L',': case L':':
-        case L'<': case L'>':
-            token = handle_oper(lexer, ch_str);
+        case L'=': case L'<': case L'>': case L'!':
+        case L'&': case L'|': case L'.': case L',':
+        case L':':
+            token = handle_oper(lexer);
             break;
 
         case L'(': case L')': case L'{': case L'}':
         case L'[': case L']':
-            token = handle_paren(lexer, ch_str);
+            token = handle_paren(lexer);
             break;
 
         case L'"': case L'\'':
@@ -222,9 +226,55 @@ Token tok_next(Lexer *lexer)
     return token;
 }
 
-static Token handle_oper(Lexer *lexer, const wchar_t *ch_str)
+static const Operator* find_operator(const wchar_t* op) {
+    size_t left = 0;
+    size_t right = operators_count - 1;
+
+    while (left <= right) {
+        size_t mid = left + (right - left) / 2;
+        int cmp = wcscmp(operators[mid].literal, op);
+
+        if (cmp == 0) return &operators[mid];
+        if (cmp < 0) left = mid + 1;
+        else right = mid - 1;
+    }
+    return NULL;
+}
+
+static Token handle_oper(Lexer *lexer)
 {
-    // TODO: implement this
+    wchar_t current = lexer->ch;
+    wchar_t next = peek_ch(lexer);
+
+    if (next != L'\0') {
+        wchar_t potential_op[3] = {current, next, L'\0'};
+        const Operator* op = find_operator(potential_op);
+
+        if (op != NULL) {
+            read_ch(lexer);
+            return tok_new(TYPE_OPERATOR, op->type, op->literal);
+        }
+    }
+
+    static const struct {
+        wchar_t ch;
+        TOperatorType type;
+    } single_ops[] = {
+        {L'+', T_PLUS}, {L'-', T_MINUS}, {L'*', T_ASTERISK},
+        {L'/', T_SLASH}, {L'=', T_ASSIGN}, {L'.', T_DOT},
+        {L',', T_COMMA}, {L':', T_COLON}, {L'<', T_LANGLE},
+        {L'>', T_RANGLE}
+    };
+
+    for (size_t i = 0; i < sizeof(single_ops)/sizeof(single_ops[0]); i++) {
+        if (current == single_ops[i].ch) {
+            wchar_t ch_str[2] = {current, L'\0'};
+            return tok_new(TYPE_OPERATOR, single_ops[i].type, ch_str);
+        }
+    }
+
+    wchar_t ch_str[2] = {current, L'\0'};
+    return tok_new(TYPE_SERVICE, T_ILLEGAL, ch_str);
 }
 
 static Token handle_num(Lexer *lexer)
@@ -237,7 +287,7 @@ static Token handle_ident(Lexer *lexer)
     // TODO: implement this
 }
 
-static Token handle_paren(Lexer *lexer, const wchar_t *ch_str)
+static Token handle_paren(Lexer *lexer)
 {
     TParenType type;
     switch (lexer->ch) {
@@ -248,7 +298,7 @@ static Token handle_paren(Lexer *lexer, const wchar_t *ch_str)
         case L'[': type = T_LBRACKET; break;
         case L']': type = T_RBRACKET; break;
     }
-    return tok_new(TYPE_PAREN, type, ch_str);
+    return tok_new(TYPE_PAREN, type, (wchar_t[]){lexer->ch, L'\0'});
 }
 
 static Token handle_str(Lexer *lexer)
