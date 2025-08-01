@@ -9,32 +9,20 @@ typedef enum {
 } TServiceType;
 
 typedef enum {
-    T_PLUS,     // +
-    T_MINUS,    // -
-    T_ASTERISK, // *
-    T_SLASH,    // /
+    T_PLUS, T_MINUS, T_ASTERISK, T_SLASH, // + - * /
+    T_DOT, T_COMMA, // . ,
+    T_LANGLE, T_RANGLE, // <>
     T_PERCENT,  // %
     T_ASSIGN,   // =
-    T_DOT,      // .
-    T_COMMA,    // ,
     T_COLON,    // :
-    T_LANGLE,   // <
-    T_RANGLE,   // >
     T_NOT,      // !
-    T_AND,      // &&
-    T_OR,       // ||
-    T_EQ,       // ==
-    T_NEQ,      // !=
-    T_LTE,      // <=
-    T_GTE,      // >=
-    T_INCREM,   // ++
-    T_DECREM,   // --
-    T_ADD,      // +=
-    T_SUB,      // -=
-    T_MUL,      // *=
-    T_DIV,      // /=
     T_RANGE,    // ..
     T_RETTYPE,  // ->
+    T_AND, T_OR, // && ||
+    T_EQ, T_NEQ, // == !=
+    T_LTE, T_GTE, // <= >=
+    T_INCREM, T_DECREM, // ++ --
+    T_ADD, T_SUB, T_MUL, T_DIV, // += -= *= /=
 } TOperatorType;
 
 typedef enum {
