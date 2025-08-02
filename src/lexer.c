@@ -6,21 +6,21 @@
 #include <wchar.h>
 #include <stdbool.h>
 
-#include "lexer.h"
+#include "../include/lexer.h"
 
 #define DEBUG
-
-const char *token_type_to_str(T_TypeTag tag){
-    static const char *names[] = {
-        "SERVICE", "OPERATOR", "KEYWORD", "PAREN",
-        "DELIMITER", "DATATYPE", "MODIFIER", "COLLECTION"};
-    return (tag < sizeof(names) / sizeof(names[0])) ? names[tag] : "UNKNOWN";
-}
 
 #ifdef DEBUG
 #define print_token(t)                         \
     wprintf(L"Token: %s | Value: %ls\n", \
             token_type_to_str((t)->tag), (t)->literal)
+
+const char *token_type_to_str(T_TypeTag tag){
+    static const char *names[] = {
+        "SERVICE", "OPERATOR", "KEYWORD", "PAREN",
+        "DELIMITER", "DATATYPE", "VALUE", "MODIFIER", "COLLECTION"};
+    return (tag < sizeof(names) / sizeof(names[0])) ? names[tag] : "UNKNOWN";
+}
 #else
 #define print_token(t)
 #endif
@@ -36,17 +36,17 @@ const char *token_type_to_str(T_TypeTag tag){
 
 Lexer lexer = {.input = NULL, .pos = 0, .nextpos = 1, .ch = 0};
 
-const Operator operators[] = {
+const Keyword operators[] = {
     {L"++", T_INCREM},
     {L"--", T_DECREM},
+    {L"==", T_EQ},
+    {L"!=", T_NEQ},
     {L"+=", T_ADD},
     {L"-=", T_SUB},
     {L"*=", T_MUL},
     {L"/=", T_DIV},
     {L"&&", T_AND},
     {L"||", T_OR},
-    {L"==", T_EQ},
-    {L"!=", T_NEQ},
     {L"<=", T_LTE},
     {L">=", T_GTE},
     {L"..", T_RANGE},
@@ -54,7 +54,6 @@ const Operator operators[] = {
 };
 
 const Keyword keywords[] = {
-    {L"var", T_VAR},
     {L"if", T_IF},
     {L"else", T_ELSE},
     {L"elif", T_ELIF},
@@ -78,8 +77,54 @@ const Keyword keywords[] = {
     {L"catch", T_CATCH},
 };
 
+const Keyword datatypes[] = {
+    /* basic types */
+    {L"int", T_INT},
+    {L"uint", T_UINT},
+    {L"float", T_FLOAT},
+    {L"str", T_STR},
+    {L"bool", T_BOOL},
+    {L"void", T_VOID},
+    {L"uni", T_UNI},
+    {L"tensor", T_TENSOR},
+
+    /* exact types */
+    {L"int8", T_INT8},
+    {L"in16", T_INT16},
+    {L"int32", T_INT32},
+    {L"int64", T_INT64},
+    {L"uint8", T_UINT8},
+    {L"uint16", T_UINT16},
+    {L"uint32", T_UINT32},
+    {L"uint64", T_UINT64},
+    {L"float32", T_FLOAT32},
+    {L"float64", T_FLOAT64},
+};
+
+const Keyword modifiers[] = {
+    {L"var", T_VAR},
+    {L"const", T_CONST},
+    {L"final", T_FINAL},
+    {L"static", T_STATIC},
+    {L"public", T_PUBLIC},
+    {L"private", T_PRIVATE},
+};
+
+const Keyword collections[] = {
+    {L"list", T_LIST},
+    {L"stack", T_STACK},
+    {L"map", T_MAP},
+    {L"vector", T_VECTOR},
+    {L"tuple", T_TUPLE},
+    {L"array", T_ARRAY},
+    {L"set", T_SET},    
+};
+
 const size_t operators_count = sizeof(operators) / sizeof(Keyword);
 const size_t keywords_count = sizeof(keywords) / sizeof(Keyword);
+const size_t datatype_count = sizeof(datatypes) / sizeof(Keyword);
+const size_t modifiers_count = sizeof(modifiers) / sizeof(Keyword);
+const size_t collections_count = sizeof(collections) / sizeof(Keyword);
 
 void read_ch(Lexer *lexer)
 {
@@ -104,10 +149,6 @@ void skip_space(Lexer *lexer)
             case '\n':
                 read_ch(lexer);
                 lexer->line++;
-                break;
-
-            case '#':
-                while (lexer->ch != '\n' || lexer->ch != '\0') read_ch(lexer);
                 break;
 
             default: return;
@@ -179,6 +220,7 @@ Token tok_new(const T_TypeTag tag, const int lit_tag, const wchar_t *literal)
         case TYPE_PAREN:      token.paren =      (TParenType)lit_tag; break;
         case TYPE_DELIMITER:  token.delim =      (TDelimiterType)lit_tag; break;
         case TYPE_DATATYPE:   token.dtype =      (TDataType)lit_tag; break;
+        case TYPE_VALUE:      token.value =      (TValueType)lit_tag; break;
         case TYPE_MODIFIER:   token.modifier =   (TModifierType)lit_tag; break;
         case TYPE_COLLECTION: token.collection = (TCollectionType)lit_tag; break;
     }
@@ -198,60 +240,68 @@ Token tok_next(Lexer *lexer)
     Token token;
 
     switch (lexer->ch){
-    case L'+': case L'-':
-    case L'*': case L'/':
-    case L'=': case L'!':
-    case L'<': case L'>':
-    case L'&': case L'|':
-    case L'.': case L',':
-    case L':':
-        token = handle_oper(lexer);
-        break;
+        case L'+': case L'-':
+        case L'*': case L'/':
+        case L'=': case L'!':
+        case L'<': case L'>':
+        case L'&': case L'|':
+        case L'.': case L',':
+        case L':':
+            token = handle_oper(lexer);
+            break;
 
-    case L'(': case L')':
-    case L'{': case L'}':
-    case L'[': case L']':
-        token = handle_paren(lexer);
-        break;
+        case L'(': case L')':
+        case L'{': case L'}':
+        case L'[': case L']':
+            token = handle_paren(lexer);
+            break;
 
-    case L'"': case L'\'':
-        token = handle_str(lexer);
-        break;
+        case L'"': case L'\'':
+            token = handle_str(lexer);
+            break;
 
-    case L'\0':
-        token = tok_new(TYPE_SERVICE, T_EOF, L"EOF");
-        break;
+        case L'\0':
+            token = tok_new(TYPE_SERVICE, T_EOF, L"EOF");
+            break;
 
-    case L'0' ... L'9':
-        token = handle_num(lexer);
-        break;
+        case '#':
+            while (lexer->ch != L'\n' && lexer->ch != L'\0'){
+                read_ch(lexer);
+            }
+            skip_space(lexer);
+            if (lexer->ch == L'\n'){
+                read_ch(lexer);
+                lexer->line++;
+                lexer->column = 1;
+            }
+            token = tok_new(TYPE_SERVICE, T_COMMENT, L"COMMENT");
+            break;
 
-    default:
-        if (iswalpha(lexer->ch) || lexer->ch == L'_'){
-            token = handle_ident(lexer);
-        }
-        else{
-            token = tok_new(TYPE_SERVICE, T_ILLEGAL, ch_str);
-        }
-        break;
+        case L'0' ... L'9':
+            token = handle_num(lexer);
+            break;
+
+        default:
+            if (iswalpha(lexer->ch) || lexer->ch == L'_'){
+                token = handle_ident(lexer);
+            }
+            else{
+                token = tok_new(TYPE_SERVICE, T_ILLEGAL, ch_str);
+                read_ch(lexer);
+            }
+            break;
     }
-    read_ch(lexer);
     return token;
 }
 
-static const Operator *find_operator(const wchar_t *op)
+static const Keyword *find_operator(const wchar_t *op)
 {
-    size_t left = 0;
-    size_t right = operators_count - 1;
-
-    while (left <= right){
-        size_t mid = left + (right - left) / 2;
-        int cmp = wcscmp(operators[mid].literal, op);
-
-        if (cmp == 0) return &operators[mid];
-        if (cmp < 0) left = mid + 1;
-        else right = mid - 1;
+    for (size_t i = 0; i < operators_count; i++){
+        if (wcscmp(op, operators[i].literal) == 0){
+            return &operators[i];
+        }
     }
+    
     return NULL;
 }
 
@@ -260,33 +310,31 @@ static Token handle_oper(Lexer *lexer)
     wchar_t current = lexer->ch;
     wchar_t next = peek_ch(lexer);
 
-    if (next != L'\0'){
+    if (next != L'\0') {
         wchar_t potential_op[3] = {current, next, L'\0'};
-        const Operator *op = find_operator(potential_op);
-
-        if (op != NULL){
+        const Keyword *op = find_operator(potential_op);
+        if (op) {
+            read_ch(lexer);
             read_ch(lexer);
             return tok_new(TYPE_OPERATOR, op->type, op->literal);
         }
     }
-
-    static const struct
-    {
-        wchar_t ch;
-        TOperatorType type;
-    } single_ops[] = {
-        {L'+', T_PLUS},     {L'-', T_MINUS}, 
-        {L'*', T_ASTERISK}, {L'/', T_SLASH}, 
-        {L'=', T_ASSIGN},   {L'!', T_NOT},
-        {L'.', T_DOT},      {L',', T_COMMA}, 
-        {L'<', T_LANGLE},   {L'>', T_RANGLE},
-        {L':', T_COLON}};
-
-    for (size_t i = 0; i < sizeof(single_ops) / sizeof(single_ops[0]); i++){
-        if (current == single_ops[i].ch){
-            wchar_t ch_str[2] = {current, L'\0'};
-            return tok_new(TYPE_OPERATOR, single_ops[i].type, ch_str);
-        }
+    
+    read_ch(lexer);
+    switch (current){
+        case L'+': return tok_new(TYPE_OPERATOR, T_PLUS, L"+");
+        case L'-': return tok_new(TYPE_OPERATOR, T_MINUS, L"-");
+        case L'*': return tok_new(TYPE_OPERATOR, T_ASTERISK, L"*");
+        case L'/': return tok_new(TYPE_OPERATOR, T_SLASH, L"/");
+        case L'=': return tok_new(TYPE_OPERATOR, T_ASSIGN, L"=");
+        case L'!': return tok_new(TYPE_OPERATOR, T_NOT, L"!");
+        case L'<': return tok_new(TYPE_OPERATOR, T_LANGLE, L"<");
+        case L'>': return tok_new(TYPE_OPERATOR, T_RANGLE, L">");
+        case L'&': return tok_new(TYPE_OPERATOR, T_AND, L"&");
+        case L'|': return tok_new(TYPE_OPERATOR, T_OR, L"|");
+        case L'.': return tok_new(TYPE_OPERATOR, T_DOT, L".");
+        case L',': return tok_new(TYPE_OPERATOR, T_COMMA, L",");
+        case L':': return tok_new(TYPE_OPERATOR, T_COLON, L":");
     }
 
     wchar_t ch_str[2] = {current, L'\0'};
@@ -298,7 +346,7 @@ static Token handle_num(Lexer *lexer)
     wchar_t *num_str = read_num(lexer);
     if (!num_str) return tok_new(TYPE_SERVICE, T_ILLEGAL, L"BAD_NUMBER");
 
-    Token token = tok_new(TYPE_DATATYPE, T_INT, num_str);
+    Token token = tok_new(TYPE_VALUE, T_NUMBER, num_str);
     free(num_str);
 
     if (wcschr(num_str, L'.') != NULL){
@@ -308,21 +356,48 @@ static Token handle_num(Lexer *lexer)
     return token;
 }
 
+static const Keyword *find_keyword(const wchar_t *ident, const Keyword *keywords, size_t count)
+{
+    for (size_t i = 0; i < count; ++i) {
+        if (wcscmp(ident, keywords[i].literal) == 0) {
+            return &keywords[i];
+        }
+    }
+    return NULL;
+}
+
 static Token handle_ident(Lexer *lexer)
 {
     wchar_t *ident = read_ident(lexer);
     if (!ident) return tok_new(TYPE_SERVICE, T_ILLEGAL, L"BAD_IDENT");
 
-    for (size_t i = 0; i < keywords_count; i++){
-        if (wcscmp(ident, keywords[i].literal) == 0){
-            Token token = tok_new(TYPE_KEYWORD, keywords[i].type, ident);
-            free(ident);
-            return token;
-        }
+    const Keyword *keyword = NULL;
+
+    if ((keyword = find_keyword(ident, keywords, keywords_count))) {
+        Token token = tok_new(TYPE_KEYWORD, keyword->type, ident);
+        free(ident);
+        return token;
+    }
+
+    if ((keyword = find_keyword(ident, datatypes, datatype_count))) {
+        Token token = tok_new(TYPE_DATATYPE, keyword->type, ident);
+        free(ident);
+        return token;
+    }
+
+    if ((keyword = find_keyword(ident, modifiers, modifiers_count))) {
+        Token token = tok_new(TYPE_MODIFIER, keyword->type, ident);
+        free(ident);
+        return token;
+    }
+
+    if ((keyword = find_keyword(ident, collections, collections_count))) {
+        Token token = tok_new(TYPE_COLLECTION, keyword->type, ident);
+        free(ident);
+        return token;
     }
 
     Token token = tok_new(TYPE_SERVICE, T_IDENT, ident);
-    free(ident);
     return token;
 }
 
@@ -338,17 +413,27 @@ static Token handle_paren(Lexer *lexer)
         case L'[': type = T_LBRACKET; break;
         case L']': type = T_RBRACKET; break;
     }
-    return tok_new(TYPE_PAREN, type, (wchar_t[]){lexer->ch, L'\0'});
+    Token token = tok_new(TYPE_PAREN, type, (wchar_t[]){lexer->ch, L'\0'});
+    read_ch(lexer);
+    return token;
 }
 
 static Token handle_str(Lexer *lexer)
 {
+    TDelimiterType opening_delim_type = (lexer->ch == L'"') ? T_QUOTE : T_SQUOTE;
+    Token opening_quote_token = tok_new(TYPE_DELIMITER, opening_delim_type, (wchar_t[]){lexer->ch, L'\0'});
+    read_ch(lexer);
+
     wchar_t *str = read_str(lexer);
     if (!str) return tok_new(TYPE_SERVICE, T_ILLEGAL, L"BAD_STRING");
 
-    Token token = tok_new(TYPE_DATATYPE, T_STR, str);
+    Token string_token = tok_new(TYPE_VALUE, T_STRING, str);
     free(str);
-    return token;
+
+    Token closing_quote_token = tok_new(TYPE_DELIMITER, opening_delim_type, (wchar_t[]){lexer->ch, L'\0'});
+    read_ch(lexer);
+
+    return string_token;
 }
 
 static wchar_t *read_ident(Lexer *lexer)
@@ -358,28 +443,26 @@ static wchar_t *read_ident(Lexer *lexer)
     size_t capacity = IDENT_SIZE;
     size_t length = 0;
 
-    while (iswalnum(lexer->ch) || lexer->ch == L'_'){
-        if (length >= MAX_IDENT_LENGTH){
+    while(iswalnum(lexer->ch) || lexer->ch == L'_'){
+        if(length >= MAX_IDENT_LENGTH){
             if (buffer != stack_buffer) free(buffer);
             return NULL;
         }
 
-        if (length >= capacity - 1){
-            size_t new_capacity = capacity * 2;
+        if(length >= capacity - 1){
+            capacity *= 2;
             wchar_t *new_buf = (wchar_t *)realloc(buffer == stack_buffer ? NULL : buffer,
-                                                  new_capacity * sizeof(wchar_t));
-            if (!new_buf){
-                if (buffer != stack_buffer)
-                    free(buffer);
+                                                  capacity * sizeof(wchar_t));
+            if(!new_buf){
+                if (buffer != stack_buffer) free(buffer);
                 return NULL;
             }
 
-            if (buffer == stack_buffer){
+            if(buffer == stack_buffer){
                 memcpy(new_buf, stack_buffer, length * sizeof(wchar_t));
             }
-
+            
             buffer = new_buf;
-            capacity = new_capacity;
         }
 
         buffer[length++] = lexer->ch;
@@ -441,11 +524,6 @@ static wchar_t *read_num(Lexer *lexer)
         read_ch(lexer);
     }
 
-    if (length == 0 || (length == 1 && has_decimal_point)){
-        if (buffer != stack_buffer) free(buffer);
-        return NULL;
-    }
-
     buffer[length] = L'\0';
 
     if (buffer == stack_buffer){
@@ -470,21 +548,19 @@ static wchar_t *read_str(Lexer *lexer)
     wchar_t *buffer = malloc(capacity * sizeof(wchar_t));
     if (!buffer) return NULL;
 
-    read_ch(lexer);
-
-    while (lexer->ch != L'"' && lexer->ch != L'\0'){
-        if (length >= MAX_STR_LENGTH){
+    while (lexer->ch != L'"' && lexer->ch != L'\0') {
+        if (length >= MAX_STR_LENGTH) {
             free(buffer);
             return NULL;
         }
 
-        if (lexer->ch == L'\\'){
+        if (lexer->ch == L'\\') {
             read_ch(lexer);
-            switch (lexer->ch){
+            switch (lexer->ch) {
             case L'n': buffer[length++] = L'\n'; break;
             case L't': buffer[length++] = L'\t'; break;
             case L'r': buffer[length++] = L'\r'; break;
-            case L'"': buffer[length++] = L'"'; break;
+            case L'"': buffer[length++] = L'\"'; break;
             case L'\\': buffer[length++] = L'\\'; break;
             case L'0': buffer[length++] = L'\0'; break;
             default:
@@ -495,10 +571,10 @@ static wchar_t *read_str(Lexer *lexer)
             continue;
         }
 
-        if (length >= capacity - 1){
+        if (length >= capacity - 1) {
             capacity *= 2;
             wchar_t *new_buf = realloc(buffer, capacity * sizeof(wchar_t));
-            if (!new_buf){
+            if (!new_buf) {
                 free(buffer);
                 return NULL;
             }
@@ -509,14 +585,14 @@ static wchar_t *read_str(Lexer *lexer)
         read_ch(lexer);
     }
 
-    if (lexer->ch != L'"'){
+    if (lexer->ch != L'"') {
         free(buffer);
         return NULL;
     }
 
     buffer[length] = L'\0';
 
-    if (length < capacity / 2){
+    if (length < capacity / 2) {
         wchar_t *shrunk_buf = realloc(buffer, (length + 1) * sizeof(wchar_t));
         if (shrunk_buf) buffer = shrunk_buf;
     }

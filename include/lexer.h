@@ -3,9 +3,10 @@
 #include <wchar.h>
 
 typedef enum {
-	T_ILLEGAL,  // unknown
-	T_IDENT,    // identificator
-	T_EOF,      // end of file
+	T_ILLEGAL,    // unknown
+	T_IDENT,      // identificator
+    T_COMMENT,    // comment
+	T_EOF,        // end of file
 } TServiceType;
 
 typedef enum {
@@ -73,6 +74,10 @@ typedef enum {
 } TDataType;
 
 typedef enum {
+    T_NUMBER, T_STRING, T_BOOL_TRUE, T_BOOL_FALSE,
+} TValueType;
+
+typedef enum {
     T_VAR, T_CONST, T_FINAL, T_STATIC, T_PUBLIC, T_PRIVATE
 } TModifierType;
 
@@ -87,15 +92,10 @@ typedef enum {
     TYPE_PAREN,      // TParenType
     TYPE_DELIMITER,  // TDelimiterType
     TYPE_DATATYPE,   // TDataType
+    TYPE_VALUE,      // TValueType
     TYPE_MODIFIER,   // TModifierType
     TYPE_COLLECTION, // TCollectionType
 } T_TypeTag;
-
-typedef struct {
-    wchar_t *literal;
-    int type;
-    int precedence;
-} Operator;
 
 typedef struct {
     wchar_t *literal;
@@ -111,6 +111,7 @@ typedef struct {
         TParenType paren;
         TDelimiterType delim;
         TDataType dtype;
+        TValueType value;
         TModifierType modifier;
         TCollectionType collection;
 	};
