@@ -1,19 +1,15 @@
-#include <stdio.h> // remove after test
-
 #include <stdlib.h>
 #include <string.h>
 #include <wctype.h>
 #include <wchar.h>
 #include <stdbool.h>
 
-#include "../include/lexer.h"
+#include "lexer.h"
 
 #define DEBUG
 
 #ifdef DEBUG
-#define print_token(t)                         \
-    wprintf(L"Token: %s | Value: %ls\n", \
-            token_type_to_str((t)->tag), (t)->literal)
+#include <stdio.h>
 
 const char *token_type_to_str(T_TypeTag tag){
     static const char *names[] = {
@@ -21,6 +17,10 @@ const char *token_type_to_str(T_TypeTag tag){
         "DELIMITER", "DATATYPE", "VALUE", "MODIFIER", "COLLECTION"};
     return (tag < sizeof(names) / sizeof(names[0])) ? names[tag] : "UNKNOWN";
 }
+
+#define print_token(t)                         \
+wprintf(L"Token: %s | Value: %ls\n", \
+    token_type_to_str((t)->tag), (t)->literal)
 #else
 #define print_token(t)
 #endif
@@ -136,6 +136,7 @@ void read_ch(Lexer *lexer)
     }
     lexer->pos = lexer->nextpos;
     lexer->nextpos++;
+    lexer->column++;
 }
 
 void skip_space(Lexer *lexer)
@@ -149,6 +150,7 @@ void skip_space(Lexer *lexer)
             case '\n':
                 read_ch(lexer);
                 lexer->line++;
+                lexer->column = 1;
                 break;
 
             default: return;
@@ -232,6 +234,8 @@ Token tok_new(const T_TypeTag tag, const int lit_tag, const wchar_t *literal)
     return token;
 }
 
+static int paren_balance = 0;
+
 Token tok_next(Lexer *lexer)
 {
     skip_space(lexer);
@@ -253,6 +257,11 @@ Token tok_next(Lexer *lexer)
         case L'(': case L')':
         case L'{': case L'}':
         case L'[': case L']':
+            if (lexer->ch == L'(' || lexer->ch == L'{' || lexer->ch == L'[') {
+                paren_balance++;
+            } else if (lexer->ch == L')' || lexer->ch == L'}' || lexer->ch == L']') {
+                paren_balance--;
+            }
             token = handle_paren(lexer);
             break;
 
@@ -261,6 +270,10 @@ Token tok_next(Lexer *lexer)
             break;
 
         case L'\0':
+            if (paren_balance != 0) {
+                wprintf(L"Error: Unmatched parentheses detected\n");
+                exit(EXIT_FAILURE);
+            }
             token = tok_new(TYPE_SERVICE, T_EOF, L"EOF");
             break;
 
@@ -287,9 +300,12 @@ Token tok_next(Lexer *lexer)
             }
             else{
                 token = tok_new(TYPE_SERVICE, T_ILLEGAL, ch_str);
-                read_ch(lexer);
             }
             break;
+    }
+    if(token.tag == TYPE_SERVICE && token.service == T_ILLEGAL){
+        wprintf(L"Illegal character: %ls at line %d, column %d\n", token.literal, lexer->line, lexer->column);
+        exit(EXIT_FAILURE);
     }
     return token;
 }
@@ -350,7 +366,13 @@ static Token handle_num(Lexer *lexer)
     free(num_str);
 
     if (wcschr(num_str, L'.') != NULL){
-        token.oper = T_FLOAT;
+        token.oper = T_DECIMAL;
+    }
+    if (wcschr(num_str, L'x') != NULL){
+        token.oper = T_HEX;
+    }
+    else if (wcschr(num_str, L'b') != NULL){
+        token.oper = T_BIN;
     }
 
     return token;
@@ -487,15 +509,15 @@ static wchar_t *read_num(Lexer *lexer)
     wchar_t *buffer = stack_buffer;
     size_t capacity = NUM_SIZE;
     size_t length = 0;
-    bool has_decimal_point = false;
+    bool has_delim_point = false;
 
-    while (iswdigit(lexer->ch) || lexer->ch == L'.'){
-        if (lexer->ch == L'.'){
-            if (has_decimal_point){
+    while (iswdigit(lexer->ch) || wcschr(L".xb", lexer->ch) != NULL) {
+        if (wcschr(L".xb", lexer->ch) != NULL) {
+            if (has_delim_point) {
                 if (buffer != stack_buffer) free(buffer);
                 return NULL;
             }
-            has_decimal_point = true;
+            has_delim_point = true;
         }
 
         if (length >= MAX_NUM_LENGTH){

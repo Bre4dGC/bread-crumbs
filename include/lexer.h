@@ -49,6 +49,9 @@ typedef enum {
     T_TRAIT,    // trait
     T_TRY,      // try
     T_CATCH,    // catch
+    T_ASYNC,    // async
+    T_AWAIT,    // await
+    T_SIGNAL,   // signal
 } TKeywordType;
 
 typedef enum {
@@ -74,11 +77,11 @@ typedef enum {
 } TDataType;
 
 typedef enum {
-    T_NUMBER, T_STRING, T_BOOL_TRUE, T_BOOL_FALSE,
+    T_NUMBER, T_DECIMAL, T_STRING, T_BOOL_TRUE, T_BOOL_FALSE, T_HEX, T_BIN,
 } TValueType;
 
 typedef enum {
-    T_VAR, T_CONST, T_FINAL, T_STATIC, T_PUBLIC, T_PRIVATE
+    T_VAR, T_CONST, T_FINAL, T_STATIC, T_PUBLIC, T_PRIVATE, 
 } TModifierType;
 
 typedef enum {

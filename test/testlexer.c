@@ -5,28 +5,30 @@
 
 int main(void)
 {
-    const wchar_t *input = L"\nfunc calculate(x: int, y: int) -> float {\n"
-                           L"\tvar result: float = x * y + 3.14\n"
-                           L"\tif result > 100 {\n"
-                           L"\t\treturn result / 2\n"
-                           L"\t} else {\n"
-                           L"\t\treturn result\n"
-                           L"\t}\n"
-                           L"} # End of function\n";
-    wprintf(L"Input: %ls\n", input);
+    const wchar_t *inputs[] = {
+        L"var 123abc = 42\n",  // TODO: fix identifiers starting with digits
+        L"var x = 0xGHI\n",  // TODO: fix hexadecimal and binary parsing
+        L"list<int32> numbers = [1, 2, , 3]\n",  // TODO: fix list parsing
+        // TODO: add more test cases
+    };
 
-    Lexer *lexer = lex_new(input);
-    if (!lexer) {
-        wprintf(L"Failed to create lexer\n");
-        return 1;
+    for (size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i) {
+        wprintf(L"%zu: %ls\n", i + 1, inputs[i]);
+
+        Lexer *lexer = lex_new(inputs[i]);
+        if (!lexer) {
+            wprintf(L"Failed to create lexer\n");
+            continue;
+        }
+
+        Token token;
+        while ((token = tok_next(lexer)).tag != TYPE_SERVICE || token.service != T_EOF) {
+            tok_free(&token);
+        }
+        lex_free(lexer);
+        
+        wprintf(L"_________________________________\n");
     }
 
-    Token token;
-    while ((token = tok_next(lexer)).tag != TYPE_SERVICE || token.service != T_EOF) {
-        tok_free(&token);
-    }
-
-    wprintf(L"End of input reached\n");
-    lex_free(lexer);
     return 0;
 }
