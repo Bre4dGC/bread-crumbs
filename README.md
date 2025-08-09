@@ -26,7 +26,6 @@ Bread Crumbs is a modern programming language designed for **testing**, **simula
   }
   ```
 - **Tracing**: Debug and analyze with `trace` for transparent execution.
-- **Collections**: Built-in `list`, `map`, `set` for rapid development.
 - **Extensible**: Modular design with `import` for custom libraries.
 
 ## Installation
@@ -81,7 +80,7 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 Join our community to discuss Bread Crumbs, share ideas, and get help:
 
-- **Discord**: [Join Bread Crumbs Community](https://discord.gg/BreadCrumbs)
+- **Discord**: [Join Bread Crumbs Community](https://discord.gg/2YBBttpX)
 - **GitHub Issues**: Report bugs or suggest features [here](https://github.com/Bre4dGC/Bread-Crumbs/issues).
 
 ## License
