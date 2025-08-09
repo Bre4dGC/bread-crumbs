@@ -14,12 +14,12 @@
 const char *token_type_to_str(T_TypeTag tag){
     static const char *names[] = {
         "SERVICE", "OPERATOR", "KEYWORD", "PAREN",
-        "DELIMITER", "DATATYPE", "VALUE", "MODIFIER", "COLLECTION"};
+        "DELIMITER", "DATATYPE", "VALUE", "MODIFIER"};
     return (tag < sizeof(names) / sizeof(names[0])) ? names[tag] : "UNKNOWN";
 }
 
 #define print_token(t)                         \
-wprintf(L"Token: %s | Value: %ls\n", \
+wprintf(L"%s(%ls)\n", \
     token_type_to_str((t)->tag), (t)->literal)
 #else
 #define print_token(t)
@@ -37,94 +37,63 @@ wprintf(L"Token: %s | Value: %ls\n", \
 Lexer lexer = {.input = NULL, .pos = 0, .nextpos = 1, .ch = 0};
 
 const Keyword operators[] = {
-    {L"++", T_INCREM},
-    {L"--", T_DECREM},
-    {L"==", T_EQ},
-    {L"!=", T_NEQ},
-    {L"+=", T_ADD},
-    {L"-=", T_SUB},
-    {L"*=", T_MUL},
-    {L"/=", T_DIV},
-    {L"&&", T_AND},
-    {L"||", T_OR},
-    {L"<=", T_LTE},
-    {L">=", T_GTE},
-    {L"..", T_RANGE},
-    {L"->", T_RETTYPE},
+    {L"++", T_INCREM},  {L"--", T_DECREM},
+    {L"==", T_EQ},      {L"!=", T_NEQ},
+    {L"+=", T_ADD},     {L"-=", T_SUB},
+    {L"*=", T_MUL},     {L"/=", T_DIV},
+    {L"&&", T_AND},     {L"||", T_OR},
+    {L"<=", T_LTE},     {L">=", T_GTE},
+    {L"..", T_RANGE},   {L"->", T_RETTYPE},
 };
 
 const Keyword keywords[] = {
-    {L"if", T_IF},
-    {L"else", T_ELSE},
-    {L"elif", T_ELIF},
-    {L"for", T_FOR},
-    {L"do", T_DO},
-    {L"while", T_WHILE},
-    {L"func", T_FUNC},
-    {L"return", T_RETURN},
-    {L"break", T_BREAK},
-    {L"continue", T_CONTINUE},
-    {L"default", T_DEFAULT},
-    {L"match", T_MATCH},
-    {L"case", T_CASE},
-    {L"struct", T_STRUCT},
-    {L"enum", T_ENUM},
-    {L"union", T_UNION},
-    {L"import", T_IMPORT},
-    {L"type", T_TYPE},
-    {L"trait", T_TRAIT},
-    {L"try", T_TRY},
-    {L"catch", T_CATCH},
+    {L"if", T_IF},          {L"else", T_ELSE},
+    {L"elif", T_ELIF},      {L"for", T_FOR},
+    {L"do", T_DO},          {L"while", T_WHILE},
+    {L"func", T_FUNC},      {L"return", T_RETURN},
+    {L"break", T_BREAK},    {L"continue", T_CONTINUE},
+    {L"default", T_DEFAULT},{L"match", T_MATCH},
+    {L"case", T_CASE},      {L"struct", T_STRUCT},
+    {L"enum", T_ENUM},      {L"union", T_UNION},
+    {L"import", T_IMPORT},  {L"type", T_TYPE},
+    {L"trait", T_TRAIT},    {L"try", T_TRY},
+    {L"catch", T_CATCH},    {L"async", T_ASYNC},
+    {L"await", T_AWAIT},    {L"test", T_TEST},
+    {L"assert", T_ASSERT},  {L"verify", T_VERIFY},
+    {L"where", T_WHERE},    {L"rollback", T_ROLLBACK},
+    {L"commit", T_COMMIT},  {L"fork", T_FORK},
+    {L"merge", T_MERGE},    {L"revert", T_REVERT},
+    {L"push", T_PUSH},      {L"pull", T_PULL},
+    {L"clone", T_CLONE},    {L"simulate", T_SIMULATE},
+    {L"choose", T_CHOOSE},  {L"timeline", T_TIMELINE},  
 };
 
 const Keyword datatypes[] = {
     /* basic types */
-    {L"int", T_INT},
-    {L"uint", T_UINT},
-    {L"float", T_FLOAT},
-    {L"str", T_STR},
-    {L"bool", T_BOOL},
-    {L"void", T_VOID},
-    {L"uni", T_UNI},
-    {L"tensor", T_TENSOR},
+    {L"int", T_INT},        {L"uint", T_UINT},
+    {L"float", T_FLOAT},    {L"str", T_STR},
+    {L"bool", T_BOOL},      {L"void", T_VOID},
+    {L"uni", T_UNI},        {L"tensor", T_TENSOR},
 
     /* exact types */
-    {L"int8", T_INT8},
-    {L"in16", T_INT16},
-    {L"int32", T_INT32},
-    {L"int64", T_INT64},
-    {L"uint8", T_UINT8},
-    {L"uint16", T_UINT16},
-    {L"uint32", T_UINT32},
-    {L"uint64", T_UINT64},
-    {L"float32", T_FLOAT32},
-    {L"float64", T_FLOAT64},
+    {L"int8", T_INT8},      {L"in16", T_INT16},
+    {L"int32", T_INT32},    {L"int64", T_INT64},
+    {L"uint8", T_UINT8},    {L"uint16", T_UINT16},
+    {L"uint32", T_UINT32},  {L"uint64", T_UINT64},
+    {L"float32", T_FLOAT32},{L"float64", T_FLOAT64},
 };
 
 const Keyword modifiers[] = {
-    {L"var", T_VAR},
-    {L"const", T_CONST},
-    {L"final", T_FINAL},
-    {L"static", T_STATIC},
-    {L"public", T_PUBLIC},
-    {L"private", T_PRIVATE},
-};
-
-const Keyword collections[] = {
-    {L"list", T_LIST},
-    {L"stack", T_STACK},
-    {L"map", T_MAP},
-    {L"vector", T_VECTOR},
-    {L"tuple", T_TUPLE},
-    {L"array", T_ARRAY},
-    {L"set", T_SET},    
+    {L"var", T_VAR},        {L"const", T_CONST},
+    {L"final", T_FINAL},    {L"static", T_STATIC},
+    {L"event", T_EVENT},    {L"signal", T_SIGNAL},
+    {L"solve", T_SOLVE},    {L"snapshot", T_SNAPSHOT},
 };
 
 const size_t operators_count = sizeof(operators) / sizeof(Keyword);
 const size_t keywords_count = sizeof(keywords) / sizeof(Keyword);
 const size_t datatype_count = sizeof(datatypes) / sizeof(Keyword);
 const size_t modifiers_count = sizeof(modifiers) / sizeof(Keyword);
-const size_t collections_count = sizeof(collections) / sizeof(Keyword);
 
 void read_ch(Lexer *lexer)
 {
@@ -158,13 +127,13 @@ void skip_space(Lexer *lexer)
     }
 }
 
-Lexer *lex_new(const wchar_t *input)
+Lexer* lex_new(const wchar_t *input)
 {
-    Lexer *lexer = (Lexer *)malloc(sizeof(Lexer));
+    Lexer *lexer = (Lexer*)malloc(sizeof(Lexer));
     if (!lexer) return NULL;
 
     size_t len = wcslen(input);
-    lexer->input = (wchar_t *)malloc((len + 1) * sizeof(wchar_t));
+    lexer->input = (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
     if (!lexer->input){
         free(lexer);
         return NULL;
@@ -224,7 +193,6 @@ Token tok_new(const T_TypeTag tag, const int lit_tag, const wchar_t *literal)
         case TYPE_DATATYPE:   token.dtype =      (TDataType)lit_tag; break;
         case TYPE_VALUE:      token.value =      (TValueType)lit_tag; break;
         case TYPE_MODIFIER:   token.modifier =   (TModifierType)lit_tag; break;
-        case TYPE_COLLECTION: token.collection = (TCollectionType)lit_tag; break;
     }
 
 #ifdef DEBUG
@@ -271,7 +239,7 @@ Token tok_next(Lexer *lexer)
 
         case L'\0':
             if (paren_balance != 0) {
-                wprintf(L"Error: Unmatched parentheses detected\n");
+                wprintf(L"[ERROR] Unmatched parentheses detected\n");
                 exit(EXIT_FAILURE);
             }
             token = tok_new(TYPE_SERVICE, T_EOF, L"EOF");
@@ -304,7 +272,9 @@ Token tok_next(Lexer *lexer)
             break;
     }
     if(token.tag == TYPE_SERVICE && token.service == T_ILLEGAL){
-        wprintf(L"Illegal character: %ls at line %d, column %d\n", token.literal, lexer->line, lexer->column);
+        wprintf(L"\n%ls", lexer->input);
+        wprintf(L"%*c\n", lexer->column, '^');
+        wprintf(L"[ERROR] %ls at line %d, column %d\n", token.literal, lexer->line, lexer->column);
         exit(EXIT_FAILURE);
     }
     return token;
@@ -363,18 +333,12 @@ static Token handle_num(Lexer *lexer)
     if (!num_str) return tok_new(TYPE_SERVICE, T_ILLEGAL, L"BAD_NUMBER");
 
     Token token = tok_new(TYPE_VALUE, T_NUMBER, num_str);
+
+    if (wcschr(num_str, L'.') != NULL) token.oper = T_DECIMAL;
+    if (wcschr(num_str, L'x') != NULL) token.oper = T_HEX;
+    else if (wcschr(num_str, L'b') != NULL) token.oper = T_BIN;
+
     free(num_str);
-
-    if (wcschr(num_str, L'.') != NULL){
-        token.oper = T_DECIMAL;
-    }
-    if (wcschr(num_str, L'x') != NULL){
-        token.oper = T_HEX;
-    }
-    else if (wcschr(num_str, L'b') != NULL){
-        token.oper = T_BIN;
-    }
-
     return token;
 }
 
@@ -394,40 +358,26 @@ static Token handle_ident(Lexer *lexer)
     if (!ident) return tok_new(TYPE_SERVICE, T_ILLEGAL, L"BAD_IDENT");
 
     const Keyword *keyword = NULL;
+    Token token;
 
     if ((keyword = find_keyword(ident, keywords, keywords_count))) {
-        Token token = tok_new(TYPE_KEYWORD, keyword->type, ident);
-        free(ident);
-        return token;
+        token = tok_new(TYPE_KEYWORD, keyword->type, ident);
+    } else if ((keyword = find_keyword(ident, datatypes, datatype_count))) {
+        token = tok_new(TYPE_DATATYPE, keyword->type, ident);
+    } else if ((keyword = find_keyword(ident, modifiers, modifiers_count))) {
+        token = tok_new(TYPE_MODIFIER, keyword->type, ident);
+    } else {
+        token = tok_new(TYPE_SERVICE, T_IDENT, ident);
     }
 
-    if ((keyword = find_keyword(ident, datatypes, datatype_count))) {
-        Token token = tok_new(TYPE_DATATYPE, keyword->type, ident);
-        free(ident);
-        return token;
-    }
-
-    if ((keyword = find_keyword(ident, modifiers, modifiers_count))) {
-        Token token = tok_new(TYPE_MODIFIER, keyword->type, ident);
-        free(ident);
-        return token;
-    }
-
-    if ((keyword = find_keyword(ident, collections, collections_count))) {
-        Token token = tok_new(TYPE_COLLECTION, keyword->type, ident);
-        free(ident);
-        return token;
-    }
-
-    Token token = tok_new(TYPE_SERVICE, T_IDENT, ident);
+    free(ident);
     return token;
 }
 
 static Token handle_paren(Lexer *lexer)
 {
     TParenType type;
-    switch (lexer->ch)
-    {
+    switch (lexer->ch) {
         case L'(': type = T_LPAREN; break;
         case L')': type = T_RPAREN; break;
         case L'{': type = T_LBRACE; break;
@@ -626,6 +576,7 @@ void lex_free(Lexer *lexer)
 {
     if (lexer){
         free(lexer->input);
+        free(lexer);
     }
 }
 
@@ -633,5 +584,6 @@ void tok_free(Token *tok)
 {
     if (tok){
         free(tok->literal);
+        tok->literal = NULL;
     }
 }

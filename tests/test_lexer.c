@@ -6,9 +6,10 @@
 int main(void)
 {
     const wchar_t *inputs[] = {
-        L"var 123abc = 42\n",  // TODO: fix identifiers starting with digits
-        L"var x = 0xGHI\n",  // TODO: fix hexadecimal and binary parsing
-        L"list<int32> numbers = [1, 2, , 3]\n",  // TODO: fix list parsing
+        L"if (x > 10) { return x }\n",
+        // L"var 123abc = 42\n",  // TODO: fix identifiers starting with digits
+        // L"var x = 0xGHI\n",  // TODO: fix hexadecimal and binary parsing
+        // L"list<int32> numbers = [1, 2, , 3]\n",  // TODO: fix list parsing
         // TODO: add more test cases
     };
 
@@ -25,6 +26,7 @@ int main(void)
         while ((token = tok_next(lexer)).tag != TYPE_SERVICE || token.service != T_EOF) {
             tok_free(&token);
         }
+        tok_free(&token);
         lex_free(lexer);
         
         wprintf(L"_________________________________\n");

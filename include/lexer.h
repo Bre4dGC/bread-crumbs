@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stddef.h>
 #include <wchar.h>
 
@@ -16,7 +17,7 @@ typedef enum {
     T_PERCENT,  // %
     T_ASSIGN,   // =
     T_COLON,    // :
-    T_NOT,      // !
+    T_NOT, T_QUESTION,   // ! ?
     T_RANGE,    // ..
     T_RETTYPE,  // ->
     T_AND, T_OR, // && ||
@@ -28,8 +29,8 @@ typedef enum {
 
 typedef enum {
     T_IF,       // if
-    T_ELSE,     // else
     T_ELIF,     // elif
+    T_ELSE,     // else
     T_FOR,      // for
     T_DO,       // do
     T_WHILE,    // while
@@ -51,7 +52,23 @@ typedef enum {
     T_CATCH,    // catch
     T_ASYNC,    // async
     T_AWAIT,    // await
-    T_SIGNAL,   // signal
+    T_TEST,     // test
+    T_ASSERT,   // assert
+    T_VERIFY,   // verify
+    T_WHERE,    // where
+    T_SOLVE,    // solve
+    T_SNAPSHOT, // snapshot
+    T_ROLLBACK, // rollback
+    T_COMMIT,   // commit
+    T_FORK,     // fork
+    T_MERGE,    // merge
+    T_REVERT,   // revert
+    T_PUSH,     // push
+    T_PULL,     // pull
+    T_CLONE,    // clone
+    T_SIMULATE, // simulate
+    T_TIMELINE, // timeline
+    T_CHOOSE,   // choose
 } TKeywordType;
 
 typedef enum {
@@ -68,7 +85,8 @@ typedef enum {
 typedef enum {
     /* basic types */
     T_INT, T_UINT, T_FLOAT,
-    T_VOID, T_BOOL, T_STR, T_UNI, T_TENSOR,
+    T_VOID, T_BOOL, T_STR, 
+    T_UNI, T_TENSOR, 
 
     /* exact types */
     T_INT8,    T_INT16,  T_INT32,  T_INT64,
@@ -77,16 +95,17 @@ typedef enum {
 } TDataType;
 
 typedef enum {
-    T_NUMBER, T_DECIMAL, T_STRING, T_BOOL_TRUE, T_BOOL_FALSE, T_HEX, T_BIN,
+    T_NUMBER, T_DECIMAL, T_STRING, T_BOOL_TRUE, T_BOOL_FALSE, T_HEX, T_BIN, T_NULL,
 } TValueType;
 
 typedef enum {
-    T_VAR, T_CONST, T_FINAL, T_STATIC, T_PUBLIC, T_PRIVATE, 
+    T_VAR,      // var
+    T_CONST,    // const
+    T_FINAL,    // final 
+    T_STATIC,   // static
+    T_EVENT,    // event
+    T_SIGNAL,   // signal
 } TModifierType;
-
-typedef enum {
-    T_LIST, T_STACK, T_MAP, T_VECTOR, T_TUPLE, T_ARRAY, T_SET
-} TCollectionType;
 
 typedef enum {
     TYPE_SERVICE,    // TServiceType
@@ -97,8 +116,11 @@ typedef enum {
     TYPE_DATATYPE,   // TDataType
     TYPE_VALUE,      // TValueType
     TYPE_MODIFIER,   // TModifierType
-    TYPE_COLLECTION, // TCollectionType
 } T_TypeTag;
+
+typedef enum {
+    TYPE_WARNING, TYPE_ERROR, TYPE_FATAL,
+} ErrorType;
 
 typedef struct {
     wchar_t *literal;
@@ -116,7 +138,6 @@ typedef struct {
         TDataType dtype;
         TValueType value;
         TModifierType modifier;
-        TCollectionType collection;
 	};
 	wchar_t *literal;
 } Token;
