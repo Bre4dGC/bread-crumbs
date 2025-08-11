@@ -6,11 +6,11 @@
 int main(void)
 {
     const wchar_t *inputs[] = {
-        L"if (x > 10) { return x }\n",
-        // L"var 123abc = 42\n",  // TODO: fix identifiers starting with digits
-        // L"var x = 0xGHI\n",  // TODO: fix hexadecimal and binary parsing
-        // L"list<int32> numbers = [1, 2, , 3]\n",  // TODO: fix list parsing
-        // TODO: add more test cases
+        // L"var name: str = \"bread\n",
+        L"var 123abc = 42\n",  // TODO: fix identifiers starting with digits
+        L"var x = 0xGHI\n",  // TODO: fix hexadecimal and binary parsing
+        L"list<int32> numbers = [1, 2, , 3]\n",  // TODO: fix list parsing
+        //TODO: add more test cases
     };
 
     for (size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i) {

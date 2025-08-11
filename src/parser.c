@@ -21,6 +21,23 @@ ParseFunction parse_table[] = {
     [T_SIMULATE] = parse_simulate,
 };
 
+static ASTNode* parse_block(Parser* parser);
+static ASTNode* parse_if(Parser* parser);
+static ASTNode* parse_while(Parser* parser);
+static ASTNode* parse_for(Parser* parser);
+static ASTNode* parse_func(Parser* parser);
+static ASTNode* parse_array(Parser* parser);
+static ASTNode* parse_struct(Parser* parser);
+static ASTNode* parse_union(Parser* parser);
+static ASTNode* parse_enum(Parser* parser);
+static ASTNode* parse_match(Parser* parser);
+static ASTNode* parse_trait(Parser* parser);
+static ASTNode* parse_try(Parser* parser);
+static ASTNode* parse_test(Parser* parser);
+static ASTNode* parse_fork(Parser* parser);
+static ASTNode* parse_solve(Parser* parser);
+static ASTNode* parse_simulate(Parser* parser);
+
 Parser* parser_new(Lexer* lexer)
 {
     Parser *parser = malloc(sizeof(Parser));
@@ -55,7 +72,10 @@ void parser_free(Parser* parser)
     }
 }
 
-static ASTNode* parse_block(Parser* parser){}
+static ASTNode* parse_block(Parser* parser)
+{
+    
+}
 
 static ASTNode* parse_if(Parser* parser){}
 
