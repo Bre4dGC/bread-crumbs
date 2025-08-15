@@ -40,7 +40,7 @@ Bread Crumbs is a modern programming language designed for **testing**, **simula
       fork scenarios {
           branch positive {
               assert(x > 0 && y > 0)
-              print("Positive solution: x = {x}, {y} = {y}")
+              print("Positive solution: x = {x}, y = {y}")
           }
           branch negative {
               assert(x < 0 || y < 0)
