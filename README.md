@@ -11,15 +11,15 @@ Bread Crumbs is a modern programming language designed for **testing**, **simula
 ## Features
 
 - **Declarative Programming**: Use `solve` to define constraints and let the language find solutions.
-  ```bread
-  solve x: int where x * x == 16
+  ```brc
+  solve (x: int) where x * x == 16
   print(x) // Outputs: 4 or -4
   ```
 - **Simulation and Testing**: Simulate scenarios with `simulate` and manage state with `snapshot`/`rollback`.
-  ```bread
+  ```brc
   snapshot state
   simulate scenarios {
-      timeline "test" {
+      timeline test {
           x += 1
           if error { rollback state }
       }
