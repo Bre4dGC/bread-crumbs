@@ -1,10 +1,11 @@
 #pragma once
-
 #include <stddef.h>
 #include <wchar.h>
-#include "tokenizer.h"
 
-typedef struct {
+#include "tokenizer.h"
+#include "errors.h"
+
+struct lexer {
     wchar_t *input;
     wchar_t ch;
     size_t pos;
@@ -12,8 +13,11 @@ typedef struct {
     size_t line;
     size_t column;
     int paren_balance;
-} Lexer;
+    struct error** errors;
+    size_t errors_count;
+};
 
-Lexer* lex_new(const wchar_t *input);
-void lex_free(Lexer *lexer);
-Token tok_next(Lexer *lexer);
+struct lexer* new_lexer(const wchar_t* input);
+void new_lexer_error(struct lexer* lex, struct error* err);
+void free_lexer(struct lexer* lex);
+struct token next_token(struct lexer* lex);

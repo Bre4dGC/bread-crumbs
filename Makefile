@@ -1,19 +1,43 @@
-FLAGS = -Wall -Wextra -I include/
+CC = cc
+CFLAGS = -Wall -Wextra -std=c11 -I include/
 SRC_DIR = src
-OBJ_DIR = build
 BIN_DIR = bin
-TARGET = $(BIN_DIR)/BreadCrumbs
 
-SRCS = $(wildcard $(SRC_DIR)/*.c)
-OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
+MAIN = $(BIN_DIR)/BreadCrumbs
+ERRTEST = $(BIN_DIR)/errtest
+LEXTEST = $(BIN_DIR)/lextest
+PARSTEST = $(BIN_DIR)/parstest
 
-.PHONY: build run clean
+SRCS_MAIN = $(SRC_DIR)/main.c $(SRC_DIR)/lexer.c $(SRC_DIR)/tokenizer.c $(SRC_DIR)/parser.c $(SRC_DIR)/ast.c $(SRC_DIR)/errors.c $(SRC_DIR)/vm.c
+SRCS_ERRTEST = tests/test_errors.c $(SRC_DIR)/errors.c
+SRCS_LEXTEST = tests/test_lexer.c $(SRC_DIR)/lexer.c $(SRC_DIR)/tokenizer.c $(SRC_DIR)/errors.c
+SRCS_PARSTEST = tests/test_parser.c $(SRC_DIR)/parser.c $(SRC_DIR)/lexer.c $(SRC_DIR)/tokenizer.c $(SRC_DIR)/ast.c $(SRC_DIR)/errors.c
 
-build:
+.PHONY: all build test clean
+
+all: build
+
+build: $(MAIN) $(ERRTEST) $(LEXTEST) $(PARSTEST)
+
+$(BIN_DIR):
 	mkdir -p $(BIN_DIR)
-	cc $(SRCS) $(FLAGS) -o $(TARGET)
 
-run:
+$(MAIN): | $(BIN_DIR)
+	$(CC) $(CFLAGS) $(SRCS_MAIN) -o $@
+
+$(ERRTEST): | $(BIN_DIR)
+	$(CC) $(CFLAGS) $(SRCS_ERRTEST) -o $@
+
+$(LEXTEST): | $(BIN_DIR)
+	$(CC) $(CFLAGS) $(SRCS_LEXTEST) -o $@
+
+$(PARSTEST): | $(BIN_DIR)
+	$(CC) $(CFLAGS) $(SRCS_PARSTEST) -o $@
+
+test: build
+	$(ERRTEST) | cat
+	$(LEXTEST) | cat
+	$(PARSTEST) | cat
 
 clean:
-	rm -rf $(BUILD_PATH) $(BIN_PATH)
+	rm -rf $(BIN_DIR)

@@ -8,114 +8,108 @@
 
 #ifdef DEBUG
 
-const char *token_type_to_str(T_TypeTag tag){
+const char *token_type_to_str(enum category_tag category){
     static const char *names[] = {
         "SERVICE", "OPERATOR", "KEYWORD", "PAREN",
         "DELIMITER", "DATATYPE", "VALUE", "MODIFIER"};
-    return (tag < sizeof(names) / sizeof(names[0])) ? names[tag] : "UNKNOWN";
+    return (category < sizeof(names) / sizeof(names[0])) ? names[category] : "UNKNOWN";
 }
 
 #define print_token(t)                         \
-wprintf(L"%s(%ls)\n", \
-    token_type_to_str((t)->tag), (t)->literal)
+wprintf(L"%s(%ls)\n", token_type_to_str((t)->category), (t)->literal)
 #else
 #define print_token(t)
 #endif
 
-const Keyword operators[] = {
-    {L"++", T_INCREM},  {L"--", T_DECREM},
-    {L"==", T_EQ},      {L"!=", T_NEQ},
-    {L"+=", T_ADD},     {L"-=", T_SUB},
-    {L"*=", T_MUL},     {L"/=", T_DIV},
-    {L"&&", T_AND},     {L"||", T_OR},
-    {L"<=", T_LTE},     {L">=", T_GTE},
-    {L"..", T_RANGE},   {L"->", T_RETTYPE},
-    {L"%=", T_MOD},
+const struct keyword operators[] = {
+    {L"++", OP_INCREM, CATEGORY_OPERATOR}, {L"--", OP_DECREM,  CATEGORY_OPERATOR},
+    {L"==", OP_EQ,     CATEGORY_OPERATOR}, {L"!=", OP_NEQ,     CATEGORY_OPERATOR},
+    {L"+=", OP_ADD,    CATEGORY_OPERATOR}, {L"-=", OP_SUB,     CATEGORY_OPERATOR},
+    {L"*=", OP_MUL,    CATEGORY_OPERATOR}, {L"/=", OP_DIV,     CATEGORY_OPERATOR},
+    {L"&&", OP_AND,    CATEGORY_OPERATOR}, {L"||", OP_OR,      CATEGORY_OPERATOR},
+    {L"<=", OP_LTE,    CATEGORY_OPERATOR}, {L">=", OP_GTE,     CATEGORY_OPERATOR},
+    {L"..", OP_RANGE,  CATEGORY_OPERATOR}, {L"->", OP_RETTYPE, CATEGORY_OPERATOR},
+    {L"%=", OP_MOD,    CATEGORY_OPERATOR},
 };
 
-const Keyword keywords[] = {
-    {L"if", T_IF},          {L"else", T_ELSE},
-    {L"elif", T_ELIF},      {L"for", T_FOR},
-    {L"do", T_DO},          {L"while", T_WHILE},
-    {L"func", T_FUNC},      {L"return", T_RETURN},
-    {L"break", T_BREAK},    {L"continue", T_CONTINUE},
-    {L"default", T_DEFAULT},{L"match", T_MATCH},
-    {L"case", T_CASE},      {L"struct", T_STRUCT},
-    {L"enum", T_ENUM},      {L"union", T_UNION},
-    {L"import", T_IMPORT},  {L"type", T_TYPE},
-    {L"trait", T_TRAIT},    {L"try", T_TRY},
-    {L"catch", T_CATCH},    {L"async", T_ASYNC},
-    {L"await", T_AWAIT},    {L"test", T_TEST},
-    {L"assert", T_ASSERT},  {L"verify", T_VERIFY},
-    {L"solve", T_SOLVE},    {L"where", T_WHERE},    
-    {L"snapshot", T_SNAPSHOT},{L"rollback", T_ROLLBACK},
-    {L"commit", T_COMMIT},  {L"fork", T_FORK},
-    {L"merge", T_MERGE},    {L"revert", T_REVERT},
-    {L"push", T_PUSH},      {L"pull", T_PULL},
-    {L"clone", T_CLONE},    {L"simulate", T_SIMULATE},
-    {L"choose", T_CHOOSE},  {L"timeline", T_TIMELINE},  
+const struct keyword keywords[] = {
+    /* сontrol structures */
+    {L"if",      KW_IF,      CATEGORY_KEYWORD}, {L"else",     KW_ELSE,      CATEGORY_KEYWORD},
+    {L"elif",    KW_ELIF,    CATEGORY_KEYWORD}, {L"for",      KW_FOR,       CATEGORY_KEYWORD},
+    {L"do",      KW_DO,      CATEGORY_KEYWORD}, {L"while",    KW_WHILE,     CATEGORY_KEYWORD},
+    {L"func",    KW_FUNC,    CATEGORY_KEYWORD}, {L"return",   KW_RETURN,    CATEGORY_KEYWORD},
+    {L"break",   KW_BREAK,   CATEGORY_KEYWORD}, {L"continue", KW_CONTINUE,  CATEGORY_KEYWORD},
+    {L"default", KW_DEFAULT, CATEGORY_KEYWORD}, {L"match",    KW_MATCH,     CATEGORY_KEYWORD},
+    {L"case",    KW_CASE,    CATEGORY_KEYWORD}, {L"struct",   KW_STRUCT,    CATEGORY_KEYWORD},
+    {L"enum",    KW_ENUM,    CATEGORY_KEYWORD}, {L"union",    KW_UNION,     CATEGORY_KEYWORD},
+    {L"import",  KW_IMPORT,  CATEGORY_KEYWORD}, {L"type",     KW_TYPE,      CATEGORY_KEYWORD},
+    {L"trait",   KW_TRAIT,   CATEGORY_KEYWORD}, {L"try",      KW_TRY,       CATEGORY_KEYWORD},
+    {L"catch",   KW_CATCH,   CATEGORY_KEYWORD}, {L"async",    KW_ASYNC,     CATEGORY_KEYWORD},
+    {L"await",   KW_AWAIT,   CATEGORY_KEYWORD}, {L"test",     KW_TEST,      CATEGORY_KEYWORD},
+    {L"assert",  KW_ASSERT,  CATEGORY_KEYWORD}, {L"verify",   KW_VERIFY,    CATEGORY_KEYWORD},
+    {L"solve",   KW_SOLVE,   CATEGORY_KEYWORD}, {L"where",    KW_WHERE,     CATEGORY_KEYWORD},    
+    {L"snapshot",KW_SNAPSHOT,CATEGORY_KEYWORD}, {L"rollback", KW_ROLLBACK,  CATEGORY_KEYWORD},
+    {L"commit",  KW_COMMIT,  CATEGORY_KEYWORD}, {L"fork",     KW_FORK,      CATEGORY_KEYWORD},
+    {L"merge",   KW_MERGE,   CATEGORY_KEYWORD}, {L"revert",   KW_REVERT,    CATEGORY_KEYWORD},
+    {L"push",    KW_PUSH,    CATEGORY_KEYWORD}, {L"pull",     KW_PULL,      CATEGORY_KEYWORD},
+    {L"clone",   KW_CLONE,   CATEGORY_KEYWORD}, {L"simulate", KW_SIMULATE,  CATEGORY_KEYWORD},
+    {L"choose",  KW_CHOOSE,  CATEGORY_KEYWORD}, {L"scenarios",KW_SCENARIOS, CATEGORY_KEYWORD},  
+    {L"branch",  KW_BRANCH,  CATEGORY_KEYWORD},  
+
+    /* data types */
+    {L"int",     DT_INT,    CATEGORY_DATATYPE}, {L"uint",    DT_UINT,    CATEGORY_DATATYPE},
+    {L"float",   DT_FLOAT,  CATEGORY_DATATYPE}, {L"str",     DT_STR,     CATEGORY_DATATYPE},
+    {L"bool",    DT_BOOL,   CATEGORY_DATATYPE}, {L"void",    DT_VOID,    CATEGORY_DATATYPE},
+    {L"uni",     DT_UNI,    CATEGORY_DATATYPE}, {L"tensor",  DT_TENSOR,  CATEGORY_DATATYPE},
+    {L"int8",    DT_INT8,   CATEGORY_DATATYPE}, {L"int16",   DT_INT16,   CATEGORY_DATATYPE},
+    {L"int32",   DT_INT32,  CATEGORY_DATATYPE}, {L"int64",   DT_INT64,   CATEGORY_DATATYPE},
+    {L"uint8",   DT_UINT8,  CATEGORY_DATATYPE}, {L"uint16",  DT_UINT16,  CATEGORY_DATATYPE},
+    {L"uint32",  DT_UINT32, CATEGORY_DATATYPE}, {L"uint64",  DT_UINT64,  CATEGORY_DATATYPE},
+    {L"float32", DT_FLOAT32,CATEGORY_DATATYPE}, {L"float64", DT_FLOAT64, CATEGORY_DATATYPE},
+    
+    /* modifiers */
+    {L"var",   MOD_VAR,   CATEGORY_MODIFIER}, {L"const",  MOD_CONST,  CATEGORY_MODIFIER},
+    {L"final", MOD_FINAL, CATEGORY_MODIFIER}, {L"static", MOD_STATIC, CATEGORY_MODIFIER},
+    {L"event", MOD_EVENT, CATEGORY_MODIFIER}, {L"signal", MOD_SIGNAL, CATEGORY_MODIFIER},
 };
 
-const Keyword datatypes[] = {
-    /* basic types */
-    {L"int", T_INT},        {L"uint", T_UINT},
-    {L"float", T_FLOAT},    {L"str", T_STR},
-    {L"bool", T_BOOL},      {L"void", T_VOID},
-    {L"uni", T_UNI},        {L"tensor", T_TENSOR},
+const size_t operators_count = sizeof(operators) / sizeof(struct keyword);
+const size_t keywords_count  = sizeof(keywords)  / sizeof(struct keyword);
 
-    /* exact types */
-    {L"int8", T_INT8},      {L"int16", T_INT16},
-    {L"int32", T_INT32},    {L"int64", T_INT64},
-    {L"uint8", T_UINT8},    {L"uint16", T_UINT16},
-    {L"uint32", T_UINT32},  {L"uint64", T_UINT64},
-    {L"float32", T_FLOAT32},{L"float64", T_FLOAT64},
-};
-
-const Keyword modifiers[] = {
-    {L"var", T_VAR},        {L"const", T_CONST},
-    {L"final", T_FINAL},    {L"static", T_STATIC},
-    {L"event", T_EVENT},    {L"signal", T_SIGNAL},
-};
-
-const size_t operators_count = sizeof(operators) / sizeof(Keyword);
-const size_t keywords_count  = sizeof(keywords)  / sizeof(Keyword);
-const size_t datatypes_count = sizeof(datatypes)/ sizeof(Keyword);
-const size_t modifiers_count = sizeof(modifiers) / sizeof(Keyword);
-
-Token tok_new(const T_TypeTag tag, const int lit_tag, const wchar_t *literal)
+struct token new_token(const enum category_tag category, const int type, const wchar_t *literal)
 {
-    Token token = {
-        .tag = tag,
+    struct token tok = {
+        .category = category,
         .literal = NULL};
 
     if (literal){
-        token.literal = wcsdup(literal);
-        if (!token.literal){
-            token.tag = TYPE_SERVICE;
-            token.service = T_ILLEGAL;
-            return token;
+        tok.literal = wcsdup(literal);
+        if (!tok.literal){
+            tok.category = CATEGORY_SERVICE;
+            tok.service = SERV_ILLEGAL;
+            return tok;
         }
     }
 
-    switch (tag){
-        case TYPE_SERVICE:    token.service =    (TServiceType)lit_tag; break;
-        case TYPE_OPERATOR:   token.oper =       (TOperatorType)lit_tag; break;
-        case TYPE_KEYWORD:    token.keyword =    (TKeywordType)lit_tag; break;
-        case TYPE_PAREN:      token.paren =      (TParenType)lit_tag; break;
-        case TYPE_DELIMITER:  token.delim =      (TDelimiterType)lit_tag; break;
-        case TYPE_DATATYPE:   token.dtype =      (TDataType)lit_tag; break;
-        case TYPE_VALUE:      token.value =      (TValueType)lit_tag; break;
-        case TYPE_MODIFIER:   token.modifier =   (TModifierType)lit_tag; break;
+    switch (category){
+        case CATEGORY_SERVICE:    tok.service =    (enum category_tag)type; break;
+        case CATEGORY_OPERATOR:   tok.oper =       (enum operator_category)type; break;
+        case CATEGORY_KEYWORD:    tok.keyword =    (enum keyword_category)type; break;
+        case CATEGORY_PAREN:      tok.paren =      (enum paren_category)type; break;
+        case CATEGORY_DELIMITER:  tok.delim =      (enum delimiter_category)type; break;
+        case CATEGORY_DATATYPE:   tok.datatype =   (enum datatype_category)type; break;
+        case CATEGORY_VALUE:      tok.value =      (enum value_category)type; break;
+        case CATEGORY_MODIFIER:   tok.modifier =   (enum modifier_category)type; break;
     }
 
 #ifdef DEBUG
-    print_token(&token);
+    print_token(&tok);
 #endif
 
-    return token;
+    return tok;
 }
 
-void tok_free(Token *tok)
+void free_token(struct token *tok)
 {
     if (tok){
         free(tok->literal);

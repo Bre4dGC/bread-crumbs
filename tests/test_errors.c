@@ -6,14 +6,20 @@
 #include "errors.h"
 
 int main(void) {
-    // Create a new error
-    Error *error = error_new(TYPE_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_UNCLOSED_STRING, 10, 5, L"test_file.c", L"Unclosed string literal");
+    struct error* err = new_error(
+        ERROR_SEVERITY_TYPE,
+        ERROR_TYPE_LEXER,
+        LEXER_ERROR_UNCLOSED_STRING,
+        10,
+        23,
+        1,
+        L"var name: str = \"bread");
     
-    // Print the error
-    if (error) {
-        error_print(error);
-        error_free(error);
-    } else {
+    if(err){
+        print_error(err);
+        free_error(err);
+    }
+    else {
         wprintf(L"Failed to create error\n");
     }
 

@@ -4,8 +4,11 @@
 #include <stdlib.h>
 #include <wchar.h>
 
-#include "../include/lexer.h"
-#include "../include/parser.h"
+#include "lexer.h"
+#include "parser.h"
+#include "errors.h"
+
+wchar_t *file_name;
 
 int repl_mode();
 int run_mode(const char *src);
@@ -15,18 +18,19 @@ int main(int argc, char *argv[])
 {
     setlocale(LC_ALL, "");
     
-    // check for REPL mode
     if(argc < 2) {
         return repl_mode();
     }
+    
+    file_name = NULL;
 
     // check for help mode
     if(argc == 2 && strcmp(argv[1], "help") == 0) {
         fprintf(stderr, "Usage: %s <mode> [source]\n", argv[0]);
         fprintf(stderr, "Modes:\n");
-        fprintf(stderr, "  run <source>    - Run the interpreter with the source file\n");
-        fprintf(stderr, "  compile <source> - Compile the source file with JIT\n");
-        fprintf(stderr, "  (no arguments)   - Start REPL mode\n");
+        fprintf(stderr, "   run <source>     - Run the interpreter with the source file\n");
+        fprintf(stderr, "   compile <source> - Compile the source file with JIT\n");
+        fprintf(stderr, "   (no arguments)   - Start REPL mode\n");
         return EXIT_SUCCESS;
     }
 
@@ -45,7 +49,7 @@ int main(int argc, char *argv[])
         return run_mode(argv[2]);
     }
 
-    // compile mode
+    // jit mode
     else if(strcmp(argv[1], "compile") == 0) {
         if(argc < 3) {
             fprintf(stderr, "Source file required for compile mode.\n");
@@ -72,12 +76,11 @@ int repl_mode()
                 printf("\nExiting REPL mode.\n");
                 break;
             } else {
-                perror("Error reading input");
+                perror("\nError reading input\n");
                 continue;
             }
         }
 
-        // Удаление символа новой строки
         size_t len = wcslen(input);
         if(len > 0 && input[len - 1] == L'\n') {
             input[len - 1] = L'\0';
@@ -88,19 +91,11 @@ int repl_mode()
         else if(wcscmp(input, L":reset") == 0) {
             // TODO: implement reset functionality
         }
-        else if(wcscmp(input, L":run") == 0) {
-            // TODO: implement running the interpreter
-        }
-        else if(wcscmp(input, L":compile") == 0) {
-            // TODO: implement compiling the source
-        }
         else if(wcscmp(input, L":help") == 0) {
             printf("Available commands:\n");
-            printf("  :quit - Exit REPL mode\n");
-            printf("  :help - Show this help message\n");
-            printf("  :reset - Reset the REPL state (not implemented yet)\n");
-            printf("  :run - Run the interpreter (not implemented yet)\n");
-            printf("  :compile - Compile the source (not implemented yet)\n");
+            printf("    :quit - Exit REPL mode\n");
+            printf("    :help - Show this help message\n");
+            printf("    :reset - Reset the REPL state (not implemented yet)\n");
         }
         else {
             // TODO: implement executing
@@ -110,9 +105,59 @@ int repl_mode()
     return 0;
 }
 
+wchar_t* get_line(const wchar_t *src)
+{
+    if(!src) return NULL;
+
+    size_t length = 0;
+
+    while(src[length] != L'\0' && src[length] != L'\n') {
+        length++;
+    }
+    
+    wchar_t *line = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+    if(!line) return NULL;
+
+    for(size_t i = 0; i < length; ++i) {
+        line[i] = src[i];
+    }
+
+    line[length] = L'\0';
+
+    return line;
+}
+
 int run_mode(const char *src)
 {
-    // TODO: implement interpreter mode
+    size_t len = strlen(src);
+    wchar_t *wsrc = (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
+    if(!wsrc) return EXIT_FAILURE;
+    for(size_t i = 0; i < len; ++i) wsrc[i] = (unsigned char)src[i];
+    wsrc[len] = L'\0';
+
+    wchar_t *line = get_line(wsrc);
+    if(!line) {
+        free(wsrc);
+        return EXIT_FAILURE;
+    }
+
+    struct lexer *lex = new_lexer(line);
+    if(!lex){
+        free(line);
+        free(wsrc);
+        return EXIT_FAILURE;
+    }
+    struct token tok;
+    do {
+        tok = next_token(lex);
+        free_token(&tok);
+    } while(!(tok.category == CATEGORY_SERVICE && tok.service == SERV_EOF));
+
+    free_token(&tok);
+    free_lexer(lex);
+    free(line);
+    free(wsrc);
+
     return 0;
 }
 

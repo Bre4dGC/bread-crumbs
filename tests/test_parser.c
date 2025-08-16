@@ -2,13 +2,13 @@
 
 int main(void)
 {
-    const wchar_t *input = L"if (x > 0) { return x; }";
+    const wchar_t *input = L"{ return x }";
     
-    Lexer *lexer = lex_new(input);
-    Parser *parser = parser_new(lexer);
-    ASTNode *ast = parse_expr(parser);
+    struct lexer *lexer = new_lexer(input);
+    struct parser *parser = new_parser(lexer);
+    struct ast_node *ast = parse_expr(parser);
 
-    parser_free(parser);
+    free_parser(parser);
 
     return 0;
 }

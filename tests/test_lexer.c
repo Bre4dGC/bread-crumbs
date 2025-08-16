@@ -6,29 +6,31 @@
 int main(void)
 {
     const wchar_t *inputs[] = {
-        // L"var name: str = \"bread\n",
-        L"var 123abc = 42\n",  // TODO: fix identifiers starting with digits
-        L"var x = 0xGHI\n",  // TODO: fix hexadecimal and binary parsing
-        L"list<int32> numbers = [1, 2, , 3]\n",  // TODO: fix list parsing
-        //TODO: add more test cases
+        L"var 123abc = 42",
+        L"var line: str = \"string",
     };
 
     for (size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i) {
-        wprintf(L"%zu: %ls\n", i + 1, inputs[i]);
+        // wprintf(L"1: %ls\n", inputs[i]);
 
-        Lexer *lexer = lex_new(inputs[i]);
-        if (!lexer) {
-            wprintf(L"Failed to create lexer\n");
-            continue;
+        struct lexer *lex = new_lexer(inputs[i]);
+        if(!lex) {
+            fprintf(stderr, "Failed to create lexer\n");
+            return 1;
         }
 
-        Token token;
-        while ((token = tok_next(lexer)).tag != TYPE_SERVICE || token.service != T_EOF) {
-            tok_free(&token);
+        struct token tok;
+        while((tok = next_token(lex)).category != CATEGORY_SERVICE || tok.service != SERV_EOF) {
+            free_token(&tok);
         }
-        tok_free(&token);
-        lex_free(lexer);
-        
+
+        for(int i = 0; i < lex->errors_count; ++i){
+            print_error(lex->errors[i]);
+        }
+
+        free_token(&tok);
+        free_lexer(lex);
+
         wprintf(L"_________________________________\n");
     }
 

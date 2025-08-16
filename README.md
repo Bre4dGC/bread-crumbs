@@ -105,7 +105,7 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 Join our community to discuss Bread Crumbs, share ideas, and get help:
 
-- **Discord**: [Join Bread Crumbs Community](https://discord.gg/2YBBttpX)
+- **Discord**: [Join Bread Crumbs Community](https://discord.gg/Z6jHnjXm)
 - **GitHub Issues**: Report bugs or suggest features [here](https://github.com/Bre4dGC/Bread-Crumbs/issues).
 
 ## License
