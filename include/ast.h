@@ -2,14 +2,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <wchar.h>
 
 #include "lexer.h"
 #include "vm.h"
 
 struct node_var{
     enum modifier_category modif;
-    wchar_t *name;
+    char *name;
     enum datatype_category dtype;
     struct ast_node *literal;
 };
@@ -39,7 +38,7 @@ struct node_for{
 
 struct node_func{
     enum modifier_category *modif;
-    wchar_t *name;
+    char *name;
     struct ast_node *params;
     enum datatype_category ret_type;
     struct ast_node *body;
@@ -57,23 +56,23 @@ struct node_match{
 };
 
 struct node_struct{
-    wchar_t *name;
+    char *name;
     struct ast_node *body;
 };
 
 struct node_enum{
-    wchar_t *name;
+    char *name;
     struct ast_node *body;
 };
 
 struct node_union{
-    wchar_t *name;
+    char *name;
     struct ast_node *body;
 };
 
 struct node_trait{
     enum modifier_category modif;
-    wchar_t *name;
+    char *name;
     struct ast_node *body;
 };
 
@@ -85,17 +84,17 @@ struct node_trycatch{
 };
 
 struct node_import{
-    wchar_t *name;
+    char *name;
 };
 
 struct node_test{
-    wchar_t *name;
+    char *name;
     struct ast_node *body;
 };
 
 struct node_fork{
     enum keyword_category keyw;
-    wchar_t *name;
+    char *name;
     struct ast_node *body;
 };
 
@@ -139,7 +138,7 @@ struct ast_node {
                 void *void_val;
                 bool bool_val;
                 char *str_val;
-                wchar_t uni_val;
+                char uni_val;
                 int64_t **tensor_val;
 
                 /* exact types */
@@ -168,12 +167,12 @@ struct ast_node {
         };
 
         struct var_assign{
-            wchar_t *name;
+            char *name;
             struct ast_node *value;
         };
 
         struct var_ref{
-            wchar_t *name;
+            char *name;
             enum datatype_category dtype;
             union {
                 struct ast_node *value;
@@ -185,7 +184,7 @@ struct ast_node {
         };
 
         struct func_call{
-            wchar_t *name;
+            char *name;
             struct ast_node *args;
         };
 

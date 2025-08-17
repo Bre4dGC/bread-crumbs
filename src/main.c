@@ -1,14 +1,12 @@
 #include <stdio.h>
 #include <string.h>
-#include <locale.h>
 #include <stdlib.h>
-#include <wchar.h>
 
 #include "lexer.h"
 #include "parser.h"
 #include "errors.h"
 
-wchar_t *file_name;
+char *file_name;
 
 int repl_mode();
 int run_mode(const char *src);
@@ -16,8 +14,6 @@ int compile_mode(const char *src);
 
 int main(int argc, char *argv[])
 {
-    setlocale(LC_ALL, "");
-    
     if(argc < 2) {
         return repl_mode();
     }
@@ -68,10 +64,10 @@ int main(int argc, char *argv[])
 int repl_mode()
 {
     while(1){
-        wchar_t input[128];
+        char input[128];
 
         printf(">> ");
-        if(fgetws(input, sizeof(input)/sizeof(wchar_t), stdin) == NULL) {
+        if(fgetws(input, sizeof(input)/sizeof(char), stdin) == NULL) {
             if(feof(stdin)) {
                 printf("\nExiting REPL mode.\n");
                 break;
@@ -81,17 +77,17 @@ int repl_mode()
             }
         }
 
-        size_t len = wcslen(input);
+        size_t len = strlen(input);
         if(len > 0 && input[len - 1] == L'\n') {
             input[len - 1] = L'\0';
         }
 
         if(input[0] == '\n') continue;
-        else if(wcscmp(input, L":quit") == 0) break;
-        else if(wcscmp(input, L":reset") == 0) {
+        else if(strcmp(input, ":quit") == 0) break;
+        else if(strcmp(input, ":reset") == 0) {
             // TODO: implement reset functionality
         }
-        else if(wcscmp(input, L":help") == 0) {
+        else if(strcmp(input, ":help") == 0) {
             printf("Available commands:\n");
             printf("    :quit - Exit REPL mode\n");
             printf("    :help - Show this help message\n");
@@ -99,13 +95,13 @@ int repl_mode()
         }
         else {
             // TODO: implement executing
-            printf("%ls\n", input);
+            printf("%s\n", input);
         }
     }
     return 0;
 }
 
-wchar_t* get_line(const wchar_t *src)
+char* get_line(const char *src)
 {
     if(!src) return NULL;
 
@@ -115,7 +111,7 @@ wchar_t* get_line(const wchar_t *src)
         length++;
     }
     
-    wchar_t *line = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+    char *line = (char*)malloc((length + 1) * sizeof(char));
     if(!line) return NULL;
 
     for(size_t i = 0; i < length; ++i) {
@@ -130,12 +126,12 @@ wchar_t* get_line(const wchar_t *src)
 int run_mode(const char *src)
 {
     size_t len = strlen(src);
-    wchar_t *wsrc = (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
+    char *wsrc = (char*)malloc((len + 1) * sizeof(char));
     if(!wsrc) return EXIT_FAILURE;
     for(size_t i = 0; i < len; ++i) wsrc[i] = (unsigned char)src[i];
     wsrc[len] = L'\0';
 
-    wchar_t *line = get_line(wsrc);
+    char *line = get_line(wsrc);
     if(!line) {
         free(wsrc);
         return EXIT_FAILURE;

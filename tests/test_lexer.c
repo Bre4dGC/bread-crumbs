@@ -1,17 +1,15 @@
-#include <wchar.h>
 #include <stdio.h>
 
 #include "lexer.h"
 
 int main(void)
 {
-    const wchar_t *inputs[] = {
-        L"var 123abc = 42",
-        L"var line: str = \"string",
+    const char *inputs[] = {
+        "var abc = 0b101"
     };
 
     for (size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i) {
-        // wprintf(L"1: %ls\n", inputs[i]);
+        printf("%d: %s\n\n", i+1, inputs[i]);
 
         struct lexer *lex = new_lexer(inputs[i]);
         if(!lex) {
@@ -31,7 +29,7 @@ int main(void)
         free_token(&tok);
         free_lexer(lex);
 
-        wprintf(L"_________________________________\n");
+        printf("_________________________________\n");
     }
 
     return 0;

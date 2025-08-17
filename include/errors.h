@@ -1,10 +1,9 @@
 #pragma once
 
-#include <wchar.h>
 #include <stddef.h>
 
 enum err_severity_type{
-    TYPE_WARNING, ERROR_SEVERITY_TYPE
+    TYPE_WARNING, TYPE_ERROR, TYPE_FATAL
 };
 
 enum lexer_error_type{
@@ -40,8 +39,8 @@ struct error{
     size_t line;
     size_t column;
     size_t length;
-    wchar_t *input;
-    wchar_t *message;
+    char *input;
+    char *message;
 };
 
 struct error* new_error(
@@ -51,7 +50,7 @@ struct error* new_error(
     const size_t line,
     const size_t column,
     const size_t length,
-    const wchar_t *input
+    const char *input
 );
 void print_error(const struct error *error);
 void free_error(struct error *error);

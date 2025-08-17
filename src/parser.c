@@ -3,8 +3,6 @@
 #include "parser.h"
 #include "errors.h"
 
-extern wchar_t *file_name;
-
 typedef struct ast_node* (*ParseFunction)(struct parser*);
 
 static struct ast_node* parse_block(struct parser* parser);
@@ -77,8 +75,8 @@ static struct ast_node* parse_block(struct parser* pars)
 
     // expect '{'
     if(!(pars->tcurrent.category == CATEGORY_PAREN && pars->tcurrent.paren == PAR_LBRACE)){
-        struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_PARSER, PARSER_ERROR_UNEXPECTED_TOKEN,
-                               pars->lexer->line, pars->lexer->column, pars->lexer->input, file_name);
+        struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_PARSER, PARSER_ERROR_UNEXPECTED_TOKEN,
+                               pars->lexer->line, pars->lexer->column, 1, pars->lexer->input);
         print_error(err);
         free_error(err);
         free_ast(block);
@@ -98,8 +96,8 @@ static struct ast_node* parse_block(struct parser* pars)
 
     // consume '}'
     if(!(pars->tcurrent.category == CATEGORY_PAREN && pars->tcurrent.paren == PAR_RBRACE)){
-        struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_PARSER, PARSER_ERROR_UNEXPECTED_TOKEN,
-                                pars->lexer->line, pars->lexer->column, pars->lexer->input, file_name);
+        struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_PARSER, PARSER_ERROR_UNEXPECTED_TOKEN,
+                                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input);
         print_error(err);
         free_error(err);
         free_ast(block);

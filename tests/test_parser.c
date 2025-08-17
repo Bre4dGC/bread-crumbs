@@ -2,7 +2,7 @@
 
 int main(void)
 {
-    const wchar_t *input = L"{ return x }";
+    const char *input = "{ return x }";
     
     struct lexer *lexer = new_lexer(input);
     struct parser *parser = new_parser(lexer);

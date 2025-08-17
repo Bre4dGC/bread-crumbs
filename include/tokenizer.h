@@ -6,7 +6,7 @@ enum service_category{
 
 enum operator_category{
     OP_PLUS,    OP_MINUS,
-    OP_ASTERISK,  OP_SLASH,
+    OP_ASTERISK,OP_SLASH,
     OP_DOT,     OP_COMMA,
     OP_LANGLE,  OP_RANGLE,
     OP_ASSIGN,  OP_COLON,
@@ -81,9 +81,9 @@ enum category_tag {
 };
 
 struct keyword {
-    wchar_t *literal;
-    enum category_tag category;
+    char *literal;
     int type;
+    enum category_tag category;
 };
 
 struct token {
@@ -98,7 +98,7 @@ struct token {
         enum value_category value;
         enum modifier_category modifier;
 	};
-	wchar_t *literal;
+	char *literal;
 };
 
 extern const struct keyword operators[];
@@ -107,5 +107,5 @@ extern const struct keyword keywords[];
 extern const size_t operators_count;
 extern const size_t keywords_count;
 
-struct token new_token(const enum category_tag category, const int type, const wchar_t* literal);
+struct token new_token(const enum category_tag category, const int type, const char* literal);
 void free_token(struct token* token);

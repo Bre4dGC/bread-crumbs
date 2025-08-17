@@ -1,9 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
-#include <wctype.h>
-#include <wchar.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "lexer.h"
 
@@ -22,9 +21,9 @@ static struct token handle_num(struct lexer* lex);
 static struct token handle_ident(struct lexer* lex);
 static struct token handle_str(struct lexer* lex);
 
-static wchar_t* read_ident(struct lexer* lex);
-static wchar_t* read_num(struct lexer* lex);
-static wchar_t* read_str(struct lexer* lex, wchar_t quote_char);
+static char* read_ident(struct lexer* lex);
+static char* read_num(struct lexer* lex);
+static char* read_str(struct lexer* lex, char quote_char);
 
 static size_t input_len = 0;
 
@@ -60,7 +59,7 @@ void skip_whitespace(struct lexer *lex)
     }
 }
 
-wchar_t peek_ch(const struct lexer* lex)
+char peek_ch(const struct lexer* lex)
 {
     if (lex->nextpos < input_len){
         return lex->input[lex->nextpos];
@@ -68,19 +67,19 @@ wchar_t peek_ch(const struct lexer* lex)
     return L'\0';
 }
 
-struct lexer* new_lexer(const wchar_t* input)
+struct lexer* new_lexer(const char* input)
 {
     struct lexer* lexer = (struct lexer*)malloc(sizeof(struct lexer));
     if (!lexer) return NULL;
 
-    input_len = wcslen(input);
-    lexer->input = (wchar_t*)malloc((input_len + 1) * sizeof(wchar_t));
+    input_len = strlen(input);
+    lexer->input = (char*)malloc((input_len + 1) * sizeof(char));
     if (!lexer->input){
         free(lexer);
         return NULL;
     }
 
-    wcscpy(lexer->input, input);
+    strcpy(lexer->input, input);
     lexer->input[input_len] = L'\0';
 
     lexer->pos = 0;
@@ -89,6 +88,8 @@ struct lexer* new_lexer(const wchar_t* input)
     lexer->line = 1;
     lexer->column = 1;
     lexer->paren_balance = 0;
+    lexer->errors = NULL;
+    lexer->errors_count = 0;
 
     return lexer;
 }
@@ -130,7 +131,7 @@ struct token next_token(struct lexer* lex)
 {
     skip_whitespace(lex);
 
-    wchar_t ch_str[2] = {lex->ch, L'\0'};
+    char ch_str[2] = {lex->ch, L'\0'};
     struct token token;
 
     switch (lex->ch){
@@ -151,7 +152,7 @@ struct token next_token(struct lexer* lex)
                 lex->paren_balance++;
             } else if (lex->ch == L')' || lex->ch == L'}' || lex->ch == L']') {
                 if (lex->paren_balance == 0) {
-                    struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_UNMATCHED_PAREN, 
+                    struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_UNMATCHED_PAREN, 
                                             lex->line, lex->column, 1, lex->input);
                     new_lexer_error(lex, err);
                 } 
@@ -172,11 +173,11 @@ struct token next_token(struct lexer* lex)
                 lex->pos = lex->nextpos;
                 lex->column++;
                 lex->line++;
-                struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_UNMATCHED_PAREN, 
+                struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_UNMATCHED_PAREN, 
                                         lex->line, lex->column, 1, lex->input);
                 new_lexer_error(lex, err);
             }
-            token = new_token(CATEGORY_SERVICE, SERV_EOF, L"EOF");
+            token = new_token(CATEGORY_SERVICE, SERV_EOF, "EOF");
             break;
 
         case '#':
@@ -189,41 +190,39 @@ struct token next_token(struct lexer* lex)
                 lex->line++;
                 lex->column = 1;
             }
-            token = new_token(CATEGORY_SERVICE, SERV_COMMENT, L"COMMENT");
+            token = new_token(CATEGORY_SERVICE, SERV_COMMENT, "COMMENT");
             break;
 
         default:
-            if (iswalnum(lex->ch) || lex->ch == L'_'){
+            if (isalnum(lex->ch) || lex->ch == L'_'){
                 token = handle_ident(lex);
             } else {
                 token = new_token(CATEGORY_SERVICE, SERV_ILLEGAL, ch_str);
-                struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_ILLEGAL_CHARACTER,
-                                        lex->line, lex->column, wcslen(ch_str), lex->input);
+                struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_ILLEGAL_CHARACTER,
+                                        lex->line, lex->column, strlen(ch_str), lex->input);
+                new_lexer_error(lex, err);
                 read_ch(lex);
             }
             break;
     }
-    if(token.category == CATEGORY_SERVICE && token.service == SERV_ILLEGAL){
-        
-    }
     return token;
 }
 
-static const struct keyword* find_oper(const wchar_t* op)
+static const struct keyword* find_oper(const char* op)
 {
     for (size_t i = 0; i < operators_count; i++){
-        if (wcscmp(op, operators[i].literal) == 0) return &operators[i];
+        if (strcmp(op, operators[i].literal) == 0) return &operators[i];
     }
     return NULL;
 }
 
 static struct token handle_oper(struct lexer* lex)
 {
-    wchar_t current = lex->ch;
-    wchar_t next = peek_ch(lex);
+    char current = lex->ch;
+    char next = peek_ch(lex);
 
     if (next != L'\0') {
-        wchar_t potential_op[3] = {current, next, L'\0'};
+        char potential_op[3] = {current, next, L'\0'};
         const struct keyword *op = find_oper(potential_op);
         if (op) {
             read_ch(lex);
@@ -234,26 +233,26 @@ static struct token handle_oper(struct lexer* lex)
     
     read_ch(lex);
     switch (current){
-        case L'+': return new_token(CATEGORY_OPERATOR, OP_PLUS,     L"+");
-        case L'-': return new_token(CATEGORY_OPERATOR, OP_MINUS,    L"-");
-        case L'*': return new_token(CATEGORY_OPERATOR, OP_ASTERISK, L"*");
-        case L'/': return new_token(CATEGORY_OPERATOR, OP_SLASH,    L"/");
-        case L'=': return new_token(CATEGORY_OPERATOR, OP_ASSIGN,   L"=");
-        case L'!': return new_token(CATEGORY_OPERATOR, OP_NOT,      L"!");
-        case L'<': return new_token(CATEGORY_OPERATOR, OP_LANGLE,   L"<");
-        case L'>': return new_token(CATEGORY_OPERATOR, OP_RANGLE,   L">");
-        case L'.': return new_token(CATEGORY_OPERATOR, OP_DOT,      L".");
-        case L',': return new_token(CATEGORY_OPERATOR, OP_COMMA,    L",");
-        case L':': return new_token(CATEGORY_OPERATOR, OP_COLON,    L":");
+        case L'+': return new_token(CATEGORY_OPERATOR, OP_PLUS,     "+");
+        case L'-': return new_token(CATEGORY_OPERATOR, OP_MINUS,    "-");
+        case L'*': return new_token(CATEGORY_OPERATOR, OP_ASTERISK, "*");
+        case L'/': return new_token(CATEGORY_OPERATOR, OP_SLASH,    "/");
+        case L'=': return new_token(CATEGORY_OPERATOR, OP_ASSIGN,   "=");
+        case L'!': return new_token(CATEGORY_OPERATOR, OP_NOT,      "!");
+        case L'<': return new_token(CATEGORY_OPERATOR, OP_LANGLE,   "<");
+        case L'>': return new_token(CATEGORY_OPERATOR, OP_RANGLE,   ">");
+        case L'.': return new_token(CATEGORY_OPERATOR, OP_DOT,      ".");
+        case L',': return new_token(CATEGORY_OPERATOR, OP_COMMA,    ",");
+        case L':': return new_token(CATEGORY_OPERATOR, OP_COLON,    ":");
     }
 
-    return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, (wchar_t[]){current, L'\0'});
+    return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, (char[]){current, L'\0'});
 }
 
-static const struct keyword* find_keyword(const wchar_t* ident, const struct keyword* keywords, size_t count)
+static const struct keyword* find_keyword(const char* ident, const struct keyword* keywords, size_t count)
 {
     for (size_t i = 0; i < count; ++i) {
-        if (wcscmp(ident, keywords[i].literal) == 0) {
+        if (strcmp(ident, keywords[i].literal) == 0) {
             return &keywords[i];
         }
     }
@@ -264,19 +263,19 @@ static struct token handle_ident(struct lexer* lex)
 {
     struct token tok;
 
-    if(iswdigit(lex->ch)){
-        wchar_t *num = read_num(lex);
+    if(isdigit(lex->ch)){
+        char *num = read_num(lex);
         if (num) {
-            tok =  new_token(CATEGORY_SERVICE, VAL_NUMBER, num);
+            tok =  new_token(CATEGORY_VALUE, VAL_NUMBER, num);
             free(num); return tok;
         }
     }
 
-    wchar_t *ident = read_ident(lex);
+    char *ident = read_ident(lex);
     if (!ident) {
         free(ident);
-        for(int i = 0; iswalnum(lex->ch); ++i) read_ch(lex);
-        return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, L"INVALID_IDENT");
+        for(int i = 0; isalnum(lex->ch); ++i) read_ch(lex);
+        return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "INVALID_IDENT");
     }
 
     const struct keyword *kw = find_keyword(ident, keywords, keywords_count);
@@ -294,12 +293,12 @@ static struct token handle_ident(struct lexer* lex)
 
 static struct token handle_num(struct lexer *lex)
 {
-    wchar_t* num_str = read_num(lex);
-    if (!num_str) return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, L"BAD_NUMBER");
+    char* num_str = read_num(lex);
+    if (!num_str) return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "BAD_NUMBER");
 
-    bool is_decimal = wcschr(num_str, L'.') != NULL;
-    bool is_hex = wcsstr(num_str, L"0x") == num_str || wcsstr(num_str, L"0X") == num_str;
-    bool is_bin = wcsstr(num_str, L"0b") == num_str || wcsstr(num_str, L"0B") == num_str;
+    bool is_decimal = strchr(num_str, L'.') != NULL;
+    bool is_hex = strstr(num_str, "0x") == num_str || strstr(num_str, "0X") == num_str;
+    bool is_bin = strstr(num_str, "0b") == num_str || strstr(num_str, "0B") == num_str;
 
     struct token token = new_token(CATEGORY_VALUE, is_decimal ? VAL_DECIMAL : VAL_NUMBER, num_str);
     if (is_hex) token.value = VAL_HEX;
@@ -320,82 +319,85 @@ static struct token handle_paren(struct lexer *lex)
         case L'[': type = PAR_LBRACKET; break;
         case L']': type = PAR_RBRACKET; break;
     }
-    struct token token = new_token(CATEGORY_PAREN, type, (wchar_t[]){lex->ch, L'\0'});
+    struct token token = new_token(CATEGORY_PAREN, type, (char[]){lex->ch, L'\0'});
     read_ch(lex);
     return token;
 }
 
 static struct token handle_str(struct lexer* lex)
 {
-    wchar_t quote_char = lex->ch;
+    char quote_char = lex->ch;
     enum delimiter_category opening_delim_type = (quote_char == L'"') ? DELIM_QUOTE : DELIM_SQUOTE;
-    (void)new_token(CATEGORY_DELIMITER, opening_delim_type, (wchar_t[]){quote_char, L'\0'});
+    struct token opening_delim = new_token(CATEGORY_DELIMITER, opening_delim_type, (char[]){quote_char, L'\0'});
+    free_token(&opening_delim);
     read_ch(lex);
 
-    wchar_t* str = read_str(lex, quote_char);
+    char* str = read_str(lex, quote_char);
     if (!str) {
-        struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_STRING, 
+        struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_STRING, 
                                 lex->line, lex->column, 1, lex->input);
         new_lexer_error(lex, err);
-        return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, L"INVALID_STRING");
+        return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "INVALID_STRING");
     }
     if (lex->ch != quote_char) {
         free(str);
-        struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_UNCLOSED_STRING, 
+        struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_UNCLOSED_STRING, 
                                 lex->line, lex->column, 1, lex->input);
         new_lexer_error(lex, err);
-        return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, L"UNCLOSED_STRING");
+        return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "UNCLOSED_STRING");
     }
 
     struct token string_token = new_token(CATEGORY_VALUE, VAL_STRING, str);
     free(str);
 
-    (void)new_token(CATEGORY_DELIMITER, opening_delim_type, (wchar_t[]){lex->ch, L'\0'});
+    struct token closing_delim = new_token(CATEGORY_DELIMITER, opening_delim_type, (char[]){lex->ch, L'\0'});
+    free_token(&closing_delim);
     read_ch(lex);
 
     return string_token;
 }
 
-static wchar_t* read_ident(struct lexer* lex)
+static char* read_ident(struct lexer* lex)
 {
-    wchar_t stack_buffer[IDENT_SIZE];
-    wchar_t* buffer = stack_buffer;
+    char stack_buffer[IDENT_SIZE];
+    char* buffer = stack_buffer;
     size_t capacity = IDENT_SIZE;
     size_t length = 0;
 
-    while(iswalnum(lex->ch) || lex->ch == L'_'){
+    while(isalnum(lex->ch) || lex->ch == L'_'){
         if(length >= MAX_IDENT_LENGTH){
             if (buffer != stack_buffer) free(buffer);
-            struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_IDENTIFIER, 
+            struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_IDENTIFIER, 
                                     lex->line, lex->column, length, lex->input);
             new_lexer_error(lex, err);
             return NULL;
         }
-        if(!iswalpha(lex->ch)){
-            for(int i = 0; !iswalpha(lex->ch); ++i){
+        if(!isalpha(lex->ch)){
+            for(int i = 0; !isalpha(lex->ch); ++i){
                 read_ch(lex);
                 length++;
             }
-            struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_IDENTIFIER, 
+            struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_IDENTIFIER, 
                                     lex->line, lex->column - length, length, lex->input);
             new_lexer_error(lex, err);
+            if (buffer != stack_buffer) free(buffer);
             return NULL;
         }
 
         if(length >= capacity - 1){
             capacity *= 2;
-            wchar_t* new_buf = (wchar_t*)realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(wchar_t));
+            char* new_buf = (char*)realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(char));
             if(!new_buf){
                 if (buffer != stack_buffer) free(buffer);
                 if (length >= MAX_IDENT_LENGTH) {
-                    struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_IDENTIFIER, 
+                    struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_IDENTIFIER, 
                                             lex->line, lex->column, length, lex->input);
                     new_lexer_error(lex, err);
                 }
                 return NULL;
             }
 
-            if(buffer == stack_buffer) memcpy(new_buf, stack_buffer, length * sizeof(wchar_t));
+            if(buffer == stack_buffer) memcpy(new_buf, stack_buffer, length * sizeof(char));
             
             buffer = new_buf;
         }
@@ -407,19 +409,21 @@ static wchar_t* read_ident(struct lexer* lex)
     buffer[length] = L'\0';
 
     if (buffer == stack_buffer){
-        wchar_t* heap_copy = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+        char* heap_copy = (char*)malloc((length + 1) * sizeof(char));
         if (!heap_copy) return NULL;
 
-        wcscpy(heap_copy, buffer);
+        strcpy(heap_copy, buffer);
         return heap_copy;
     }
     return buffer;
 }
 
-static wchar_t* read_num(struct lexer* lex)
+static char* read_num(struct lexer* lex)
 {
-    wchar_t stack_buffer[NUM_SIZE];
-    wchar_t* buffer = stack_buffer;
+    if(!isdigit(lex->ch)) return NULL;
+
+    char stack_buffer[NUM_SIZE];
+    char* buffer = stack_buffer;
     size_t capacity = NUM_SIZE;
     size_t length = 0;
 
@@ -428,7 +432,7 @@ static wchar_t* read_num(struct lexer* lex)
     bool is_bin = false;
 
     if (lex->ch == L'0') {
-        wchar_t next = peek_ch(lex);
+        char next = peek_ch(lex);
         if (next == L'x' || next == L'X') {
             is_hex = true;
         }
@@ -438,24 +442,24 @@ static wchar_t* read_num(struct lexer* lex)
     }
 
     while (1) {
-        wchar_t ch = lex->ch;
+        char ch = lex->ch;
 
         bool accept = false;
         if (is_hex) {
-            accept = iswdigit(ch) || (ch >= L'a' && ch <= L'f') || (ch >= L'A' && ch <= L'F') || ch == L'x' || ch == L'X';
+            accept = isdigit(ch) || (ch >= L'a' && ch <= L'f') || (ch >= L'A' && ch <= L'F') || ch == L'x' || ch == L'X';
         } 
         else if (is_bin) {
             accept = (ch == L'0' || ch == L'1') || ch == L'b' || ch == L'B';
         } 
         else {
-            if (iswdigit(ch)) accept = true;
+            if (isdigit(ch)) accept = true;
             else if (ch == L'.' && !is_decimal) {
                 accept = true;
                 is_decimal = true;
             }
         }
 
-        if (length > 0 && (iswalpha(lex->ch) || lex->ch == L'_')) {
+        if (length > 0 && (isalpha(ch) || ch == L'_') && (!is_hex && !is_bin && !is_decimal)) {
             if (buffer != stack_buffer) free(buffer);
             lex->pos -= length;
             lex->nextpos = lex->pos + 1;
@@ -463,24 +467,38 @@ static wchar_t* read_num(struct lexer* lex)
             return NULL;
         }
 
-        if (!accept) break;
+        if(!accept) break;
+        
+        /* TODO: fix */
+        // if (!accept && (is_hex || is_bin || is_decimal)){
+        //     length -= 2;
+        //     for(int i = 0; isalnum(ch); ++i){
+        //         read_ch(lex);
+        //         length++;
+        //     }
+        //     struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_NUMBER, 
+        //                             lex->line, lex->column - length, length, lex->input);
+        //     new_lexer_error(lex, err);
+        //     if (buffer != stack_buffer) free(buffer);
+        //     return NULL;
+        // }
 
         if (length >= MAX_NUM_LENGTH){
             if (buffer != stack_buffer) free(buffer);
-            struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_NUMBER, 
+            struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_NUMBER, 
                                     lex->line, lex->column, length, lex->input);
             new_lexer_error(lex, err);
             return NULL;
         }
         if (length >= capacity - 1){
             size_t new_capacity = capacity * 2;
-            wchar_t* new_buf = (wchar_t*)realloc(buffer == stack_buffer ? NULL : buffer,
-                                                  new_capacity * sizeof(wchar_t));
+            char* new_buf = (char*)realloc(buffer == stack_buffer ? NULL : buffer,
+                                                  new_capacity * sizeof(char));
             if (!new_buf){
                 if (buffer != stack_buffer) free(buffer);
                 return NULL;
             }
-            if (buffer == stack_buffer) wmemcpy(new_buf, stack_buffer, length);
+            if (buffer == stack_buffer) memcpy(new_buf, stack_buffer, length);
 
             buffer = new_buf;
             capacity = new_capacity;
@@ -493,31 +511,31 @@ static wchar_t* read_num(struct lexer* lex)
     buffer[length] = L'\0';
 
     if (buffer == stack_buffer){
-        wchar_t* heap_copy = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+        char* heap_copy = (char*)malloc((length + 1) * sizeof(char));
         if (!heap_copy) return NULL;
-        wmemcpy(heap_copy, buffer, length + 1);
+        memcpy(heap_copy, buffer, length + 1);
         return heap_copy;
     }
 
     if (length < capacity / 2){
-        wchar_t* shrunk_buf = (wchar_t*)realloc(buffer, (length + 1) * sizeof(wchar_t));
+        char* shrunk_buf = (char*)realloc(buffer, (length + 1) * sizeof(char));
         if (shrunk_buf) buffer = shrunk_buf;
     }
 
     return buffer;
 }
 
-static wchar_t* read_str(struct lexer *lex, wchar_t quote_char)
+static char* read_str(struct lexer *lex, char quote_char)
 {
     size_t capacity = STR_SIZE;
     size_t length = 0;
-    wchar_t* buffer = (wchar_t*)malloc(capacity * sizeof(wchar_t));
+    char* buffer = (char*)malloc(capacity * sizeof(char));
     if (!buffer) return NULL;
 
     while (lex->ch != quote_char && lex->ch != L'\0') {
         if (length >= MAX_STR_LENGTH) {
             free(buffer);
-            struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_STRING, 
+            struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_STRING, 
                                     lex->line, lex->column, length, lex->input);
             new_lexer_error(lex, err);
             return NULL;
@@ -535,7 +553,7 @@ static wchar_t* read_str(struct lexer *lex, wchar_t quote_char)
                 case L'0': buffer[length++] = L'\0'; break;
                 default:
                     free(buffer);
-                    struct error* err = new_error(ERROR_SEVERITY_TYPE, ERROR_TYPE_LEXER, LEXER_ERROR_ILLEGAL_CHARACTER, 
+                    struct error* err = new_error(TYPE_FATAL, ERROR_TYPE_LEXER, LEXER_ERROR_ILLEGAL_CHARACTER, 
                                             lex->line, lex->column, length, lex->input);
                     new_lexer_error(lex, err);
                     return NULL;
@@ -546,7 +564,7 @@ static wchar_t* read_str(struct lexer *lex, wchar_t quote_char)
 
         if (length >= capacity - 1) {
             capacity *= 2;
-            wchar_t* new_buf = (wchar_t*)realloc(buffer, capacity * sizeof(wchar_t));
+            char* new_buf = (char*)realloc(buffer, capacity * sizeof(char));
             if (!new_buf) {
                 free(buffer);
                 return NULL;
@@ -561,7 +579,7 @@ static wchar_t* read_str(struct lexer *lex, wchar_t quote_char)
     buffer[length] = L'\0';
 
     if (length < capacity / 2) {
-        wchar_t *shrunk_buf = (wchar_t*)realloc(buffer, (length + 1) * sizeof(wchar_t));
+        char *shrunk_buf = (char*)realloc(buffer, (length + 1) * sizeof(char));
         if (shrunk_buf) buffer = shrunk_buf;
     }
 
@@ -573,9 +591,9 @@ void free_lexer(struct lexer* lex)
     if (lex){
         if(lex->errors) {
             for(int i = 0; i < lex->errors_count; i++) {
-                free_error(lex->errors[i]);
+                if (lex->errors[i]) free_error(lex->errors[i]);
             }
-            lex->errors = NULL;
+            free(lex->errors);
         }
         free(lex->input);
         free(lex);
