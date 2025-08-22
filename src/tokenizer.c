@@ -16,8 +16,7 @@ const struct keyword operators[] = {
     {"*=", OP_MUL,    CATEGORY_OPERATOR}, {"/=", OP_DIV,     CATEGORY_OPERATOR},
     {"&&", OP_AND,    CATEGORY_OPERATOR}, {"||", OP_OR,      CATEGORY_OPERATOR},
     {"<=", OP_LTE,    CATEGORY_OPERATOR}, {">=", OP_GTE,     CATEGORY_OPERATOR},
-    {"..", OP_RANGE,  CATEGORY_OPERATOR}, {"->", OP_RETTYPE, CATEGORY_OPERATOR},
-    {"%=", OP_MOD,    CATEGORY_OPERATOR},
+    {"..", OP_RANGE,  CATEGORY_OPERATOR}, {"%=", OP_MOD,    CATEGORY_OPERATOR},
 };
 
 const struct keyword keywords[] = {
@@ -48,7 +47,6 @@ const struct keyword keywords[] = {
     {"int",     DT_INT,    CATEGORY_DATATYPE}, {"uint",    DT_UINT,    CATEGORY_DATATYPE},
     {"float",   DT_FLOAT,  CATEGORY_DATATYPE}, {"str",     DT_STR,     CATEGORY_DATATYPE},
     {"bool",    DT_BOOL,   CATEGORY_DATATYPE}, {"void",    DT_VOID,    CATEGORY_DATATYPE},
-    {"uni",     DT_UNI,    CATEGORY_DATATYPE}, {"tensor",  DT_TENSOR,  CATEGORY_DATATYPE},
     {"int8",    DT_INT8,   CATEGORY_DATATYPE}, {"int16",   DT_INT16,   CATEGORY_DATATYPE},
     {"int32",   DT_INT32,  CATEGORY_DATATYPE}, {"int64",   DT_INT64,   CATEGORY_DATATYPE},
     {"uint8",   DT_UINT8,  CATEGORY_DATATYPE}, {"uint16",  DT_UINT16,  CATEGORY_DATATYPE},
@@ -58,7 +56,6 @@ const struct keyword keywords[] = {
     /* modifiers */
     {"var",   MOD_VAR,   CATEGORY_MODIFIER}, {"const",  MOD_CONST,  CATEGORY_MODIFIER},
     {"final", MOD_FINAL, CATEGORY_MODIFIER}, {"static", MOD_STATIC, CATEGORY_MODIFIER},
-    {"event", MOD_EVENT, CATEGORY_MODIFIER}, {"signal", MOD_SIGNAL, CATEGORY_MODIFIER},
 };
 
 const size_t operators_count = sizeof(operators) / sizeof(struct keyword);
@@ -80,13 +77,13 @@ struct token new_token(const enum category_tag category, const int type, const c
     }
 
     switch (category){
-        case CATEGORY_SERVICE:    tok.service =    (enum category_tag)type; break;
+        case CATEGORY_SERVICE:    tok.service =    (enum service_category)type; break;
         case CATEGORY_OPERATOR:   tok.oper =       (enum operator_category)type; break;
         case CATEGORY_KEYWORD:    tok.keyword =    (enum keyword_category)type; break;
         case CATEGORY_PAREN:      tok.paren =      (enum paren_category)type; break;
         case CATEGORY_DELIMITER:  tok.delim =      (enum delimiter_category)type; break;
         case CATEGORY_DATATYPE:   tok.datatype =   (enum datatype_category)type; break;
-        case CATEGORY_VALUE:      tok.value =      (enum value_category)type; break;
+        case CATEGORY_LITERAL:    tok.value =    (enum value_category)type; break;
         case CATEGORY_MODIFIER:   tok.modifier =   (enum modifier_category)type; break;
     }
 

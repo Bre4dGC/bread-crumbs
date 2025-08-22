@@ -5,7 +5,7 @@
 
 #include "errors.h"
 
-static const char* error_msg(const enum err_type_tag type_tag, const int error_code) {
+static const char* error_msg(const enum error_type_tag type_tag, const int error_code) {
     switch (type_tag) {
         case ERROR_TYPE_LEXER:
             switch ((enum lexer_error_type)error_code) {
@@ -28,8 +28,8 @@ static const char* error_msg(const enum err_type_tag type_tag, const int error_c
 }
 
 struct error* new_error(
-    enum err_severity_type severity,
-    enum err_type_tag type_tag,
+    enum error_severity severity,
+    enum error_type_tag type_tag,
     const int error_code,
     const size_t line,
     const size_t column,
@@ -70,24 +70,27 @@ struct error* new_error(
 void print_error(const struct error* err) {
     if (!err) return;
 
-    const char* severity_str = "Unknown";
-    switch (err->severity_type) {
-        case TYPE_WARNING: severity_str = "Warning"; break;
-        case TYPE_ERROR:   severity_str = "Error";   break;
-        case TYPE_FATAL:   severity_str = "Fatal";   break;
-        default:           severity_str = "Unknown"; break;
-    }
-
     printf("\n%s\n", err->input ? err->input : "");
 
-    if (err->column > 0) {
-        for (size_t i = 1; i < err->column; ++i) putchar(' ');
-    }
+    printf("%*s", err->column != 0 ? (int)err->column - 1 : 0, "");
 
     if (err->length == 1) putchar('^');
     else for (size_t i = 0; i < err->length; ++i) putchar('~');
 
-    printf("\n[%s] %s at %d:%d\n", severity_str, err->message ? err->message : "", err->line, err->column);
+    switch (err->severity_type) {
+        case TYPE_WARNING:
+            printf("\n\033[35m[WARNING]\033[0m %s at %zu:%zu\n", err->message ? err->message : "", err->line, err->column);
+            break;
+        case TYPE_ERROR:
+            printf("\n\033[33m[ERROR]\033[0m %s at %zu:%zu\n", err->message ? err->message : "", err->line, err->column);
+            break;
+        case TYPE_FATAL:
+            printf("\n\033[31m[FATAL]\033[0m %s at %zu:%zu\n", err->message ? err->message : "", err->line, err->column);
+            break;
+        default:
+            printf("\n[UNKNOW] %s at %zu:%zu\n", err->message ? err->message : "", err->line, err->column);
+            break;
+    }
 }
 
 void free_error(struct error *err)

@@ -5,11 +5,11 @@
 int main(void)
 {
     const char *inputs[] = {
-        "var abc = 0b101"
+        "var abd3c: bool = true;",
     };
 
     for (size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i) {
-        printf("%d: %s\n\n", i+1, inputs[i]);
+        printf("%zu: %s\n\n", i+1, inputs[i]);
 
         struct lexer *lex = new_lexer(inputs[i]);
         if(!lex) {

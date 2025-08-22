@@ -6,6 +6,8 @@
 #include "lexer.h"
 #include "vm.h"
 
+struct ast_node;
+
 struct node_var{
     enum modifier_category modif;
     char *name;
@@ -19,19 +21,20 @@ struct node_array{
 };
 
 struct node_if{
-    struct ast_node *cond;
-    struct ast_node *then_block;
+    struct ast_node *condition;
+    struct ast_node *body;
+    struct ast_node *elif_blocks;
     struct ast_node *else_block;
 };
 
 struct node_while{
-    struct ast_node *cond;
+    struct ast_node *condition;
     struct ast_node *body;
 };
 
 struct node_for{
     struct ast_node *init;
-    struct ast_node *cond;
+    struct ast_node *condition;
     struct ast_node *step;
     struct ast_node *body;
 };
@@ -51,7 +54,7 @@ struct node_case{
 };
 
 struct node_match{
-    struct ast_node *cond;
+    struct ast_node *condition;
     struct ast_node *cases;    
 };
 
@@ -77,14 +80,14 @@ struct node_trait{
 };
 
 struct node_trycatch{
-    struct ast_node *cond;
+    struct ast_node *condition;
     struct ast_node *try_block;
     struct ast_node *catch_block;
     struct ast_node *finally_block;
 };
 
 struct node_import{
-    char *name;
+    char *module_name;
 };
 
 struct node_test{
@@ -108,6 +111,41 @@ struct node_solve{
     struct ast_node *body;
 };
 
+struct node_bin_op{
+    struct ast_node *left;
+    struct ast_node *right;
+    enum op_code code;
+};
+
+struct node_unary_op{
+    struct ast_node *operand;
+    enum op_code code;
+};
+
+struct node_var_assign{
+    char *name;
+    struct ast_node *value;
+};
+
+struct node_var_ref{
+    char *name;
+    enum datatype_category dtype;
+    struct ast_node *value;
+};
+
+struct node_block{
+    struct ast_node *body;
+};
+
+struct node_func_call{
+    char *name;
+    struct ast_node *args;
+};
+
+struct node_return_stmt{
+    struct ast_node *body;
+};
+
 enum node_type{
     NODE_BIN_OP,    NODE_EXPR,      NODE_BLOCK, 
     NODE_UNARY_OP,  NODE_VAR,       NODE_IF,    
@@ -117,31 +155,27 @@ enum node_type{
     NODE_ENUM,      NODE_UNION,     NODE_TRAIT,     
     NODE_TRYCATCH,  NODE_IMPORT,    NODE_TEST,      
     NODE_FORK,      NODE_SIMULATE,  NODE_SOLVE,
-    // TODO: add more node types as needed
+    NODE_VAR_REF,   NODE_CASE,
 };
 
 struct ast_node {
     enum node_type type;
     size_t line;
     union {
-        struct { 
+        /* simple (literal) value */
+        struct {
             int value;
             char *var_name;
-        };
+        } simple;
 
-        struct literal{
+        struct {
             union {
-                /* basic types */
                 int int_val;
                 unsigned int uint_val;
                 float float_val;
                 void *void_val;
                 bool bool_val;
                 char *str_val;
-                char uni_val;
-                int64_t **tensor_val;
-
-                /* exact types */
                 int8_t int8_val;
                 int16_t int16_val;
                 int32_t int32_val;
@@ -153,45 +187,17 @@ struct ast_node {
                 float float32_val;
                 double float64_val;
             };
-        };
+        } value;
 
-        struct bin_op{
-            struct ast_node *left;
-            struct ast_node *right;
-            enum op_code code;
-        };
+        struct node_bin_op bin_op;
+        struct node_unary_op unary_op;
+        struct node_var_assign var_assign;
+        struct node_var_ref var_ref;
+        struct node_block block;
+        struct node_func_call func_call;
+        struct node_return_stmt return_stmt;
 
-        struct unary_op{
-            struct ast_node *operand;
-            enum op_code code;
-        };
-
-        struct var_assign{
-            char *name;
-            struct ast_node *value;
-        };
-
-        struct var_ref{
-            char *name;
-            enum datatype_category dtype;
-            union {
-                struct ast_node *value;
-            };
-        };
-
-        struct block{
-            struct ast_node *body;
-        };
-
-        struct func_call{
-            char *name;
-            struct ast_node *args;
-        };
-
-        struct return_stmt{
-            struct ast_node *body;
-        };
-
+        /* high-level declarations */
         struct node_var *var_decl;
         struct node_array *array_decl;
         struct node_if *if_stmt;
@@ -210,13 +216,6 @@ struct ast_node {
         struct node_fork *fork_stmt;
         struct node_simulate *simulate_stmt;
         struct node_solve *solve_stmt;
-        struct node_bin_op *bin_op;
-        struct node_unary_op *unary_op;
-        struct node_var_assign *var_assign;
-        struct node_var_ref *var_ref;
-        struct node_block *block;
-        struct node_func_call *func_call;
-        struct node_return_stmt *return_stmt;
     };
 };
 

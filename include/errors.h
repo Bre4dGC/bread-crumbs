@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-enum err_severity_type{
+enum error_severity{
     TYPE_WARNING, TYPE_ERROR, TYPE_FATAL
 };
 
@@ -21,17 +21,22 @@ enum parser_error_type{
     PARSER_ERROR_UNEXPECTED_TOKEN,
     PARSER_ERROR_INVALID_EXPRESSION,
     PARSER_ERROR_UNEXPECTED_END_OF_FILE,
+    PARSER_ERROR_EXPECTED_NAME,
+    PARSER_ERROR_EXPECTED_TYPE,
+    PARSER_ERROR_EXPECTED_PAREN,
+    PARSER_ERROR_EXPECTED_OPERATOR,
+    PARSER_ERROR_EXPECTED_KEYWORD,
     // TODO: add more error types as needed
 };
 
-enum err_type_tag{
+enum error_type_tag{
     ERROR_TYPE_LEXER,
     ERROR_TYPE_PARSER,
 };
 
 struct error{
-    enum err_severity_type severity_type;
-    enum err_type_tag type_tag;
+    enum error_severity severity_type;
+    enum error_type_tag type_tag;
     union {
         enum lexer_error_type lexer_error;
         enum parser_error_type parser_error;
@@ -44,8 +49,8 @@ struct error{
 };
 
 struct error* new_error(
-    enum err_severity_type severity,
-    enum err_type_tag type_tag,
+    enum error_severity severity,
+    enum error_type_tag type_tag,
     const int error_code,
     const size_t line,
     const size_t column,

@@ -1,7 +1,7 @@
 #pragma once
 
 enum service_category{
-	SERV_ILLEGAL, SERV_IDENT, SERV_COMMENT, SERV_EOF
+	SERV_ILLEGAL, SERV_COMMENT, SERV_EOF
 };
 
 enum operator_category{
@@ -11,7 +11,6 @@ enum operator_category{
     OP_LANGLE,  OP_RANGLE,
     OP_ASSIGN,  OP_COLON,
     OP_NOT,     OP_QUESTION,
-    OP_RANGE,   OP_RETTYPE,
     OP_ADD,     OP_SUB,
     OP_MUL,     OP_DIV,
     OP_PERCENT, OP_MOD,
@@ -19,6 +18,7 @@ enum operator_category{
     OP_EQ,      OP_NEQ,
     OP_LTE,     OP_GTE,
     OP_INCREM,  OP_DECREM,
+    OP_RANGE,
 };
 
 enum keyword_category {
@@ -51,8 +51,7 @@ enum delimiter_category {
 enum datatype_category {
     /* basic types */
     DT_INT,  DT_UINT, DT_FLOAT,
-    DT_VOID, DT_BOOL, DT_STR, 
-    DT_UNI,  DT_TENSOR, 
+    DT_VOID, DT_BOOL, DT_STR,
 
     /* exact types */
     DT_INT8,    DT_INT16,  DT_INT32,  DT_INT64,
@@ -61,23 +60,23 @@ enum datatype_category {
 };
 
 enum value_category {
-    VAL_NUMBER, VAL_DECIMAL,
-    VAL_CHAR,   VAL_STRING,
-    VAL_TRUE,   VAL_FALSE,
-    VAL_HEX,    VAL_BIN,
-    VAL_NULL,
+    LIT_IDENT,  LIT_NUMBER,
+    LIT_FLOAT,  LIT_HEX,    LIT_BIN,
+    LIT_CHAR,   LIT_STRING,
+    LIT_TRUE,   LIT_FALSE,
+    LIT_NULL,
 };
 
 enum modifier_category {
     MOD_VAR,    MOD_CONST, MOD_FINAL, 
-    MOD_STATIC, MOD_EVENT, MOD_SIGNAL
+    MOD_STATIC,
 };
 
 enum category_tag {
     CATEGORY_SERVICE,   CATEGORY_OPERATOR,
     CATEGORY_KEYWORD,   CATEGORY_PAREN,
     CATEGORY_DELIMITER, CATEGORY_DATATYPE,
-    CATEGORY_VALUE,     CATEGORY_MODIFIER,
+    CATEGORY_LITERAL,   CATEGORY_MODIFIER,
 };
 
 struct keyword {
