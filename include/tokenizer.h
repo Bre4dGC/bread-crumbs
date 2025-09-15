@@ -1,27 +1,27 @@
 #pragma once
 
-enum service_category{
+enum category_service{
 	SERV_ILLEGAL, SERV_COMMENT, SERV_EOF
 };
 
-enum operator_category{
-    OP_PLUS,    OP_MINUS,
-    OP_ASTERISK,OP_SLASH,
-    OP_DOT,     OP_COMMA,
-    OP_LANGLE,  OP_RANGLE,
-    OP_ASSIGN,  OP_COLON,
-    OP_NOT,     OP_QUESTION,
-    OP_ADD,     OP_SUB,
-    OP_MUL,     OP_DIV,
-    OP_PERCENT, OP_MOD,
-    OP_AND,     OP_OR,
-    OP_EQ,      OP_NEQ,
-    OP_LTE,     OP_GTE,
-    OP_INCREM,  OP_DECREM,
-    OP_RANGE,
+enum category_operator{
+    OPER_PLUS,    OPER_MINUS,
+    OPER_ASTERISK,OPER_SLASH,
+    OPER_DOT,     OPER_COMMA,
+    OPER_LANGLE,  OPER_RANGLE,
+    OPER_ASSIGN,  OPER_COLON,
+    OPER_NOT,     OPER_QUESTION,
+    OPER_ADD,     OPER_SUB,
+    OPER_MUL,     OPER_DIV,
+    OPER_PERCENT, OPER_MOD,
+    OPER_AND,     OPER_OR,
+    OPER_EQ,      OPER_NEQ,
+    OPER_LTE,     OPER_GTE,
+    OPER_INCREM,  OPER_DECREM,
+    OPER_RANGE,   OPER_ARROW
 };
 
-enum keyword_category {
+enum category_keyword {
     KW_IF,       KW_ELIF,     KW_ELSE,
     KW_FOR,      KW_DO,       KW_WHILE,
     KW_FUNC,     KW_RETURN,   KW_BREAK,
@@ -38,20 +38,20 @@ enum keyword_category {
     KW_SIMULATE, KW_SCENARIOS,KW_CHOOSE,
 };
 
-enum paren_category {
+enum category_paren {
     PAR_LPAREN,   PAR_RPAREN,   // ()
     PAR_LBRACE,   PAR_RBRACE,   // {}
     PAR_LBRACKET, PAR_RBRACKET  // []
 };
 
-enum delimiter_category {
+enum category_delimiter {
     DELIM_QUOTE, DELIM_SQUOTE
 };
 
-enum datatype_category {
+enum category_datatype {
     /* basic types */
-    DT_INT,  DT_UINT, DT_FLOAT,
     DT_VOID, DT_BOOL, DT_STR,
+    DT_INT,  DT_UINT, DT_FLOAT,
 
     /* exact types */
     DT_INT8,    DT_INT16,  DT_INT32,  DT_INT64,
@@ -59,17 +59,15 @@ enum datatype_category {
     DT_FLOAT32, DT_FLOAT64,
 };
 
-enum value_category {
+enum category_literal {
     LIT_IDENT,  LIT_NUMBER,
-    LIT_FLOAT,  LIT_HEX,    LIT_BIN,
     LIT_CHAR,   LIT_STRING,
-    LIT_TRUE,   LIT_FALSE,
-    LIT_NULL,
+    LIT_FLOAT,  LIT_HEX,    LIT_BIN,
+    LIT_TRUE,   LIT_FALSE,  LIT_NULL,
 };
 
-enum modifier_category {
-    MOD_VAR,    MOD_CONST, MOD_FINAL, 
-    MOD_STATIC,
+enum category_modifier {
+    MOD_VAR, MOD_CONST, MOD_FINAL, MOD_STATIC,
 };
 
 enum category_tag {
@@ -88,14 +86,14 @@ struct keyword {
 struct token {
     enum category_tag category;
 	union {
-        enum service_category service;
-        enum operator_category oper;
-        enum keyword_category keyword;
-        enum paren_category paren;
-        enum delimiter_category delim;
-        enum datatype_category datatype;
-        enum value_category value;
-        enum modifier_category modifier;
+        enum category_service type_service;
+        enum category_operator type_operator;
+        enum category_keyword type_keyword;
+        enum category_paren type_paren;
+        enum category_delimiter type_delim;
+        enum category_datatype type_datatype;
+        enum category_literal type_literal;
+        enum category_modifier type_modifier;
 	};
 	char *literal;
 };

@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 enum error_severity{
-    TYPE_WARNING, TYPE_ERROR, TYPE_FATAL
+    SEVERITY_NOTE, SEVERITY_WARNING, SEVERITY_ERROR
 };
 
 enum lexer_error_type{
@@ -16,22 +16,34 @@ enum lexer_error_type{
     // TODO: add more error types as needed
 };
 
-
 enum parser_error_type{
     PARSER_ERROR_UNEXPECTED_TOKEN,
     PARSER_ERROR_INVALID_EXPRESSION,
+    PARSER_ERROR_INVALID_UNARY_OP,
     PARSER_ERROR_UNEXPECTED_END_OF_FILE,
     PARSER_ERROR_EXPECTED_NAME,
     PARSER_ERROR_EXPECTED_TYPE,
     PARSER_ERROR_EXPECTED_PAREN,
     PARSER_ERROR_EXPECTED_OPERATOR,
     PARSER_ERROR_EXPECTED_KEYWORD,
+    PARSER_ERROR_EXPECTED_EXPRESSION,
+    PARSER_ERROR_EXPECTED_PARAM,
+    // TODO: add more error types as needed
+};
+
+enum semantic_error_type{
+    SEMANTIC_ERROR_UNDECLARED_VARIABLE,
+    SEMANTIC_ERROR_TYPE_MISMATCH,
+    SEMANTIC_ERROR_INVALID_OPERATION,
+    SEMANTIC_ERROR_REDECLARATION,
+    SEMANTIC_ERROR_INVALID_FUNCTION_CALL,
     // TODO: add more error types as needed
 };
 
 enum error_type_tag{
     ERROR_TYPE_LEXER,
     ERROR_TYPE_PARSER,
+    ERROR_TYPE_SEMANTIC
 };
 
 struct error{
@@ -40,6 +52,7 @@ struct error{
     union {
         enum lexer_error_type lexer_error;
         enum parser_error_type parser_error;
+        enum semantic_error_type semantic_error;
     };
     size_t line;
     size_t column;
@@ -49,8 +62,8 @@ struct error{
 };
 
 struct error* new_error(
-    enum error_severity severity,
-    enum error_type_tag type_tag,
+    const enum error_severity severity,
+    const enum error_type_tag type_tag,
     const int error_code,
     const size_t line,
     const size_t column,

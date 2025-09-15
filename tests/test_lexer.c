@@ -5,7 +5,7 @@
 int main(void)
 {
     const char *inputs[] = {
-        "var abd3c: bool = true;",
+        "var abd3c: bool = true;;;",
     };
 
     for (size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i) {
@@ -17,16 +17,16 @@ int main(void)
             return 1;
         }
 
-        struct token tok;
-        while((tok = next_token(lex)).category != CATEGORY_SERVICE || tok.service != SERV_EOF) {
-            free_token(&tok);
+        struct token token;
+        while((token = next_token(lex)).category != CATEGORY_SERVICE || token.type_service != SERV_EOF) {
+            free_token(&token);
         }
 
-        for(int i = 0; i < lex->errors_count; ++i){
+        for(size_t i = 0; i < lex->errors_count; ++i){
             print_error(lex->errors[i]);
         }
 
-        free_token(&tok);
+        free_token(&token);
         free_lexer(lex);
 
         printf("_________________________________\n");

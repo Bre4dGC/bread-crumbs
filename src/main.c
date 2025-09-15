@@ -8,7 +8,7 @@
 
 char *file_name;
 
-int repl_mode();
+int repl_mode(void);
 int run_mode(const char *src);
 int compile_mode(const char *src);
 
@@ -61,40 +61,37 @@ int main(int argc, char *argv[])
     return repl_mode();
 }
 
-int repl_mode()
+int repl_mode(void)
 {
-    while(1){
-        char input[128];
+    char input[1024];
 
+    while (1) {
         printf(">> ");
-        if(fgetws(input, sizeof(input)/sizeof(char), stdin) == NULL) {
-            if(feof(stdin)) {
+        if (fgets(input, sizeof(input), stdin) == NULL) {
+            if (feof(stdin)) {
                 printf("\nExiting REPL mode.\n");
                 break;
             } else {
-                perror("\nError reading input\n");
+                perror("Error reading input");
                 continue;
             }
         }
 
         size_t len = strlen(input);
-        if(len > 0 && input[len - 1] == L'\n') {
-            input[len - 1] = L'\0';
-        }
+        if (len > 0 && input[len - 1] == '\n') input[len - 1] = '\0';
 
-        if(input[0] == '\n') continue;
-        else if(strcmp(input, ":quit") == 0) break;
-        else if(strcmp(input, ":reset") == 0) {
-            // TODO: implement reset functionality
+        if (input[0] == '\0') continue;
+        else if (strcmp(input, ":quit") == 0) break;
+        else if (strcmp(input, ":reset") == 0) {
+            // TODO
         }
-        else if(strcmp(input, ":help") == 0) {
+        else if (strcmp(input, ":help") == 0) {
             printf("Available commands:\n");
             printf("    :quit - Exit REPL mode\n");
             printf("    :help - Show this help message\n");
             printf("    :reset - Reset the REPL state (not implemented yet)\n");
         }
         else {
-            // TODO: implement executing
             printf("%s\n", input);
         }
     }
@@ -107,7 +104,7 @@ char* get_line(const char *src)
 
     size_t length = 0;
 
-    while(src[length] != L'\0' && src[length] != L'\n') {
+    while(src[length] != '\0' && src[length] != '\n') {
         length++;
     }
     
@@ -137,20 +134,20 @@ int run_mode(const char *src)
         return EXIT_FAILURE;
     }
 
-    struct lexer *lex = new_lexer(line);
-    if(!lex){
+    struct lexer *lexer = new_lexer(line);
+    if(!lexer){
         free(line);
         free(wsrc);
         return EXIT_FAILURE;
     }
-    struct token tok;
+    struct token token;
     do {
-        tok = next_token(lex);
-        free_token(&tok);
-    } while(!(tok.category == CATEGORY_SERVICE && tok.service == SERV_EOF));
+        token = next_token(lexer);
+        free_token(&token);
+    } while(!(token.category == CATEGORY_SERVICE && token.type_service == SERV_EOF));
 
-    free_token(&tok);
-    free_lexer(lex);
+    free_token(&token);
+    free_lexer(lexer);
     free(line);
     free(wsrc);
 

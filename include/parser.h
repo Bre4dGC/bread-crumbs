@@ -8,10 +8,12 @@
 
 struct parser {
     struct lexer *lexer;
-    struct token tok_current;
-    struct token tok_next;
+    struct token current;
+    struct token peek;
     struct error **errors;
     size_t errors_count;
+    size_t line;
+    size_t column;
 };
 
 struct parser* new_parser(struct lexer* lexer);

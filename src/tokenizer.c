@@ -5,18 +5,20 @@
 #include <ctype.h>
 
 #include "tokenizer.h"
+#include "utils.h"
 #define DEBUG
 #include "debug.h"
 
 
 const struct keyword operators[] = {
-    {"++", OP_INCREM, CATEGORY_OPERATOR}, {"--", OP_DECREM,  CATEGORY_OPERATOR},
-    {"==", OP_EQ,     CATEGORY_OPERATOR}, {"!=", OP_NEQ,     CATEGORY_OPERATOR},
-    {"+=", OP_ADD,    CATEGORY_OPERATOR}, {"-=", OP_SUB,     CATEGORY_OPERATOR},
-    {"*=", OP_MUL,    CATEGORY_OPERATOR}, {"/=", OP_DIV,     CATEGORY_OPERATOR},
-    {"&&", OP_AND,    CATEGORY_OPERATOR}, {"||", OP_OR,      CATEGORY_OPERATOR},
-    {"<=", OP_LTE,    CATEGORY_OPERATOR}, {">=", OP_GTE,     CATEGORY_OPERATOR},
-    {"..", OP_RANGE,  CATEGORY_OPERATOR}, {"%=", OP_MOD,    CATEGORY_OPERATOR},
+    {"++", OPER_INCREM, CATEGORY_OPERATOR}, {"--", OPER_DECREM,  CATEGORY_OPERATOR},
+    {"==", OPER_EQ,     CATEGORY_OPERATOR}, {"!=", OPER_NEQ,     CATEGORY_OPERATOR},
+    {"+=", OPER_ADD,    CATEGORY_OPERATOR}, {"-=", OPER_SUB,     CATEGORY_OPERATOR},
+    {"*=", OPER_MUL,    CATEGORY_OPERATOR}, {"/=", OPER_DIV,     CATEGORY_OPERATOR},
+    {"&&", OPER_AND,    CATEGORY_OPERATOR}, {"||", OPER_OR,      CATEGORY_OPERATOR},
+    {"<=", OPER_LTE,    CATEGORY_OPERATOR}, {">=", OPER_GTE,     CATEGORY_OPERATOR},
+    {"..", OPER_RANGE,  CATEGORY_OPERATOR}, {"%=", OPER_MOD,     CATEGORY_OPERATOR},
+    {"->", OPER_ARROW,  CATEGORY_OPERATOR}
 };
 
 const struct keyword keywords[] = {
@@ -63,28 +65,26 @@ const size_t keywords_count  = sizeof(keywords)  / sizeof(struct keyword);
 
 struct token new_token(const enum category_tag category, const int type, const char *literal)
 {
-    struct token tok = {
-        .category = category,
-        .literal = NULL};
+    struct token tok = {.category = category, .literal = NULL};
 
     if (literal){
         tok.literal = strdup(literal);
         if (!tok.literal){
             tok.category = CATEGORY_SERVICE;
-            tok.service = SERV_ILLEGAL;
+            tok.type_service = SERV_ILLEGAL;
             return tok;
         }
     }
 
     switch (category){
-        case CATEGORY_SERVICE:    tok.service =    (enum service_category)type; break;
-        case CATEGORY_OPERATOR:   tok.oper =       (enum operator_category)type; break;
-        case CATEGORY_KEYWORD:    tok.keyword =    (enum keyword_category)type; break;
-        case CATEGORY_PAREN:      tok.paren =      (enum paren_category)type; break;
-        case CATEGORY_DELIMITER:  tok.delim =      (enum delimiter_category)type; break;
-        case CATEGORY_DATATYPE:   tok.datatype =   (enum datatype_category)type; break;
-        case CATEGORY_LITERAL:    tok.value =    (enum value_category)type; break;
-        case CATEGORY_MODIFIER:   tok.modifier =   (enum modifier_category)type; break;
+        case CATEGORY_SERVICE:    tok.type_service =    (enum category_service)type; break;
+        case CATEGORY_OPERATOR:   tok.type_operator =   (enum category_operator)type; break;
+        case CATEGORY_KEYWORD:    tok.type_keyword =    (enum category_keyword)type; break;
+        case CATEGORY_PAREN:      tok.type_paren =      (enum category_paren)type; break;
+        case CATEGORY_DELIMITER:  tok.type_delim =      (enum category_delimiter)type; break;
+        case CATEGORY_DATATYPE:   tok.type_datatype =   (enum category_datatype)type; break;
+        case CATEGORY_LITERAL:    tok.type_literal =    (enum category_literal)type; break;
+        case CATEGORY_MODIFIER:   tok.type_modifier =   (enum category_modifier)type; break;
     }
 
 #ifdef DEBUG
@@ -96,8 +96,7 @@ struct token new_token(const enum category_tag category, const int type, const c
 
 void free_token(struct token *tok)
 {
-    if (tok){
-        free(tok->literal);
-        tok->literal = NULL;
-    }
+    if(!tok) return;
+    free(tok->literal);
+    tok->literal = NULL;
 }

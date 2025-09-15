@@ -6,7 +6,7 @@
 
 int main(void) {
     struct error* err = new_error(
-        TYPE_FATAL,
+        SEVERITY_ERROR,
         ERROR_TYPE_LEXER,
         LEXER_ERROR_UNCLOSED_STRING,
         10,

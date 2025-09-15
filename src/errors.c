@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "errors.h"
+#include "utils.h"
 
 static const char* error_msg(const enum error_type_tag type_tag, const int error_code) {
     switch (type_tag) {
@@ -23,13 +24,22 @@ static const char* error_msg(const enum error_type_tag type_tag, const int error
                 case PARSER_ERROR_UNEXPECTED_END_OF_FILE: return "Unexpected end of file";
                 default: return "Unknown parser error";
             }
+        case ERROR_TYPE_SEMANTIC:
+            switch ((enum semantic_error_type)error_code) {
+                case SEMANTIC_ERROR_UNDECLARED_VARIABLE: return "Undeclared variable";
+                case SEMANTIC_ERROR_TYPE_MISMATCH: return "Type mismatch";
+                case SEMANTIC_ERROR_INVALID_OPERATION: return "Invalid operation";
+                case SEMANTIC_ERROR_REDECLARATION: return "Redeclaration of variable";
+                case SEMANTIC_ERROR_INVALID_FUNCTION_CALL: return "Invalid function call";
+                default: return "Unknown semantic error";
+            }
         default: return "Unknown error type";
     }
 }
 
 struct error* new_error(
-    enum error_severity severity,
-    enum error_type_tag type_tag,
+    const enum error_severity severity,
+    const enum error_type_tag type_tag,
     const int error_code,
     const size_t line,
     const size_t column,
@@ -53,11 +63,11 @@ struct error* new_error(
     }
 
     switch (type_tag) {
-        case ERROR_TYPE_LEXER:
-            err->lexer_error = (enum lexer_error_type)error_code;
+        case ERROR_TYPE_LEXER: err->lexer_error = (enum lexer_error_type)error_code;
             break;
-        case ERROR_TYPE_PARSER:
-            err->parser_error = (enum parser_error_type)error_code;
+        case ERROR_TYPE_PARSER: err->parser_error = (enum parser_error_type)error_code;
+            break;
+        case ERROR_TYPE_SEMANTIC: err->semantic_error = (enum semantic_error_type)error_code;
             break;
         default:
             free_error(err);
@@ -70,34 +80,33 @@ struct error* new_error(
 void print_error(const struct error* err) {
     if (!err) return;
 
-    printf("\n%s\n", err->input ? err->input : "");
+    printf("\n|\t%s\n", err->input ? err->input : "");
 
-    printf("%*s", err->column != 0 ? (int)err->column - 1 : 0, "");
+    printf("|\t%*s", err->column != 0 ? (int)err->column - 1 : 0, "");
 
-    if (err->length == 1) putchar('^');
-    else for (size_t i = 0; i < err->length; ++i) putchar('~');
+    if (err->length == 1) printf("^");
+    else for (size_t i = 0; i < err->length; ++i) printf("~");
 
     switch (err->severity_type) {
-        case TYPE_WARNING:
-            printf("\n\033[35m[WARNING]\033[0m %s at %zu:%zu\n", err->message ? err->message : "", err->line, err->column);
+        case SEVERITY_NOTE:
+            printf("\n\033[34m[NOTE]\033[0m %s at %zu:%zu\n", err->message, err->line, err->column);
             break;
-        case TYPE_ERROR:
-            printf("\n\033[33m[ERROR]\033[0m %s at %zu:%zu\n", err->message ? err->message : "", err->line, err->column);
+        case SEVERITY_WARNING:
+            printf("\n\033[33m[WARNING]\033[0m %s at %zu:%zu\n", err->message, err->line, err->column);
             break;
-        case TYPE_FATAL:
-            printf("\n\033[31m[FATAL]\033[0m %s at %zu:%zu\n", err->message ? err->message : "", err->line, err->column);
+        case SEVERITY_ERROR:
+            printf("\n\033[31m[ERROR]\033[0m %s at %zu:%zu\n", err->message, err->line, err->column);
             break;
         default:
-            printf("\n[UNKNOW] %s at %zu:%zu\n", err->message ? err->message : "", err->line, err->column);
+            printf("\n[UNKNOW] %s at %zu:%zu\n", err->message, err->line, err->column);
             break;
     }
 }
 
 void free_error(struct error *err)
 {
-    if (err) {
-        free(err->input);
-        free(err->message);
-        free(err);
-    }
+    if (!err) return; 
+    free(err->input);
+    free(err->message);
+    free(err);
 }

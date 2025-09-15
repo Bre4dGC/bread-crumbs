@@ -1,5 +1,5 @@
-CC = cc
-CFLAGS = -Wall -Wextra -std=c11 -I include/
+CC = clang
+CFLAGS = -Wall -Wextra -pedantic -std=c11 -g -I include/
 SRC_DIR = src
 BIN_DIR = bin
 
