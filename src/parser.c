@@ -6,33 +6,33 @@
 #define DEBUG
 #include "debug.h"
 
-static struct ast_node* parse_block(struct parser* pars);
-static struct ast_node* parse_func_call(struct parser* pars);
-static struct ast_node* parse_var_decl(struct parser* pars);
-static struct ast_node* parse_var_ref(struct parser* pars);
-static struct ast_node* parse_unary_op(struct parser* pars);
-static struct ast_node* parse_bin_op(struct parser* pars, int min_precedence);
-static struct ast_node* parse_return(struct parser* pars);
-static struct ast_node* parse_if(struct parser* pars);
-static struct ast_node* parse_while(struct parser* pars);
-static struct ast_node* parse_for(struct parser* pars);
-static struct ast_node* parse_func(struct parser* pars);
-static struct ast_node* parse_array(struct parser* pars);
-static struct ast_node* parse_struct(struct parser* pars);
-static struct ast_node* parse_union(struct parser* pars);
-static struct ast_node* parse_enum(struct parser* pars);
-static struct ast_node* parse_match(struct parser* pars);
-static struct ast_node* parse_trait(struct parser* pars);
-static struct ast_node* parse_try_catch(struct parser* pars);
-static struct ast_node* parse_import(struct parser* pars);
-static struct ast_node* parse_test(struct parser* pars);
-static struct ast_node* parse_fork(struct parser* pars);
-static struct ast_node* parse_solve(struct parser* pars);
-static struct ast_node* parse_simulate(struct parser* pars);
+struct ast_node* parse_block(struct parser* pars);
+struct ast_node* parse_func_call(struct parser* pars);
+struct ast_node* parse_var_decl(struct parser* pars);
+struct ast_node* parse_var_ref(struct parser* pars);
+struct ast_node* parse_unary_op(struct parser* pars);
+struct ast_node* parse_bin_op(struct parser* pars, int min_precedence);
+struct ast_node* parse_return(struct parser* pars);
+struct ast_node* parse_if(struct parser* pars);
+struct ast_node* parse_while(struct parser* pars);
+struct ast_node* parse_for(struct parser* pars);
+struct ast_node* parse_func(struct parser* pars);
+struct ast_node* parse_array(struct parser* pars);
+struct ast_node* parse_struct(struct parser* pars);
+struct ast_node* parse_union(struct parser* pars);
+struct ast_node* parse_enum(struct parser* pars);
+struct ast_node* parse_match(struct parser* pars);
+struct ast_node* parse_trait(struct parser* pars);
+struct ast_node* parse_try_catch(struct parser* pars);
+struct ast_node* parse_import(struct parser* pars);
+struct ast_node* parse_test(struct parser* pars);
+struct ast_node* parse_fork(struct parser* pars);
+struct ast_node* parse_solve(struct parser* pars);
+struct ast_node* parse_simulate(struct parser* pars);
 
 typedef struct ast_node* (*parse_func_t)(struct parser*);
 
-static struct parse_func_t* parse_table[] = {
+struct parse_func_t* parse_table[] = {
     [KW_IF] = parse_if,
     [KW_WHILE] = parse_while,
     [KW_FOR] = parse_for,
@@ -60,13 +60,11 @@ struct parser* new_parser(struct lexer* lexer)
     parser->peek = next_token(lexer);
     parser->errors = NULL;
     parser->errors_count = 0;
-    parser->line = 1;
-    parser->column = 1;
 
     return parser;
 }
 
-static void new_parser_error(struct parser* pars, struct error* err)
+void new_parser_error(struct parser* pars, struct error* err)
 {
     if(!pars || !err){
         if(err) free_error(err);
@@ -117,9 +115,6 @@ void advance_token(struct parser *pars)
 {
     if(!pars || (pars->current.category == CATEGORY_SERVICE && pars->current.type_service == SERV_EOF)) return;
 
-    pars->line = pars->lexer->line;
-    pars->column = pars->lexer->column;
-
     free_token(&pars->current);
     
     pars->current = pars->peek;
@@ -167,10 +162,10 @@ bool consume_token(
     return true;
 }
 
-static struct ast_node* parse_operator_expr(struct parser* pars);
-static struct ast_node* parse_keyword_expr(struct parser* pars);
-static struct ast_node* parse_paren_expr(struct parser* pars);
-static struct ast_node* parse_literal_expr(struct parser* pars);
+struct ast_node* parse_operator_expr(struct parser* pars);
+struct ast_node* parse_keyword_expr(struct parser* pars);
+struct ast_node* parse_paren_expr(struct parser* pars);
+struct ast_node* parse_literal_expr(struct parser* pars);
 
 struct ast_node* parse_expr(struct parser* pars)
 {
@@ -188,7 +183,7 @@ struct ast_node* parse_expr(struct parser* pars)
     return NULL;
 }
 
-static struct ast_node* parse_keyword_expr(struct parser* pars)
+struct ast_node* parse_keyword_expr(struct parser* pars)
 {
     const int kw = pars->current.type_keyword;
     
@@ -206,7 +201,7 @@ static struct ast_node* parse_keyword_expr(struct parser* pars)
     return func(pars);
 }
 
-static struct ast_node* parse_paren_expr(struct parser* pars)
+struct ast_node* parse_paren_expr(struct parser* pars)
 {
     switch (pars->current.type_paren){
         case PAR_LBRACE: return parse_block(pars);            
@@ -227,7 +222,7 @@ static struct ast_node* parse_paren_expr(struct parser* pars)
     }
 }
 
-static struct ast_node* parse_literal_expr(struct parser* pars)
+struct ast_node* parse_literal_expr(struct parser* pars)
 {
     if(pars->current.type_literal == LIT_IDENT){
         if(pars->peek.category == CATEGORY_OPERATOR && pars->peek.type_operator == OPER_ASSIGN){
@@ -249,7 +244,7 @@ static struct ast_node* parse_literal_expr(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_operator_expr(struct parser* pars)
+struct ast_node* parse_operator_expr(struct parser* pars)
 {
     bool is_unary = (pars->peek.category == CATEGORY_LITERAL) ||
                     (pars->peek.category == CATEGORY_PAREN &&
@@ -260,7 +255,7 @@ static struct ast_node* parse_operator_expr(struct parser* pars)
     return is_unary ? parse_unary_op(pars) : parse_bin_op(pars, 0);
 }
 
-static struct ast_node* parse_keyword_stmt(struct parser* pars)
+struct ast_node* parse_keyword_stmt(struct parser* pars)
 {
     int kw = pars->current.type_keyword;
 
@@ -293,7 +288,7 @@ struct ast_node* parse_stmt(struct parser* pars)
     return parse_expr(pars);
 }
 
-static bool add_block_stmt(struct ast_node* block, struct ast_node* stmt)
+bool add_block_stmt(struct ast_node* block, struct ast_node* stmt)
 {
     if(block->type != NODE_BLOCK) return false;
     
@@ -311,7 +306,7 @@ static bool add_block_stmt(struct ast_node* block, struct ast_node* stmt)
     return true;
 }
 
-static struct ast_node* parse_block(struct parser* pars)
+struct ast_node* parse_block(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_BLOCK);
     if(!node) return NULL;
@@ -355,7 +350,7 @@ error_cleanup:
     return NULL;
 }
 
-static struct ast_node* parse_func_call(struct parser* pars)
+struct ast_node* parse_func_call(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_FUNC_CALL);
     if(!node) return NULL;
@@ -428,7 +423,7 @@ static struct ast_node* parse_func_call(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_var_decl(struct parser* pars)
+struct ast_node* parse_var_decl(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_VAR);
     if(!node) return NULL;
@@ -484,7 +479,7 @@ static struct ast_node* parse_var_decl(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_var_ref(struct parser* pars)
+struct ast_node* parse_var_ref(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_VAR_REF);
     if (!node) return NULL;
@@ -509,7 +504,7 @@ static struct ast_node* parse_var_ref(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_return(struct parser* pars)
+struct ast_node* parse_return(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_RETURN);
     if(!node) return NULL;
@@ -520,10 +515,10 @@ static struct ast_node* parse_return(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_primary(struct parser* pars);
-static int get_operator_precedence(enum category_operator op);
+struct ast_node* parse_primary(struct parser* pars);
+int get_operator_precedence(enum category_operator op);
 
-static struct ast_node* parse_bin_op(struct parser* pars, int min_precedence){
+struct ast_node* parse_bin_op(struct parser* pars, int min_precedence){
     struct ast_node* left = parse_primary(pars);
     if(!left) return NULL;
 
@@ -564,7 +559,7 @@ static struct ast_node* parse_bin_op(struct parser* pars, int min_precedence){
     return left;
 }
 
-static struct ast_node* parse_primary(struct parser* pars){
+struct ast_node* parse_primary(struct parser* pars){
     switch (pars->current.category){
         case CATEGORY_LITERAL:
             if(pars->current.type_literal == LIT_IDENT){
@@ -597,7 +592,7 @@ static struct ast_node* parse_primary(struct parser* pars){
     return NULL;
 }
 
-static int get_operator_precedence(enum category_operator op){
+int get_operator_precedence(enum category_operator op){
     switch (op){
         case OPER_MUL: case OPER_DIV: case OPER_MOD:
             return 7;
@@ -618,12 +613,12 @@ static int get_operator_precedence(enum category_operator op){
     }
 }
 
-static struct ast_node* parse_unary_op(struct parser* pars)
+struct ast_node* parse_unary_op(struct parser* pars)
 {
     
 }
 
-static struct ast_node* parse_array(struct parser* pars)
+struct ast_node* parse_array(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_ARRAY);
     if(!node) return NULL;
@@ -631,7 +626,7 @@ static struct ast_node* parse_array(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_if(struct parser* pars){
+struct ast_node* parse_if(struct parser* pars){
     struct ast_node* node = new_ast(NODE_IF);
     if(!node) return NULL;
 
@@ -769,7 +764,7 @@ static struct ast_node* parse_if(struct parser* pars){
     return node;
 }
 
-static struct ast_node* parse_while(struct parser* pars)
+struct ast_node* parse_while(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_WHILE);
     if(!node) return NULL;
@@ -819,7 +814,7 @@ static struct ast_node* parse_while(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_for(struct parser* pars)
+struct ast_node* parse_for(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_FOR);
     if(!node) return NULL;
@@ -827,7 +822,7 @@ static struct ast_node* parse_for(struct parser* pars)
     return node; 
 }
 
-static struct ast_node* parse_func(struct parser* pars)
+struct ast_node* parse_func(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_FUNC);
     if (!node) return NULL;
@@ -943,7 +938,7 @@ static struct ast_node* parse_func(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_struct(struct parser* pars)
+struct ast_node* parse_struct(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_STRUCT);
     if(!node) return NULL;
@@ -951,7 +946,7 @@ static struct ast_node* parse_struct(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_union(struct parser* pars)
+struct ast_node* parse_union(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_UNION);
     if(!node) return NULL;
@@ -959,7 +954,7 @@ static struct ast_node* parse_union(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_enum(struct parser* pars)
+struct ast_node* parse_enum(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_ENUM);
     if(!node) return NULL;
@@ -967,21 +962,21 @@ static struct ast_node* parse_enum(struct parser* pars)
     return node;
 }
 
-static struct ast_node* parse_match(struct parser* pars)
+struct ast_node* parse_match(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_MATCH);
     if(!node) return NULL;
     return node;
 }
 
-static struct ast_node* parse_trait(struct parser* pars)
+struct ast_node* parse_trait(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_TRAIT);
     if(!node) return NULL;
     return node; 
 }
 
-static struct ast_node* parse_try_catch(struct parser* pars)
+struct ast_node* parse_try_catch(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_TRYCATCH);
     if(!node) return NULL;
@@ -989,7 +984,7 @@ static struct ast_node* parse_try_catch(struct parser* pars)
     return node; 
 }
 
-static struct ast_node* parse_import(struct parser* pars)
+struct ast_node* parse_import(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_IMPORT);
     if(!node) return NULL;
@@ -997,28 +992,28 @@ static struct ast_node* parse_import(struct parser* pars)
     return node; 
 }
 
-static struct ast_node* parse_test(struct parser* pars)
+struct ast_node* parse_test(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_TEST);
     if(!node) return NULL;
     return node; 
 }
 
-static struct ast_node* parse_fork(struct parser* parser)
+struct ast_node* parse_fork(struct parser* parser)
 {
     struct ast_node* node = new_ast(NODE_FORK);
     if(!node) return NULL;
     return node; 
 }
 
-static struct ast_node* parse_solve(struct parser* pars)
+struct ast_node* parse_solve(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_SOLVE);
     if(!node) return NULL;
     return node; 
 }
 
-static struct ast_node* parse_simulate(struct parser* pars)
+struct ast_node* parse_simulate(struct parser* pars)
 {
     struct ast_node* node = new_ast(NODE_SIMULATE);
     if(!node) return NULL;
