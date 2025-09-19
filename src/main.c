@@ -10,7 +10,6 @@ char *file_name;
 
 int repl_mode(void);
 int run_mode(const char *src);
-int compile_mode(const char *src);
 
 int main(int argc, char *argv[])
 {
@@ -24,16 +23,9 @@ int main(int argc, char *argv[])
     if(argc == 2 && strcmp(argv[1], "help") == 0) {
         fprintf(stderr, "Usage: %s <mode> [source]\n", argv[0]);
         fprintf(stderr, "Modes:\n");
-        fprintf(stderr, "   run <source>     - Run the interpreter with the source file\n");
-        fprintf(stderr, "   compile <source> - Compile the source file with JIT\n");
-        fprintf(stderr, "   (no arguments)   - Start REPL mode\n");
+        fprintf(stderr, "   <source>       - Run the program with the source file\n");
+        fprintf(stderr, "   (no arguments) - Start REPL mode\n");
         return EXIT_SUCCESS;
-    }
-
-    // check for valid mode
-    if(strcmp(argv[1], "run") && strcmp(argv[1], "compile")) {
-        fprintf(stderr, "Invalid mode: %s. Use 'run' or 'compile'.\n", argv[1]);
-        return EXIT_FAILURE;
     }
 
     // run mode
@@ -44,17 +36,8 @@ int main(int argc, char *argv[])
         }
         return run_mode(argv[2]);
     }
-
-    // jit mode
-    else if(strcmp(argv[1], "compile") == 0) {
-        if(argc < 3) {
-            fprintf(stderr, "Source file required for compile mode.\n");
-            return EXIT_FAILURE;
-        }
-        return compile_mode(argv[2]);
-    }
     else {
-        fprintf(stderr, "Unknown mode: %s. Use 'run' or 'compile'.\n", argv[1]);
+        fprintf(stderr, "Unknown mode: %s. Use 'run'.\n", argv[1]);
         return EXIT_FAILURE;
     }
     
@@ -151,11 +134,5 @@ int run_mode(const char *src)
     free(line);
     free(wsrc);
 
-    return 0;
-}
-
-int compile_mode(const char *src)
-{
-    printf("JIT-compiler not able yet :(");
     return 0;
 }
