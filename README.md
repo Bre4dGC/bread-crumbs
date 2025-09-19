@@ -1,9 +1,7 @@
 # Bread Crumbs
 
 <div align="center">
-  <a href="https://ibb.co/PvSG5cCn">
-    <img src="https://i.ibb.co/VcKYvgBZ/file-000000004554620a8bfedbbf332477e8.png" alt="BreadCrumbs Logo" style="border-radius: 50px;" border="0">
-  </a>
+    <img src="logo.jpg" alt="BreadCrumbs Logo" style="border-radius: 50px;">
 </div>
 
 Bread Crumbs is a modern programming language designed for **testing**, **simulations**, **scientific computing**, **AI planning**, and **rapid prototyping**. With its unique features like declarative problem-solving (`solve`), scenario simulation (`simulate`), state management (`snapshot`/`rollback`), and execution tracing (`trace`), Bread Crumbs empowers developers to tackle complex problems with ease.
@@ -57,8 +55,8 @@ Bread Crumbs is a modern programming language designed for **testing**, **simula
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/Bre4dGC/Bread-Crumbs.git
-   cd Bread-Crumbs
+   git clone https://github.com/Bre4dGC/bread-crumbs.git
+   cd bread-crumbs
    ```
 
 2. **Build from Source**:
@@ -105,8 +103,8 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 Join our community to discuss Bread Crumbs, share ideas, and get help:
 
-- **Discord**: [Join Bread Crumbs Community](https://discord.gg/Z6jHnjXm)
-- **GitHub Issues**: Report bugs or suggest features [here](https://github.com/Bre4dGC/Bread-Crumbs/issues).
+- **Discord**: [Join Bread Crumbs Community](https://discord.gg/63pD2dK5u3)
+- **GitHub Issues**: Report bugs or suggest features [here](https://github.com/Bre4dGC/bread-crumbs/issues).
 
 ## License
 
