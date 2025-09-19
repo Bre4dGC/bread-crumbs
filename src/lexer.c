@@ -20,11 +20,12 @@ struct token handle_paren(struct lexer* lex);
 struct token handle_num(struct lexer* lex);
 struct token handle_ident(struct lexer* lex);
 struct token handle_str(struct lexer* lex);
+struct token handle_commment(struct lexer* lex);
 
 char* read_ident(struct lexer* lex);
 char* read_num(struct lexer* lex);
-char read_esc_seq(struct lexer* lex);
 char* read_str(struct lexer* lex, char quote_char);
+char read_esc_seq(struct lexer* lex);
 
 size_t input_len = 0;
 
@@ -142,7 +143,7 @@ struct token next_token(struct lexer* lex)
         case '<': case '>':
         case '&': case '|':
         case '.': case ',':
-        case ':':
+        case ':': case ';':
             token = handle_oper(lex);
             break;
 
@@ -170,16 +171,7 @@ struct token next_token(struct lexer* lex)
             break;
 
         case '#':
-            while (lex->ch != '\n' && lex->ch != '\0'){
-                read_ch(lex);
-            }
-            skip_whitespace(lex);
-            if(lex->ch == '\n'){
-                read_ch(lex);
-                lex->line++;
-                lex->column = 1;
-            }
-            token = new_token(CATEGORY_SERVICE, SERV_COMMENT, "COMMENT");
+            token = handle_commment(lex);
             break;
 
         default:
@@ -188,10 +180,6 @@ struct token next_token(struct lexer* lex)
             }
             else{
                 token = new_token(CATEGORY_SERVICE, SERV_ILLEGAL, ch_str);
-                while(token.category == CATEGORY_SERVICE && token.type_service == SERV_ILLEGAL){
-                    read_ch(lex);
-                    token = next_token(lex);
-                }
                 struct error* err = new_error(SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_ILLEGAL_CHARACTER,
                                         lex->line, lex->column, strlen(ch_str), lex->input);
                 new_lexer_error(lex, err);
@@ -239,6 +227,7 @@ struct token handle_oper(struct lexer* lex)
         case '.': return new_token(CATEGORY_OPERATOR, OPER_DOT,      oper);
         case ',': return new_token(CATEGORY_OPERATOR, OPER_COMMA,    oper);
         case ':': return new_token(CATEGORY_OPERATOR, OPER_COLON,    oper);
+        case ';': return new_token(CATEGORY_OPERATOR, OPER_SEMICOLON,oper);
         default:  return new_token(CATEGORY_SERVICE,  SERV_ILLEGAL,  oper);
     }
 }
@@ -275,7 +264,7 @@ struct token handle_ident(struct lexer* lex)
         tok = new_token(kw->category, kw->type, ident);
     }
     else if(strcmp(ident, "true") == 0) tok = new_token(CATEGORY_LITERAL, LIT_TRUE, ident); 
-    else if(strcmp(ident, "false") == 0) tok = new_token(CATEGORY_LITERAL, LIT_FALSE, ident); 
+    else if(strcmp(ident, "false")== 0) tok = new_token(CATEGORY_LITERAL, LIT_FALSE,ident); 
     else if(strcmp(ident, "null") == 0) tok = new_token(CATEGORY_LITERAL, LIT_NULL, ident);
     else tok = new_token(CATEGORY_LITERAL, LIT_IDENT, ident);
 
@@ -361,6 +350,20 @@ struct token handle_str(struct lexer* lex)
     read_ch(lex);
 
     return string_token;
+}
+
+struct token handle_commment(struct lexer* lex)
+{
+    while (lex->ch != '\n' && lex->ch != '\0'){
+        read_ch(lex);
+    }
+    skip_whitespace(lex);
+    if(lex->ch == '\n'){
+        read_ch(lex);
+        lex->line++;
+        lex->column = 1;
+    }
+    return new_token(CATEGORY_SERVICE, SERV_COMMENT, "COMMENT");
 }
 
 char* read_ident(struct lexer* lex)
@@ -525,6 +528,7 @@ char* read_num(struct lexer* lex)
 
 char read_esc_seq(struct lexer* lex)
 {
+    // TODO: extend escape sequence with numbers
     char esc_seq;
     switch (lex->ch){
         case 'n': esc_seq = '\n';
@@ -534,13 +538,13 @@ char read_esc_seq(struct lexer* lex)
         case '\'':esc_seq = '\'';
         case '\\':esc_seq = '\\';
         case '0': esc_seq = '\0';
-        default:
+        default:{
             struct error* err = new_error(SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_ESCAPE_SEQUENCE, 
                                     lex->line, lex->column, 1, lex->input);
             new_lexer_error(lex, err);
-            return NULL;
+        }
     }
-    read_char(lex);
+    read_ch(lex);
     return esc_seq;
 }
 
