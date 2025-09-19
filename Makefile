@@ -1,9 +1,9 @@
 CC = clang
-CFLAGS = -Wall -Wextra -pedantic -std=c11 -g -I include/
+CFLAGS = -Wall -Wextra -pedantic -std=c11 -g -I include/ -DDEBUG
 SRC_DIR = src
 BIN_DIR = bin
 
-MAIN = $(BIN_DIR)/BreadCrumbs
+MAIN = $(BIN_DIR)/breadcrumbs
 ERRTEST = $(BIN_DIR)/errtest
 LEXTEST = $(BIN_DIR)/lextest
 PARSTEST = $(BIN_DIR)/parstest
