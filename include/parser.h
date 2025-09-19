@@ -7,10 +7,10 @@
 #include "errors.h"
 
 struct parser {
-    struct lexer *lexer;
+    struct lexer* lexer;
     struct token current;
     struct token peek;
-    struct error **errors;
+    struct error** errors;
     size_t errors_count;
 };
 

@@ -5,20 +5,21 @@ enum category_service{
 };
 
 enum category_operator{
-    OPER_PLUS,    OPER_MINUS,
-    OPER_ASTERISK,OPER_SLASH,
-    OPER_DOT,     OPER_COMMA,
-    OPER_LANGLE,  OPER_RANGLE,
-    OPER_ASSIGN,  OPER_COLON,
-    OPER_NOT,     OPER_QUESTION,
-    OPER_ADD,     OPER_SUB,
-    OPER_MUL,     OPER_DIV,
-    OPER_PERCENT, OPER_MOD,
-    OPER_AND,     OPER_OR,
-    OPER_EQ,      OPER_NEQ,
-    OPER_LTE,     OPER_GTE,
-    OPER_INCREM,  OPER_DECREM,
-    OPER_RANGE,   OPER_ARROW
+    OPER_PLUS,   OPER_MINUS,
+    OPER_SLASH,  OPER_ASTERISK,
+    OPER_DOT,    OPER_COMMA,
+    OPER_LANGLE, OPER_RANGLE,
+    OPER_ASSIGN,  
+    OPER_COLON,  OPER_SEMICOLON,
+    OPER_NOT,    OPER_QUESTION,
+    OPER_ADD,    OPER_SUB,
+    OPER_MUL,    OPER_DIV,
+    OPER_MOD,    OPER_PERCENT,
+    OPER_AND,    OPER_OR,
+    OPER_EQ,     OPER_NEQ,
+    OPER_LTE,    OPER_GTE,
+    OPER_INCREM, OPER_DECREM,
+    OPER_RANGE,  OPER_ARROW,
 };
 
 enum category_keyword {
@@ -78,7 +79,7 @@ enum category_tag {
 };
 
 struct keyword {
-    char *literal;
+    char* literal;
     int type;
     enum category_tag category;
 };
@@ -95,7 +96,7 @@ struct token {
         enum category_literal type_literal;
         enum category_modifier type_modifier;
 	};
-	char *literal;
+	char* literal;
 };
 
 extern const struct keyword operators[];

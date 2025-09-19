@@ -529,7 +529,7 @@ char* read_num(struct lexer* lex)
 char read_esc_seq(struct lexer* lex)
 {
     // TODO: extend escape sequence with numbers
-    char esc_seq;
+    char esc_seq = '\0';
     switch (lex->ch){
         case 'n': esc_seq = '\n';
         case 't': esc_seq = '\t';
@@ -538,11 +538,11 @@ char read_esc_seq(struct lexer* lex)
         case '\'':esc_seq = '\'';
         case '\\':esc_seq = '\\';
         case '0': esc_seq = '\0';
-        default:{
+        default:
             struct error* err = new_error(SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_ESCAPE_SEQUENCE, 
                                     lex->line, lex->column, 1, lex->input);
             new_lexer_error(lex, err);
-        }
+            break;
     }
     read_ch(lex);
     return esc_seq;

@@ -6,7 +6,6 @@
 
 #include "tokenizer.h"
 #include "utils.h"
-#define DEBUG
 #include "debug.h"
 
 #define C_OP (CATEGORY_OPERATOR)

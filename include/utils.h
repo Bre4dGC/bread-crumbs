@@ -4,9 +4,8 @@
 #include <string.h>
 
 static inline char* strdup(const char* str) {
-    if (!str) return NULL;
-    size_t len = strlen(str) + 1;
-    char* copy = (char*)malloc(len);
-    if (copy) memcpy(copy, str, len);
-    return copy;
+    char* dst = malloc(strlen (str) + 1);
+    if (dst == NULL) return NULL;
+    strcpy(dst, str);
+    return dst;
 }

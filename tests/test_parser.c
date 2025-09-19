@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include "parser.h"
 
-#define DEBUG
 #include "debug.h"
 
 int main(void)
 {
-    const char *input = "func dosmth(var a: int, const b: int, final c: str = \"str\") -> int { print(str) }";
+    const char *input = "var a: int = 1;";
     
     struct lexer *lex = new_lexer(input);
     if(!lex) {
@@ -32,6 +31,7 @@ int main(void)
     }
 
     printf("Parsed expression successfully.\n");
+    compile_ast(ast, NULL);
     free_ast(ast);
     free_parser(pars);
 

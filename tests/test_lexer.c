@@ -5,7 +5,7 @@
 int main(void)
 {
     const char *inputs[] = {
-        "var abd3c: bool = true;;;",
+        "var abd3c: bool = true;;$;",
     };
 
     for (size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i) {

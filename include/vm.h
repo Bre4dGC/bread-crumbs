@@ -36,13 +36,12 @@ enum op_code{
     OP_RETURN,      // return
     OP_JUMP_IF,     // jmp_if <label>
     OP_JUMP_IFNOT,  // jmp_ifnot <label>
-    // TODO: add more operations as needed
 };
 
-struct vm{
-    uint8_t *code;
+struct vm {
+    uint8_t* code;
     size_t capacity;
-    int64_t *stack;
+    int64_t* stack;
     size_t ssize;   // stack size
     size_t ip;      // instruction pointer 
     size_t sp;      // stack pointer

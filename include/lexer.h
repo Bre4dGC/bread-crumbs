@@ -5,7 +5,7 @@
 #include "errors.h"
 
 struct lexer {
-    char *input;
+    char* input;
     char ch;
     size_t pos;
     size_t nextpos;
