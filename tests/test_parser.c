@@ -1,39 +1,86 @@
 #include <stdio.h>
+#include <assert.h>
 #include "parser.h"
 
+#ifdef DEBUG
 #include "debug.h"
+#endif
 
-int main(void)
-{
-    const char *input = "var a: int = 1;";
+static int test_count = 0;
+static int test_passed = 0;
+
+void run_test(const char* test_name, const char* input, bool should_succeed) {
+    test_count++;
+    printf("Running test: %s\n", test_name);
+    printf("Input: %s\n", input);
     
     struct lexer *lex = new_lexer(input);
     if(!lex) {
-        fprintf(stderr, "Failed to create lexer\n");
-        return 1;
+        printf("FAIL: Failed to create lexer\n\n");
+        return;
     }
 
     struct parser *pars = new_parser(lex);
     if(!pars) {
-        fprintf(stderr, "Failed to create parser\n");
+        printf("FAIL: Failed to create parser\n\n");
         free_lexer(lex);
-        return 1;
+        return;
     }
 
     struct ast_node* ast = parse_expr(pars);
-    if(!ast) {
-        fprintf(stderr, "Failed to parse expression\n");
-        for(size_t i = 0; i < pars->errors_count; ++i){
-            print_error(pars->errors[i]);
+    
+    if(should_succeed) {
+        if(ast) {
+            printf("PASS: Successfully parsed\n");
+            test_passed++;
+            #ifdef DEBUG
+            compile_ast(ast, NULL);
+            #endif
+            free_ast(ast);
+        } else {
+            printf("FAIL: Expected success but parsing failed\n");
+            for(size_t i = 0; i < pars->errors_count; ++i){
+                print_error(pars->errors[i]);
+            }
         }
-        free_parser(pars);
+    } else {
+        if(!ast) {
+            printf("PASS: Expected failure and parsing failed as expected\n");
+            test_passed++;
+        } else {
+            printf("FAIL: Expected failure but parsing succeeded\n");
+            free_ast(ast);
+        }
+    }
+    
+    free_parser(pars);
+    printf("\n");
+}
+
+int main(void)
+{
+    printf("=== Parser Test Suite ===\n\n");
+    
+    run_test("Function Declaration", "func main() { return 0; }", true);
+    run_test("Variable Declaration", "var x: int = 42", true);
+    run_test("Array Literal", "[1, 2, 3, 4]", true);
+    run_test("Function Call", "print(\"hello\")", true);
+    run_test("If Statement", "if (x > 0) { return x; }", true);
+    run_test("While Loop", "while (true) { break; }", true);
+    run_test("For Loop", "for (var i = 0; i < 10; i++) { print(i); }", true);
+    run_test("Struct Declaration", "struct Point { x: int, y: int }", true);
+    run_test("Invalid Syntax", "func ( { }", false);
+    
+    printf("=== Test Results ===\n");
+    printf("Tests run: %d\n", test_count);
+    printf("Tests passed: %d\n", test_passed);
+    printf("Tests failed: %d\n", test_count - test_passed);
+    
+    if(test_passed == test_count) {
+        printf("All tests passed!\n");
+        return 0;
+    } else {
+        printf("Some tests failed.\n");
         return 1;
     }
-
-    printf("Parsed expression successfully.\n");
-    compile_ast(ast, NULL);
-    free_ast(ast);
-    free_parser(pars);
-
-    return 0;
 }
