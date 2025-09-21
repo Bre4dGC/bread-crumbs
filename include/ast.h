@@ -26,8 +26,6 @@ struct node_var_assign{
 
 struct node_var_ref{
     char* name;
-    enum category_datatype dtype;
-    struct ast_node* value;
 };
 
 struct node_block{
@@ -143,13 +141,11 @@ struct node_union{
 };
 
 struct node_trait{
-    enum category_modifier modif;
     char* name;
     struct ast_node* body;
 };
 
 struct node_trycatch{
-    struct ast_node* condition;
     struct ast_node* try_block;
     struct ast_node* catch_block;
     struct ast_node* finally_block;
@@ -208,24 +204,24 @@ struct ast_node {
         struct node_return_stmt return_stmt;
         struct node_literal literal;
 
-        struct node_var *var_decl;
-        struct node_array *array_decl;
-        struct node_if *if_stmt;
-        struct node_while *while_loop;
-        struct node_for *for_loop;
-        struct node_func *func_decl;
-        struct node_case *match_case;
-        struct node_match *match_stmt;
-        struct node_struct *struct_decl;
-        struct node_enum *enum_decl;
-        struct node_union *union_decl;
-        struct node_trait *trait_decl;
-        struct node_trycatch *trycatch_stmt;
-        struct node_import *import_stmt;
-        struct node_test *test_stmt;
-        struct node_fork *fork_stmt;
-        struct node_simulate *simulate_stmt;
-        struct node_solve *solve_stmt;
+        struct node_var* var_decl;
+        struct node_array* array_decl;
+        struct node_if* if_stmt;
+        struct node_while* while_loop;
+        struct node_for* for_loop;
+        struct node_func* func_decl;
+        struct node_case* match_case;
+        struct node_match* match_stmt;
+        struct node_struct* struct_decl;
+        struct node_enum* enum_decl;
+        struct node_union* union_decl;
+        struct node_trait* trait_decl;
+        struct node_trycatch* trycatch_stmt;
+        struct node_import* import_stmt;
+        struct node_test* test_stmt;
+        struct node_fork* fork_stmt;
+        struct node_simulate* simulate_stmt;
+        struct node_solve* solve_stmt;
     };
 };
 
