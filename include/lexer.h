@@ -6,6 +6,7 @@
 
 struct lexer {
     char* input;
+    size_t input_len;
     char ch;
     size_t pos;
     size_t nextpos;
@@ -17,6 +18,5 @@ struct lexer {
 };
 
 struct lexer* new_lexer(const char* input);
-void new_lexer_error(struct lexer* lex, struct error* err);
 void free_lexer(struct lexer* lex);
 struct token next_token(struct lexer* lex);
