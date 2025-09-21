@@ -77,37 +77,45 @@ void free_ast(struct ast_node* node)
             break;
 
         case NODE_ARRAY:
-            for (size_t i = 0; i < node->array_decl->count; i++){
-                free_ast(node->array_decl->elements[i]);
+            if(node->array_decl){
+                for (size_t i = 0; i < node->array_decl->count; i++){
+                    free_ast(node->array_decl->elements[i]);
+                }
+                if(node->array_decl->elements) free(node->array_decl->elements);
+                free(node->array_decl);
             }
-            if(node->array_decl->elements) free(node->array_decl->elements);
-            if(node->array_decl) free(node->array_decl);
             break;
 
             case NODE_IF:
-            free_ast(node->if_stmt->condition);
-            free_ast(node->if_stmt->then_block);
-            if(node->if_stmt->else_block){
-                free_ast(node->if_stmt->else_block);
+            if(node->if_stmt){
+                free_ast(node->if_stmt->condition);
+                free_ast(node->if_stmt->then_block);
+                if(node->if_stmt->else_block){
+                    free_ast(node->if_stmt->else_block);
+                }
+                if(node->if_stmt->elif_blocks){
+                    free_ast(node->if_stmt->elif_blocks);
+                }
+                free(node->if_stmt);
             }
-            if(node->if_stmt->elif_blocks){
-                free_ast(node->if_stmt->elif_blocks);
-            }
-            if(node->if_stmt) free(node->if_stmt);
             break;
 
         case NODE_WHILE:
-            free_ast(node->while_loop->condition);
-            free_ast(node->while_loop->body);
-            if(node->while_loop) free(node->while_loop);
+            if(node->while_loop){
+                free_ast(node->while_loop->condition);
+                free_ast(node->while_loop->body);
+                free(node->while_loop);
+            }
             break;
 
         case NODE_FOR:
-            free_ast(node->for_loop->init);
-            free_ast(node->for_loop->condition);
-            free_ast(node->for_loop->update);
-            free_ast(node->for_loop->body);
-            if(node->for_loop) free(node->for_loop);
+            if(node->for_loop){
+                free_ast(node->for_loop->init);
+                free_ast(node->for_loop->condition);
+                free_ast(node->for_loop->update);
+                free_ast(node->for_loop->body);
+                free(node->for_loop);
+            }
             break;
 
         case NODE_FUNC:
@@ -123,89 +131,113 @@ void free_ast(struct ast_node* node)
             break;
 
         case NODE_STRUCT:
-            if(node->struct_decl->name) free(node->struct_decl->name);
-            for (size_t i = 0; i < node->struct_decl->member_count; i++){
-                free_ast(node->struct_decl->members[i]);
+            if(node->struct_decl){
+                if(node->struct_decl->name) free(node->struct_decl->name);
+                for (size_t i = 0; i < node->struct_decl->member_count; i++){
+                    free_ast(node->struct_decl->members[i]);
+                }
+                if(node->struct_decl->members) free(node->struct_decl->members);
+                free(node->struct_decl);
             }
-            if(node->struct_decl->members) free(node->struct_decl->members);
-            if(node->struct_decl) free(node->struct_decl);
             break;
 
         case NODE_UNION:
-            if(node->union_decl->name) free(node->union_decl->name);
-            for (size_t i = 0; i < node->union_decl->member_count; i++){
-                free_ast(node->union_decl->members[i]);
+            if(node->union_decl){
+                if(node->union_decl->name) free(node->union_decl->name);
+                for (size_t i = 0; i < node->union_decl->member_count; i++){
+                    free_ast(node->union_decl->members[i]);
+                }
+                if(node->union_decl->members) free(node->union_decl->members);
+                free(node->union_decl);
             }
-            if(node->union_decl->members) free(node->union_decl->members);
-            if(node->union_decl) free(node->union_decl);
             break;
 
         case NODE_ENUM:
-            if(node->enum_decl->name) free(node->enum_decl->name);
-            for (size_t i = 0; i < node->enum_decl->member_count; i++){
-                if(node->enum_decl->members[i]) free(node->enum_decl->members[i]);
+            if(node->enum_decl){
+                if(node->enum_decl->name) free(node->enum_decl->name);
+                for (size_t i = 0; i < node->enum_decl->member_count; i++){
+                    if(node->enum_decl->members[i]) free(node->enum_decl->members[i]);
+                }
+                if(node->enum_decl->members) free(node->enum_decl->members);
+                free(node->enum_decl);
             }
-            if(node->enum_decl->members) free(node->enum_decl->members);
-            if(node->enum_decl) free(node->enum_decl);
             break;
 
         case NODE_MATCH:
-            free_ast(node->match_stmt->target);
-            for (size_t i = 0; i < node->match_stmt->case_count; i++){
-                free_ast(node->match_stmt->cases[i]);
+            if(node->match_stmt){
+                free_ast(node->match_stmt->target);
+                for (size_t i = 0; i < node->match_stmt->case_count; i++){
+                    free_ast(node->match_stmt->cases[i]);
+                }
+                if(node->match_stmt->cases) free(node->match_stmt->cases);
+                free(node->match_stmt);
             }
-            if(node->match_stmt->cases) free(node->match_stmt->cases);
-            if(node->match_stmt) free(node->match_stmt);
             break;
 
         case NODE_CASE:
-            free_ast(node->match_case->condition);
-            free_ast(node->match_case->body);
-            if(node->match_case) free(node->match_case);
+            if(node->match_case){
+                free_ast(node->match_case->condition);
+                free_ast(node->match_case->body);
+                free(node->match_case);
+            }
             break;
 
         case NODE_TRAIT:
-            if(node->trait_decl->name) free(node->trait_decl->name);
-            free_ast(node->trait_decl->body);
-            if(node->trait_decl) free(node->trait_decl);
+            if(node->trait_decl){
+                if(node->trait_decl->name) free(node->trait_decl->name);
+                free_ast(node->trait_decl->body);
+                free(node->trait_decl);
+            }
             break;
 
         case NODE_TRYCATCH:
-            free_ast(node->trycatch_stmt->try_block);
-            if(node->trycatch_stmt->catch_block) free_ast(node->trycatch_stmt->catch_block);
-            if(node->trycatch_stmt->finally_block) free_ast(node->trycatch_stmt->finally_block);
-            if(node->trycatch_stmt) free(node->trycatch_stmt);
+            if(node->trycatch_stmt){
+                free_ast(node->trycatch_stmt->try_block);
+                if(node->trycatch_stmt->catch_block) free_ast(node->trycatch_stmt->catch_block);
+                if(node->trycatch_stmt->finally_block) free_ast(node->trycatch_stmt->finally_block);
+                free(node->trycatch_stmt);
+            }
             break;
 
         case NODE_IMPORT:
-            if(node->import_stmt->module_name) free(node->import_stmt->module_name);
-            if(node->import_stmt) free(node->import_stmt);
+            if(node->import_stmt){
+                if(node->import_stmt->module_name) free(node->import_stmt->module_name);
+                free(node->import_stmt);
+            }
             break;
 
         case NODE_TEST:
-            if(node->test_stmt->name) free(node->test_stmt->name);
-            free_ast(node->test_stmt->body);
-            if(node->test_stmt) free(node->test_stmt);
+            if(node->test_stmt){
+                if(node->test_stmt->name) free(node->test_stmt->name);
+                free_ast(node->test_stmt->body);
+                free(node->test_stmt);
+            }
             break;
 
         case NODE_FORK:
-            if(node->fork_stmt->name) free(node->fork_stmt->name);
-            free_ast(node->fork_stmt->body);
-            if(node->fork_stmt) free(node->fork_stmt);
+            if(node->fork_stmt){
+                if(node->fork_stmt->name) free(node->fork_stmt->name);
+                free_ast(node->fork_stmt->body);
+                free(node->fork_stmt);
+            }
             break;
 
         case NODE_SOLVE:
-            for (size_t i = 0; i < node->solve_stmt->param_count; i++){
-                free_ast(node->solve_stmt->params[i]);
+            if(node->solve_stmt){
+                for (size_t i = 0; i < node->solve_stmt->param_count; i++){
+                    free_ast(node->solve_stmt->params[i]);
+                }
+                if(node->solve_stmt->params) free(node->solve_stmt->params);
+                free_ast(node->solve_stmt->body);
+                free(node->solve_stmt);
             }
-            if(node->solve_stmt->params) free(node->solve_stmt->params);
-            free_ast(node->solve_stmt->body);
-            if(node->solve_stmt) free(node->solve_stmt);
             break;
 
         case NODE_SIMULATE:
-            free_ast(node->simulate_stmt->body);
-            if(node->simulate_stmt) free(node->simulate_stmt);
+            if(node->simulate_stmt){
+                free_ast(node->simulate_stmt->body);
+                free(node->simulate_stmt);
+            }
             break;
 
         default:
