@@ -5,21 +5,46 @@ enum category_service{
 };
 
 enum category_operator{
-    OPER_PLUS,   OPER_MINUS,
-    OPER_SLASH,  OPER_ASTERISK,
-    OPER_DOT,    OPER_COMMA,
-    OPER_LANGLE, OPER_RANGLE,
-    OPER_ASSIGN,  
-    OPER_COLON,  OPER_SEMICOLON,
-    OPER_NOT,    OPER_QUESTION,
-    OPER_ADD,    OPER_SUB,
-    OPER_MUL,    OPER_DIV,
-    OPER_MOD,    OPER_PERCENT,
-    OPER_AND,    OPER_OR,
-    OPER_EQ,     OPER_NEQ,
-    OPER_LTE,    OPER_GTE,
-    OPER_INCREM, OPER_DECREM,
-    OPER_RANGE,  OPER_ARROW,
+    // basic arithmetic operators
+    OPER_PLUS,      // +
+    OPER_MINUS,     // -
+    OPER_ASTERISK,  // * (multiplication)
+    OPER_SLASH,     // / (division)
+    OPER_PERCENT,   // % (modulo)
+    
+    // assignment operators
+    OPER_ASSIGN,    // =
+    OPER_ADD,       // +=
+    OPER_SUB,       // -=
+    OPER_MUL,       // *=
+    OPER_DIV,       // /=
+    OPER_MOD,       // %=
+    
+    // comparison operators
+    OPER_EQ,        // ==
+    OPER_NEQ,       // !=
+    OPER_LANGLE,    // <
+    OPER_RANGLE,    // >
+    OPER_LTE,       // <=
+    OPER_GTE,       // >=
+    
+    // logical operators
+    OPER_AND,       // &&
+    OPER_OR,        // ||
+    OPER_NOT,       // !
+    
+    // increment/decrement
+    OPER_INCREM,    // ++
+    OPER_DECREM,    // --
+    
+    // punctuation
+    OPER_DOT,       // .
+    OPER_COMMA,     // ,
+    OPER_COLON,     // :
+    OPER_SEMICOLON, // ;
+    OPER_QUESTION,  // ?
+    OPER_RANGE,     // ..
+    OPER_ARROW,     // ->
 };
 
 enum category_keyword {
