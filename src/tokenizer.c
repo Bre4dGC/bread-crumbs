@@ -22,9 +22,9 @@ const struct keyword operators[] = {
     {"==", OPER_EQ,     C_OP}, {"!=", OPER_NEQ,     C_OP},
     {"+=", OPER_ADD,    C_OP}, {"-=", OPER_SUB,     C_OP},
     {"*=", OPER_MUL,    C_OP}, {"/=", OPER_DIV,     C_OP},
-    {"&&", OPER_AND,    C_OP}, {"||", OPER_OR,      C_OP},
-    {"<=", OPER_LTE,    C_OP}, {">=", OPER_GTE,     C_OP},
-    {"..", OPER_RANGE,  C_OP}, {"%=", OPER_MOD,     C_OP},
+    {"%=", OPER_MOD,    C_OP}, {"&&", OPER_AND,     C_OP},
+    {"||", OPER_OR,     C_OP}, {"<=", OPER_LTE,     C_OP},
+    {">=", OPER_GTE,    C_OP}, {"..", OPER_RANGE,   C_OP},
     {"->", OPER_ARROW,  C_OP}
 };
 
