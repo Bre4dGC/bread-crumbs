@@ -27,11 +27,11 @@ char* read_num(struct lexer* lex);
 char* read_str(struct lexer* lex, char quote_char);
 char read_esc_seq(struct lexer* lex);
 
-size_t input_len = 0;
-
 void read_ch(struct lexer *lex)
 {
-    if(lex->nextpos >= input_len){
+    if(!lex || !lex->input) return;
+    
+    if(lex->nextpos >= lex->input_len){
         lex->ch = 0;
     }
     else{
@@ -63,7 +63,9 @@ void skip_whitespace(struct lexer *lex)
 
 char peek_ch(const struct lexer* lex)
 {
-    if(lex->nextpos < input_len){
+    if(!lex || !lex->input) return '\0';
+    
+    if(lex->nextpos < lex->input_len){
         return lex->input[lex->nextpos];
     }
     return '\0';
@@ -71,22 +73,24 @@ char peek_ch(const struct lexer* lex)
 
 struct lexer* new_lexer(const char* input)
 {
+    if(!input) return NULL;
+    
     struct lexer* lexer = (struct lexer*)malloc(sizeof(struct lexer));
     if(!lexer) return NULL;
 
-    input_len = strlen(input);
-    lexer->input = (char*)malloc((input_len + 1) * sizeof(char));
+    lexer->input_len = strlen(input);
+    lexer->input = (char*)malloc((lexer->input_len + 1) * sizeof(char));
     if(!lexer->input){
         free(lexer);
         return NULL;
     }
 
     strcpy(lexer->input, input);
-    lexer->input[input_len] = '\0';
+    lexer->input[lexer->input_len] = '\0';
 
     lexer->pos = 0;
     lexer->nextpos = 1;
-    lexer->ch = input[0];
+    lexer->ch = lexer->input_len > 0 ? input[0] : '\0';
     lexer->line = 1;
     lexer->column = 1;
     lexer->paren_balance = 0;
@@ -131,7 +135,17 @@ void new_lexer_error(struct lexer* lex, struct error* err)
 
 struct token next_token(struct lexer* lex)
 {
-    skip_whitespace(lex);
+    if(!lex) return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "NULL_LEXER");
+    
+    while(1){
+        skip_whitespace(lex);
+        
+        if(lex->ch == '#'){
+            handle_commment(lex);
+            continue;
+        }
+        break;
+    }
 
     const char ch_str[2] ={lex->ch, '\0'};
     struct token token;
@@ -139,11 +153,12 @@ struct token next_token(struct lexer* lex)
     switch (lex->ch){
         case '+': case '-':
         case '*': case '/':
-        case '=': case '!':
-        case '<': case '>':
-        case '&': case '|':
-        case '.': case ',':
-        case ':': case ';':
+        case '%': case '=':
+        case '!': case '<':
+        case '>': case '&':
+        case '|': case '.':
+        case ',': case ':':
+        case ';': case '?':
             token = handle_oper(lex);
             break;
 
@@ -159,19 +174,11 @@ struct token next_token(struct lexer* lex)
 
         case '\0':
             if(lex->paren_balance != 0){
-                lex->ch = 0;
-                lex->pos = lex->nextpos;
-                lex->column++;
-                lex->line++;
                 struct error* err = new_error(SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_UNMATCHED_PAREN, 
                                         lex->line, lex->column, 1, lex->input);
                 new_lexer_error(lex, err);
             }
             token = new_token(CATEGORY_SERVICE, SERV_EOF, "EOF");
-            break;
-
-        case '#':
-            token = handle_commment(lex);
             break;
 
         default:
@@ -220,6 +227,7 @@ struct token handle_oper(struct lexer* lex)
         case '-': return new_token(CATEGORY_OPERATOR, OPER_MINUS,    oper);
         case '*': return new_token(CATEGORY_OPERATOR, OPER_ASTERISK, oper);
         case '/': return new_token(CATEGORY_OPERATOR, OPER_SLASH,    oper);
+        case '%': return new_token(CATEGORY_OPERATOR, OPER_PERCENT,  oper);
         case '=': return new_token(CATEGORY_OPERATOR, OPER_ASSIGN,   oper);
         case '!': return new_token(CATEGORY_OPERATOR, OPER_NOT,      oper);
         case '<': return new_token(CATEGORY_OPERATOR, OPER_LANGLE,   oper);
@@ -228,13 +236,14 @@ struct token handle_oper(struct lexer* lex)
         case ',': return new_token(CATEGORY_OPERATOR, OPER_COMMA,    oper);
         case ':': return new_token(CATEGORY_OPERATOR, OPER_COLON,    oper);
         case ';': return new_token(CATEGORY_OPERATOR, OPER_SEMICOLON,oper);
+        case '?': return new_token(CATEGORY_OPERATOR, OPER_QUESTION, oper);
         default:  return new_token(CATEGORY_SERVICE,  SERV_ILLEGAL,  oper);
     }
 }
 
-const struct keyword* find_keyword(const char* ident, const struct keyword* keywords, const size_t count)
+const struct keyword* find_keyword(const char* ident)
 {
-    for (size_t i = 0; i < count; ++i){
+    for (size_t i = 0; i < keywords_count; ++i){
         if(strcmp(ident, keywords[i].literal) == 0){
             return &keywords[i];
         }
@@ -244,6 +253,8 @@ const struct keyword* find_keyword(const char* ident, const struct keyword* keyw
 
 struct token handle_ident(struct lexer* lex)
 {
+    if(!lex) return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "NULL_LEXER");
+    
     struct token tok;
 
     if(isdigit(lex->ch)){
@@ -253,18 +264,15 @@ struct token handle_ident(struct lexer* lex)
 
     char *ident = read_ident(lex);
     if(!ident){
-        free(ident);
-        while(isalnum(lex->ch)) read_ch(lex);
+        while(isalnum(lex->ch) || lex->ch == '_') read_ch(lex); // skip remaining alphanumeric characters to recover
         return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "INVALID_IDENT");
     }
 
-    const struct keyword *kw = find_keyword(ident, keywords, keywords_count);
+    const struct keyword *kw = find_keyword(ident);
 
-    if(kw){
-        tok = new_token(kw->category, kw->type, ident);
-    }
-    else if(strcmp(ident, "true") == 0) tok = new_token(CATEGORY_LITERAL, LIT_TRUE, ident); 
-    else if(strcmp(ident, "false")== 0) tok = new_token(CATEGORY_LITERAL, LIT_FALSE,ident); 
+    if(kw) tok = new_token(kw->category, kw->type, ident);
+    else if(strcmp(ident, "true") == 0) tok = new_token(CATEGORY_LITERAL, LIT_TRUE, ident);
+    else if(strcmp(ident, "false") == 0) tok = new_token(CATEGORY_LITERAL, LIT_FALSE, ident);
     else if(strcmp(ident, "null") == 0) tok = new_token(CATEGORY_LITERAL, LIT_NULL, ident);
     else tok = new_token(CATEGORY_LITERAL, LIT_IDENT, ident);
 
@@ -354,15 +362,12 @@ struct token handle_str(struct lexer* lex)
 
 struct token handle_commment(struct lexer* lex)
 {
-    while (lex->ch != '\n' && lex->ch != '\0'){
-        read_ch(lex);
-    }
-    skip_whitespace(lex);
-    if(lex->ch == '\n'){
-        read_ch(lex);
-        lex->line++;
-        lex->column = 1;
-    }
+    if(!lex) return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "NULL_LEXER");
+    
+    read_ch(lex); // skip '#'
+    
+    while (lex->ch != '\n' && lex->ch != '\0') read_ch(lex); // read until end
+    
     return new_token(CATEGORY_SERVICE, SERV_COMMENT, "COMMENT");
 }
 
@@ -433,17 +438,14 @@ char* read_num(struct lexer* lex)
 
     if(lex->ch == '0'){
         char next = peek_ch(lex);
-        if(next == 'x' || next == 'X'){
-            buffer[length++] = lex->ch;
-            read_ch(lex);
-            buffer[length++] = lex->ch;
-            read_ch(lex);
+        if(next == 'x'){
+            buffer[length++] = lex->ch; read_ch(lex);
+            buffer[length++] = lex->ch; read_ch(lex);
             is_hex = true;
-        } else if(next == 'b' || next == 'B'){
-            buffer[length++] = lex->ch;
-            read_ch(lex);
-            buffer[length++] = lex->ch;
-            read_ch(lex);
+        }
+        else if(next == 'b'){
+            buffer[length++] = lex->ch; read_ch(lex);
+            buffer[length++] = lex->ch; read_ch(lex);
             is_bin = true;
         }
     }
@@ -455,13 +457,16 @@ char* read_num(struct lexer* lex)
         bool accept = false;
         if(is_hex){
             if(isxdigit(ch)) accept = true;
-        } else if(is_bin){
+        }
+        else if(is_bin){
             if(ch == '0' || ch == '1') accept = true;
-        } else{
+        }
+        else{
             if(ch == '.' && !is_float){
                 is_float = true;
                 accept = true;
-            } else if(isdigit(ch)){
+            }
+            else if(isdigit(ch)){
                 accept = true;
             }
         }
@@ -528,17 +533,19 @@ char* read_num(struct lexer* lex)
 
 char read_esc_seq(struct lexer* lex)
 {
-    // TODO: extend escape sequence with numbers
+    if(!lex) return '\0';
+    
     char esc_seq = '\0';
     switch (lex->ch){
-        case 'n': esc_seq = '\n';
-        case 't': esc_seq = '\t';
-        case 'r': esc_seq = '\r';
-        case '"': esc_seq = '\"';
-        case '\'':esc_seq = '\'';
-        case '\\':esc_seq = '\\';
-        case '0': esc_seq = '\0';
+        case 'n': esc_seq = '\n'; break;
+        case 't': esc_seq = '\t'; break;
+        case 'r': esc_seq = '\r'; break;
+        case '"': esc_seq = '\"'; break;
+        case '\\':esc_seq = '\\'; break;
+        case '\'':esc_seq = '\''; break;
+        case '0': esc_seq = '\0'; break;
         default:
+            esc_seq = lex->ch;
             struct error* err = new_error(SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_ESCAPE_SEQUENCE, 
                                     lex->line, lex->column, 1, lex->input);
             new_lexer_error(lex, err);
