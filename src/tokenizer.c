@@ -25,7 +25,7 @@ const struct keyword operators[] = {
     {"%=", OPER_MOD,    C_OP}, {"&&", OPER_AND,     C_OP},
     {"||", OPER_OR,     C_OP}, {"<=", OPER_LTE,     C_OP},
     {">=", OPER_GTE,    C_OP}, {"..", OPER_RANGE,   C_OP},
-    {"->", OPER_ARROW,  C_OP}
+    {"=>", OPER_ARROW,  C_OP}
 };
 
 const struct keyword keywords[] = {

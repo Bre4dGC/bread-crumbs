@@ -76,6 +76,9 @@ void free_ast(struct ast_node* node)
             }
             break;
 
+        case NODE_BREAK:
+            break;
+
         case NODE_ARRAY:
             if(node->array_decl){
                 for (size_t i = 0; i < node->array_decl->count; i++){

@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "errors.h"
+// #include "highlight.h"
 #include "utils.h"
 
 const char* error_msg(const enum error_type_tag type_tag, const int error_code)
@@ -25,7 +26,7 @@ const char* error_msg(const enum error_type_tag type_tag, const int error_code)
             switch ((enum parser_error_type)error_code) {
                 case PARSER_ERROR_UNEXPECTED_TOKEN:     return "Unexpected token";
                 case PARSER_ERROR_INVALID_EXPRESSION:   return "Invalid expression";
-                case PARSER_ERROR_EXPECTED_NAME:        return "Expected name";
+                case PARSER_ERROR_EXPECTED_IDENTIFIER:        return "Expected name";
                 case PARSER_ERROR_EXPECTED_TYPE:        return "Expected type";
                 case PARSER_ERROR_EXPECTED_PAREN:       return "Expected parentheses";
                 case PARSER_ERROR_EXPECTED_OPERATOR:    return "Expected operator";
@@ -86,9 +87,9 @@ struct error* new_error(
 
 void print_error(const struct error* err)
 {
-    if (!err) return;
-
-    printf("\n|\t%s\n", err->input ? err->input : "");
+    if (!err || !err->input) return;
+    
+    printf("\033[1m%s\033[0m\n", err->input);
 
     printf("|\t%*s", err->column != 0 ? (int)err->column - 1 : 0, "");
 

@@ -29,16 +29,12 @@ int main(int argc, char *argv[])
     }
 
     // run mode
-    if(strcmp(argv[1], "run") == 0) {
+    if(argv[1] != NULL) {
         if(argc < 3) {
             fprintf(stderr, "Source file required for run mode.\n");
             return EXIT_FAILURE;
         }
         return run_mode(argv[2]);
-    }
-    else {
-        fprintf(stderr, "Unknown mode: %s. Use 'run'.\n", argv[1]);
-        return EXIT_FAILURE;
     }
     
     return repl_mode();
@@ -54,7 +50,8 @@ int repl_mode(void)
             if (feof(stdin)) {
                 printf("\nExiting REPL mode.\n");
                 break;
-            } else {
+            }
+            else {
                 perror("Error reading input");
                 continue;
             }

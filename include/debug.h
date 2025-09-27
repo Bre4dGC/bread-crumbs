@@ -79,6 +79,12 @@ static inline void ast_print(struct ast_node* node, int indent)
             printf("Return:\n");
             ast_print(node->return_stmt.body, indent + 1);
             break;
+        case NODE_BREAK:
+            printf("Break:\n");
+            break;
+        case NODE_CONTINUE:
+            printf("Continue:\n");
+            break;
         case NODE_ARRAY:
             printf("Array:\n");
             for (size_t i = 0; i < node->array_decl->count; i++){

@@ -15,5 +15,5 @@ struct parser {
 };
 
 struct parser* new_parser(struct lexer* lexer);
-struct ast_node* parse_expr(struct parser* parser);
+struct ast_node* parse_expr(struct parser* pars);
 void free_parser(struct parser* parser);
