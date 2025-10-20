@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ast.h"
-#include "lexer.h"
-#include "vm.h"
-#include "errors.h"
-#include "debug.h"
+#include "compiler/parser/ast.h"
+#include "compiler/lexer.h"
+#include "compiler/vm.h"
+#include "compiler/errors.h"
+#include "utils/debug.h"
 
 struct ast_node* new_ast(enum node_type type)
 {
@@ -13,7 +13,7 @@ struct ast_node* new_ast(enum node_type type)
     if(!node) return NULL;
     node->type = type;
     node->line = 0;
-    
+
     return node;
 }
 

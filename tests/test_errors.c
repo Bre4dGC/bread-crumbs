@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "errors.h"
+#include "compiler/errors.h"
 
 int main(void) {
     struct error* err = new_error(

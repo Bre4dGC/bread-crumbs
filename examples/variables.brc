@@ -1,0 +1,15 @@
+import collection
+
+# variables (type is automatically inferred if not specified)
+var x = 42  // int32
+var name = "Bread" # str
+
+# constants (imutable variables)
+const PI: float64 = 3.14159
+const MAX_USERS: int32 = 1000
+
+# collection
+var numbers: list<int32> = [1, 2, 3]
+var dict: map<string, int32> = {"one": 1, "two": 2, "three": 3}
+var vec: vector<int32> = [1, 2, 3]
+var tuple: tuple<int32, str, float64> = (1, "one", 3.14)

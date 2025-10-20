@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "lexer.h"
-#include "vm.h"
-#include "ast.h"
+#include "compiler/lexer.h"
+#include "compiler/parser/ast.h"
+#include "compiler/vm.h"
 
 static inline const char* type_to_str(const struct token* tok)
 {

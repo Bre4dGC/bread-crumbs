@@ -58,6 +58,7 @@ struct error {
     size_t length;
     char* input;
     char* message;
+    char* file;
 };
 
 struct error* new_error(

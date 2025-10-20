@@ -11,7 +11,7 @@ enum category_operator{
     OPER_ASTERISK,  // * (multiplication)
     OPER_SLASH,     // / (division)
     OPER_PERCENT,   // % (modulo)
-    
+
     // assignment operators
     OPER_ASSIGN,    // =
     OPER_ADD,       // +=
@@ -19,7 +19,7 @@ enum category_operator{
     OPER_MUL,       // *=
     OPER_DIV,       // /=
     OPER_MOD,       // %=
-    
+
     // comparison operators
     OPER_EQ,        // ==
     OPER_NEQ,       // !=
@@ -27,16 +27,16 @@ enum category_operator{
     OPER_RANGLE,    // >
     OPER_LTE,       // <=
     OPER_GTE,       // >=
-    
+
     // logical operators
     OPER_AND,       // &&
     OPER_OR,        // ||
     OPER_NOT,       // !
-    
+
     // increment/decrement
     OPER_INCREM,    // ++
     OPER_DECREM,    // --
-    
+
     // punctuation
     OPER_DOT,       // .
     OPER_COMMA,     // ,

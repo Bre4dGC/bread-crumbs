@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "ast.h"
-#include "errors.h"
+#include "compiler/parser/ast.h"
+#include "compiler/errors.h"
 
 struct parser {
     struct lexer* lexer;

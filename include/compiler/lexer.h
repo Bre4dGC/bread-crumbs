@@ -1,8 +1,8 @@
 #pragma once
 #include <stddef.h>
 
-#include "tokenizer.h"
-#include "errors.h"
+#include "compiler/lexer/tokenizer.h"
+#include "compiler/errors.h"
 
 struct lexer {
     char* input;

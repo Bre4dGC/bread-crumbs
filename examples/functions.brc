@@ -1,0 +1,15 @@
+func simple_function()
+{
+    # do something
+}
+
+func get_number() => int 
+{
+    return 42
+}
+
+func main():
+{
+    simple_function()
+    var x = return_function()
+}

@@ -1,8 +1,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "vm.h"
-#include "debug.h"
+#include "compiler/vm.h"
+#include "utils/debug.h"
 
 static inline int64_t read_i64(struct vm *vm)
 {

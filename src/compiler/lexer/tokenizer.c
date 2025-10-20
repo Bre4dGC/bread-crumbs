@@ -4,9 +4,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "tokenizer.h"
-#include "utils.h"
-#include "debug.h"
+#include "compiler/lexer/tokenizer.h"
+#include "utils/utils.h"
+#include "utils/debug.h"
 
 #define C_OP (CATEGORY_OPERATOR)
 #define C_KW (CATEGORY_KEYWORD)
@@ -40,17 +40,17 @@ const struct keyword keywords[] = {
     {"enum",    KW_ENUM,    C_KW}, {"union",    KW_UNION,     C_KW},
     {"import",  KW_IMPORT,  C_KW}, {"type",     KW_TYPE,      C_KW},
     {"trait",   KW_TRAIT,   C_KW}, {"try",      KW_TRY,       C_KW},
-    {"catch",   KW_CATCH,   C_KW}, {"async",    KW_ASYNC,     C_KW},
-    {"await",   KW_AWAIT,   C_KW}, {"test",     KW_TEST,      C_KW},
-    {"assert",  KW_ASSERT,  C_KW}, {"verify",   KW_VERIFY,    C_KW},
-    {"solve",   KW_SOLVE,   C_KW}, {"where",    KW_WHERE,     C_KW},    
-    {"snapshot",KW_SNAPSHOT,C_KW}, {"rollback", KW_ROLLBACK,  C_KW},
-    {"commit",  KW_COMMIT,  C_KW}, {"fork",     KW_FORK,      C_KW},
-    {"merge",   KW_MERGE,   C_KW}, {"revert",   KW_REVERT,    C_KW},
-    {"push",    KW_PUSH,    C_KW}, {"pull",     KW_PULL,      C_KW},
-    {"clone",   KW_CLONE,   C_KW}, {"simulate", KW_SIMULATE,  C_KW},
-    {"choose",  KW_CHOOSE,  C_KW}, {"scenarios",KW_SCENARIOS, C_KW},  
-    {"branch",  KW_BRANCH,  C_KW},  
+    {"catch",   KW_CATCH,   C_KW}, // {"async",    KW_ASYNC,     C_KW},
+    // {"await",   KW_AWAIT,   C_KW}, {"test",     KW_TEST,      C_KW},
+    // {"assert",  KW_ASSERT,  C_KW}, {"verify",   KW_VERIFY,    C_KW},
+    // {"solve",   KW_SOLVE,   C_KW}, {"where",    KW_WHERE,     C_KW},    
+    // {"snapshot",KW_SNAPSHOT,C_KW}, {"rollback", KW_ROLLBACK,  C_KW},
+    // {"commit",  KW_COMMIT,  C_KW}, {"fork",     KW_FORK,      C_KW},
+    // {"merge",   KW_MERGE,   C_KW}, {"revert",   KW_REVERT,    C_KW},
+    // {"push",    KW_PUSH,    C_KW}, {"pull",     KW_PULL,      C_KW},
+    // {"clone",   KW_CLONE,   C_KW}, {"simulate", KW_SIMULATE,  C_KW},
+    // {"choose",  KW_CHOOSE,  C_KW}, {"scenarios",KW_SCENARIOS, C_KW},  
+    // {"branch",  KW_BRANCH,  C_KW},  
 
     /* data types */
     {"int",     DT_INT,    C_DT}, {"uint",    DT_UINT,    C_DT},
