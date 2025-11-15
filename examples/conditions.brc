@@ -1,3 +1,12 @@
-if () {
-
+if(condition)
+{
+    # something
+}
+elif(other_condition)
+{
+    # something else
+}
+else
+{
+    # another thing
 }

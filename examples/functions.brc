@@ -1,15 +1,33 @@
 func simple_function()
 {
-    # do something
+    print("This is a simple function.")
 }
 
-func get_number() => int 
+func get_float() : float
 {
-    return 42
+    return 3.14
 }
 
-func main():
+func get_string() : str
+{
+    return "Hello, World!"
+}
+
+func get_array() : int[5]
+{
+    return {1, 2, 3, 4, 5}
+}
+
+func main() : int
 {
     simple_function()
-    var x = return_function()
+    var x = get_float()
+    var y = get_string()
+    var arr = get_array()
+
+    var some_int: any = 52
+    var some_str: any = "yado aura farmer"
+    var some_some: any = if(yado.aura > 10000000) "daddy" else +1000
+
+    return 0
 }

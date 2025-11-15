@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-#include "compiler/parser.h"
+#include "compiler/frontend/parser.h"
+#include "common/file_reader.h"
+#include "common/utils.h"
 
-#ifdef DEBUG
-#include "utils/debug.h"
-#endif
+char* filepath;
 
 static int test_count = 0;
 static int test_passed = 0;
@@ -40,9 +40,8 @@ void run_test(const char* test_name, const char* input, bool should_succeed)
         }
         else{
             printf("FAIL: Expected success but parsing failed\n");
-            for(size_t i = 0; i < pars->errors_count; ++i){
-                print_error(pars->errors[i]);
-            }
+            for(size_t i = 0; i < lex->errors_count; ++i) print_error(lex->errors[i]);
+            for(size_t i = 0; i < pars->errors_count; ++i) print_error(pars->errors[i]);
         }
     }
     else{
@@ -57,6 +56,7 @@ void run_test(const char* test_name, const char* input, bool should_succeed)
     }
     
     free_parser(pars);
+    free(filepath);
     printf("\n");
 }
 
@@ -66,8 +66,8 @@ int main(void)
 
     struct timeval start, end;
     gettimeofday(&start, NULL);
-    
-    run_test("Function Declaration", "func main() => int { return 0; }", true);
+
+    run_test("Function Declaration", "func main() : int { return 0; }", true);
     run_test("Variable Declaration", "var x: int = 42", true);
     run_test("Array Literal", "[1, 2, 3, 4]", true);
     run_test("Function Call", "print(\"hello\")", true);
@@ -79,15 +79,14 @@ int main(void)
     run_test("If-Elif-Else Statement", "if (x > 0) { return x; } elif (x < 0) { return -x; } else { return 0; }", true);
     run_test("Union Declaration", "union Color { Red, Green, Blue }", true);
 
+    /* FIX: The match and trait statements is not work yet */
+    // run_test("Match Statement", "match (x) { 1 => print(\"one\"), 2 => print(\"two\"), _ => print(\"other\") }", true);
+    // run_test("Trait Declaration", "trait Printable { fn print() }", true);
+
     gettimeofday(&end, NULL);
-    double microseconds = (end.tv_sec - start.tv_sec) * 1000000.0 + 
-                        (end.tv_usec - start.tv_usec);
+    double microseconds = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_usec - start.tv_usec);
     
     printf("Processed in %.2f microseconds\n", microseconds);
-
-    /* FIX: The match and trait statements is not work yet */
-    // run_test("Match Statement", "match (x) { 1 => println(\"one\"), 2 => println(\"two\"), _ => println(\"other\") }", true);
-    // run_test("Trait Declaration", "trait Printable { fn print() }", true);
     
     printf("\n=== Test Results ===\n");
     printf("Tests run: %d\n", test_count);
@@ -96,10 +95,10 @@ int main(void)
     
     if(test_passed == test_count){
         printf("All tests passed!\n");
-        return 0;
+        return EXIT_SUCCESS;
     }
     else{
         printf("Some tests failed.\n");
-        return 1;
+        return EXIT_FAILURE;
     }
 }

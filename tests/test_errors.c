@@ -2,9 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "compiler/errors.h"
+#include "compiler/diagnostic/errors.h"
+#include "common/utils.h"
 
-int main(void) {
+char* filepath;
+
+int main(int argc, char** argv)
+{
+    (void)argc; // Unused parameter
+    filepath = util_strdup(argv[0]);
+
     struct error* err = new_error(
         SEVERITY_ERROR,
         ERROR_TYPE_LEXER,
@@ -17,10 +24,11 @@ int main(void) {
     if(err){
         print_error(err);
         free_error(err);
+        free(filepath);
     }
     else {
         printf("Failed to create error\n");
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

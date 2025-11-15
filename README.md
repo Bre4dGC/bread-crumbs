@@ -1,7 +1,7 @@
 # Bread Crumbs
 
-<div align="center">
-    <img src="logo.jpg" alt="BreadCrumbs Logo" style="border-radius: 50px;">
+<div align="center"> 
+    <img src="logo.jpg" alt="Bread Crumbs Logo" style="border-radius: 50px;">
 </div>
 
 Bread Crumbs is a modern programming language designed for **testing**, **simulations**, **scientific computing**, **AI planning**, and **rapid prototyping**. With its unique features like declarative problem-solving (`solve`), scenario simulation (`simulate`), state management (`snapshot`/`rollback`), and execution tracing (`trace`), Bread Crumbs empowers developers to tackle complex problems with ease.
@@ -9,13 +9,16 @@ Bread Crumbs is a modern programming language designed for **testing**, **simula
 ## Features
 
 - **Declarative Programming**: Use `solve` to define constraints and let the language find solutions.
+
   ```brc
   solve (x: int) {
       where x * x == 16
   }
   print(x) // Outputs: 4 or -4
   ```
+
 - **Simulation**: Simulate scenarios with `simulate` and manage state with `snapshot`/`rollback`.
+
   ```brc
   snapshot state
   simulate scenarios {
@@ -25,7 +28,9 @@ Bread Crumbs is a modern programming language designed for **testing**, **simula
       }
   }
   ```
+
 - **Build-in Testing and Fork the branches**
+
   ```brc
   test find_numbers {
       solve (x, y: int) {
@@ -49,23 +54,27 @@ Bread Crumbs is a modern programming language designed for **testing**, **simula
 
   run find_numbers
   ```
+
 - **Tracing**: Debug and analyze with `trace` for transparent execution.
 
 ## Installation
 
 1. **Clone the Repository**:
+
    ```bash
    git clone https://github.com/Bre4dGC/bread-crumbs.git
    cd bread-crumbs
    ```
 
 2. **Build from Source**:
+
    ```bash
    make
    sudo make install
    ```
 
 3. **Verify Installation**:
+
    ```bash
    crumbs --version
    ```

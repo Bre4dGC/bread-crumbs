@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include "compiler/vm.h"
-#include "utils/debug.h"
+#include "common/debug.h"
 
 static inline int64_t read_i64(struct vm *vm)
 {

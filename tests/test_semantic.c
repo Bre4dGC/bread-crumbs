@@ -1,6 +1,12 @@
-#include "compiler/semantic.h"
+#include "compiler/middle/semantic.h"
+#include "common/utils.h"
 
-int main(void)
+char* filepath;
+
+int main(int argc, char** argv)
 {
-    return 0;
+    (void)argc;
+    filepath = util_strdup(argv[0]);
+    free(filepath);
+    return EXIT_SUCCESS;
 }

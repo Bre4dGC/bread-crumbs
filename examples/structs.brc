@@ -1,0 +1,20 @@
+enum Direction
+{
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+}
+
+struct Person
+{
+    var name: str
+    var age: int
+    var height: float
+}
+
+func main()
+{
+    Person person = {"Bread", 16, 170}
+    Direction person_direction = Direction.NAHUI
+}
