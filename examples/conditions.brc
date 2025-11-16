@@ -2,11 +2,11 @@ if(condition)
 {
     # something
 }
-elif(other_condition)
+elif(another_conditioin)
 {
-    # something else
+
 }
 else
 {
-    # another thing
+
 }

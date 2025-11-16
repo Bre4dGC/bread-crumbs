@@ -1,4 +1,5 @@
 #pragma once
+#include <stddef.h>
 #include <stdint.h>
 
 enum op_code{
@@ -38,7 +39,7 @@ enum op_code{
     OP_JUMP_IFNOT,  // jmp_ifnot <label>
 };
 
-struct vm {
+struct virtual_machine {
     uint8_t* code;
     size_t capacity;
     int64_t* stack;
@@ -47,4 +48,4 @@ struct vm {
     size_t sp;      // stack pointer
 };
 
-void vm_execute(struct vm* vm);
+void vm_execute(struct virtual_machine* vm);

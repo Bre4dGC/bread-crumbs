@@ -1,4 +1,4 @@
-#include "compiler/middle/semantic.h"
+#include "compiler/frontend/semantic.h"
 
 bool check_node(struct semantic_context* ctx, struct ast_node* node);
 bool check_function(struct semantic_context* ctx, struct ast_node* node);
@@ -24,8 +24,8 @@ bool check_enum(struct semantic_context* ctx, struct ast_node* node);
 struct type* infer_type(struct semantic_context* ctx, struct ast_node* node);
 
 bool check_type_compatibility(struct semantic_context* ctx, struct ast_node* node, struct type* expected, struct type* actual);
-struct type* get_binary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* left, struct type* right);
-struct type* get_unary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* operand);
+// struct type* get_binary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* left, struct type* right);
+// struct type* get_unary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* operand);
 
 bool all_paths_return(struct ast_node* node);
 bool is_unreachable_code(struct ast_node* node);
@@ -423,8 +423,8 @@ bool check_binary_op(struct semantic_context* ctx, struct ast_node* node)
     }
     
     // check type compatibility for operation
-    enum op_code op = node->bin_op.code;
-    (void)op;  // TODO: use for operator-specific checks
+    // enum op_code op = node->bin_op.code;
+    // (void)op;  // TODO: use for operator-specific checks
     
     if(!types_compatible(left_type, right_type)){
         // semantic_error(ctx, node, "Type mismatch in binary operation: %s and %s", type_to_string(left_type), type_to_string(right_type));
@@ -574,11 +574,11 @@ struct type* infer_type(struct semantic_context* ctx, struct ast_node* node)
             return sym ? sym->type : type_error;
         }
         
-        case NODE_BIN_OP:
-            return get_binary_op_result_type(ctx, node->bin_op.code, infer_type(ctx, node->bin_op.left), infer_type(ctx, node->bin_op.right));
+        // case NODE_BIN_OP:
+        //     return get_binary_op_result_type(ctx, node->bin_op.code, infer_type(ctx, node->bin_op.left), infer_type(ctx, node->bin_op.right));
         
-        case NODE_UNARY_OP:
-            return get_unary_op_result_type(ctx, node->unary_op.code, infer_type(ctx, node->unary_op.right));
+        // case NODE_UNARY_OP:
+        //     return get_unary_op_result_type(ctx, node->unary_op.code, infer_type(ctx, node->unary_op.right));
         
         case NODE_FUNC_CALL: {
             struct symbol* func = lookup_symbol(ctx->symbols, node->func_call.name);
@@ -601,27 +601,27 @@ bool check_type_compatibility(struct semantic_context* ctx, struct ast_node* nod
     return types_compatible(expected, actual);
 }
 
-struct type* get_binary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* left, struct type* right)
-{
-    (void)ctx;
-    (void)op;
+// struct type* get_binary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* left, struct type* right)
+// {
+//     (void)ctx;
+//     (void)op;
     
-    if(!left || !right) return type_error;
+//     if(!left || !right) return type_error;
     
-    // For now, simple rule: result is left type if compatible
-    if(types_compatible(left, right)){
-        return left;
-    }
+//     // For now, simple rule: result is left type if compatible
+//     if(types_compatible(left, right)){
+//         return left;
+//     }
     
-    return type_error;
-}
+//     return type_error;
+// }
 
-struct type* get_unary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* operand)
-{
-    (void)ctx;
-    (void)op;
-    return operand;  // For now, result type = operand type
-}
+// struct type* get_unary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* operand)
+// {
+//     (void)ctx;
+//     (void)op;
+//     return operand;  // For now, result type = operand type
+// }
 
 
 bool all_paths_return(struct ast_node* node)

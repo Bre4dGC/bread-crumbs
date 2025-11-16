@@ -3,8 +3,8 @@
 #include <stddef.h>
 
 #include "compiler/frontend/ast.h"
-#include "compiler/middle/types.h"
-#include "compiler/middle/symbol.h"
+#include "compiler/frontend/types.h"
+#include "compiler/frontend/symbol.h"
 
 enum semantic_phase {
     PHASE_DECLARE, // register symbols

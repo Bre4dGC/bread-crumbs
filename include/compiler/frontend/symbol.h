@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "compiler/frontend/ast.h"
-#include "compiler/middle/types.h"
+#include "compiler/frontend/types.h"
 
 enum symbol_kind {
     SYMBOL_VAR,

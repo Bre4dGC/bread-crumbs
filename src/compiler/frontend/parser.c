@@ -5,6 +5,7 @@
 #include "compiler/frontend/parser.h"
 #include "common/utils.h"
 
+struct ast_node* parse_expr(struct parser* pars);
 struct ast_node* parse_operator_expr(struct parser* pars);
 struct ast_node* parse_keyword_expr(struct parser* pars);
 struct ast_node* parse_paren_expr(struct parser* pars);
@@ -33,10 +34,10 @@ struct ast_node* parse_match(struct parser* pars);
 struct ast_node* parse_trait(struct parser* pars);
 struct ast_node* parse_try_catch(struct parser* pars);
 struct ast_node* parse_import(struct parser* pars);
-struct ast_node* parse_test(struct parser* pars);
-struct ast_node* parse_fork(struct parser* pars);
-struct ast_node* parse_solve(struct parser* pars);
-struct ast_node* parse_simulate(struct parser* pars);
+// struct ast_node* parse_test(struct parser* pars);
+// struct ast_node* parse_fork(struct parser* pars);
+// struct ast_node* parse_solve(struct parser* pars);
+// struct ast_node* parse_simulate(struct parser* pars);
 
 typedef struct ast_node* (*parse_func_t)(struct parser*);
 
@@ -52,13 +53,13 @@ parse_func_t parse_table[] = {
     [KW_IMPL]     = parse_trait,
     [KW_TRY]      = parse_try_catch,
     [KW_IMPORT]   = parse_import,
-    [KW_TEST]     = parse_test,
-    [KW_FORK]     = parse_fork,
-    [KW_SOLVE]    = parse_solve,
-    [KW_SIMULATE] = parse_simulate,
     [KW_RETURN]   = parse_return,
     [KW_BREAK]    = parse_break,
     [KW_CONTINUE] = parse_continue,
+    // [KW_TEST]     = parse_test,
+    // [KW_FORK]     = parse_fork,
+    // [KW_SOLVE]    = parse_solve,
+    // [KW_SIMULATE] = parse_simulate,
 };
 
 struct parser* new_parser(struct lexer* lexer)
@@ -120,7 +121,6 @@ void free_parser(struct parser* parser)
         parser->errors = NULL;
         parser->errors_count = 0;
     }
-
     if(parser->lexer) free_lexer(parser->lexer);
     free(parser);
 }
@@ -180,6 +180,18 @@ bool consume_token(
     return true;
 }
 
+struct ast_node* parse_program(struct parser* pars)
+{
+    struct ast_node* ast = NULL;
+
+    while(pars->current.category != CATEGORY_SERVICE || pars->current.type_service != SERV_EOF) {
+        ast = parse_expr(pars);
+        if(!ast) return NULL;
+    }
+
+    return ast;
+}
+
 struct ast_node* parse_expr(struct parser* pars)
 {
     if(!pars) return NULL;
@@ -192,7 +204,6 @@ struct ast_node* parse_expr(struct parser* pars)
         case CATEGORY_LITERAL:  return parse_bin_op(pars, 0);
         default: return NULL;
     }
-    printf("\nNULL\n");
 
     return NULL;
 }
@@ -461,7 +472,7 @@ struct ast_node* parse_var_decl(struct parser* pars)
 
     node->var_decl->modif = MOD_VAR;
     node->var_decl->name = NULL;
-    node->var_decl->dtype = DT_VOID;
+    node->var_decl->dtype = DT_INT;
     node->var_decl->value = NULL;
 
     // optional modifier
@@ -713,36 +724,36 @@ bool is_binary_operator(enum category_operator op)
     return precedence > 0 && op != OPER_SEMICOLON && op != OPER_COMMA;
 }
 
-enum op_code operator_to_opcode(enum category_operator op)
-{
-    switch(op){
-        case OPER_PLUS: case OPER_ADD:
-            return OP_ADD;
+// enum op_code operator_to_opcode(enum category_operator op)
+// {
+//     switch(op){
+//         case OPER_PLUS: case OPER_ADD:
+//             return OP_ADD;
 
-        case OPER_MINUS: case OPER_SUB:
-            return OP_SUB;
+//         case OPER_MINUS: case OPER_SUB:
+//             return OP_SUB;
 
-        case OPER_ASTERISK: case OPER_MUL:
-            return OP_MUL;
+//         case OPER_ASTERISK: case OPER_MUL:
+//             return OP_MUL;
 
-        case OPER_SLASH: case OPER_DIV:
-            return OP_DIV;
+//         case OPER_SLASH: case OPER_DIV:
+//             return OP_DIV;
 
-        case OPER_INCREM: case OPER_DECREM:
-            return OP_DUP;
+//         case OPER_INCREM: case OPER_DECREM:
+//             return OP_DUP;
 
-        case OPER_EQ:     return OP_EQ;
-        case OPER_NEQ:    return OP_NEQ;
-        case OPER_LANGLE: return OP_LT;
-        case OPER_RANGLE: return OP_GT;
-        case OPER_AND:    return OP_AND;
-        case OPER_OR:     return OP_OR;
-        case OPER_NOT:    return OP_NOT;
-        case OPER_ASSIGN: return OP_STORE;
+//         case OPER_EQ:     return OP_EQ;
+//         case OPER_NEQ:    return OP_NEQ;
+//         case OPER_LANGLE: return OP_LT;
+//         case OPER_RANGLE: return OP_GT;
+//         case OPER_AND:    return OP_AND;
+//         case OPER_OR:     return OP_OR;
+//         case OPER_NOT:    return OP_NOT;
+//         case OPER_ASSIGN: return OP_STORE;
         
-        default: return OP_PUSH;
-    }
-}
+//         default: return OP_PUSH;
+//     }
+// }
 
 struct ast_node* parse_postfix(struct parser* pars)
 {
@@ -760,7 +771,7 @@ struct ast_node* parse_postfix(struct parser* pars)
             }
             
             postfix->unary_op.right = expr;
-            postfix->unary_op.code = operator_to_opcode(op);
+            // postfix->unary_op.code = operator_to_opcode(op);
             postfix->unary_op.is_postfix = true;
             
             advance_token(pars);
@@ -815,7 +826,7 @@ struct ast_node* parse_bin_op(struct parser* pars, int min_precedence)
 
         bin_op->bin_op.left = left;
         bin_op->bin_op.right = right;
-        bin_op->bin_op.code = operator_to_opcode(op);
+        // bin_op->bin_op.code = operator_to_opcode(op);
 
         left = bin_op;
     }
@@ -835,7 +846,7 @@ struct ast_node* parse_unary_op(struct parser* pars)
         return NULL;
     }
 
-    node->unary_op.code = operator_to_opcode(op_type);
+    // node->unary_op.code = operator_to_opcode(op_type);
     node->unary_op.is_postfix = false;
     advance_token(pars);
 
@@ -1859,183 +1870,183 @@ struct ast_node* parse_import(struct parser* pars)
     return node;
 }
 
-struct ast_node* parse_test(struct parser* pars)
-{
-    struct ast_node* node = new_ast(NODE_TEST);
-    if(!node) return NULL;
+// struct ast_node* parse_test(struct parser* pars)
+// {
+//     struct ast_node* node = new_ast(NODE_TEST);
+//     if(!node) return NULL;
 
-    node->test_stmt = (struct node_test*)malloc(sizeof(struct node_test));
-    if(!node->test_stmt){
-        free_ast(node);
-        return NULL;
-    }
-    node->test_stmt->name = NULL;
-    node->test_stmt->body = NULL;
+//     node->test_stmt = (struct node_test*)malloc(sizeof(struct node_test));
+//     if(!node->test_stmt){
+//         free_ast(node);
+//         return NULL;
+//     }
+//     node->test_stmt->name = NULL;
+//     node->test_stmt->body = NULL;
 
-    advance_token(pars); // skip 'test'
+//     advance_token(pars); // skip 'test'
 
-    // expect name
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
-    }
-    node->test_stmt->name = util_strdup(pars->current.literal);
-    advance_token(pars);
+//     // expect name
+//     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
+//         struct error* err = new_error(
+//             SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
+//             pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+//         );
+//         new_parser_error(pars, err);
+//         free_ast(node);
+//         return NULL;
+//     }
+//     node->test_stmt->name = util_strdup(pars->current.literal);
+//     advance_token(pars);
 
-    // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+//     // expect '{'
+//     if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
-    // parse test block
-    node->test_stmt->body = parse_block(pars);
-    if(!node->test_stmt->body){
-        free_ast(node);
-        return NULL;
-    }
+//     // parse test block
+//     node->test_stmt->body = parse_block(pars);
+//     if(!node->test_stmt->body){
+//         free_ast(node);
+//         return NULL;
+//     }
 
-    // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+//     // expect '}'
+//     if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
-    return node;
-}
+//     return node;
+// }
 
-struct ast_node* parse_fork(struct parser* pars)
-{
-    struct ast_node* node = new_ast(NODE_FORK);
-    if(!node) return NULL;
+// struct ast_node* parse_fork(struct parser* pars)
+// {
+//     struct ast_node* node = new_ast(NODE_FORK);
+//     if(!node) return NULL;
 
-    node->fork_stmt = (struct node_fork*)malloc(sizeof(struct node_fork));
-    if(!node->fork_stmt){
-        free_ast(node);
-        return NULL;
-    }
-    node->fork_stmt->keyw = KW_FORK;
-    node->fork_stmt->name = NULL;
-    node->fork_stmt->body = NULL;
+//     node->fork_stmt = (struct node_fork*)malloc(sizeof(struct node_fork));
+//     if(!node->fork_stmt){
+//         free_ast(node);
+//         return NULL;
+//     }
+//     node->fork_stmt->keyw = KW_FORK;
+//     node->fork_stmt->name = NULL;
+//     node->fork_stmt->body = NULL;
 
-    advance_token(pars); // skip 'fork'
+//     advance_token(pars); // skip 'fork'
 
-    // expect name
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
-    }
-    node->fork_stmt->name = util_strdup(pars->current.literal);
-    advance_token(pars);
+//     // expect name
+//     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
+//         struct error* err = new_error(
+//             SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
+//             pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+//         );
+//         new_parser_error(pars, err);
+//         free_ast(node);
+//         return NULL;
+//     }
+//     node->fork_stmt->name = util_strdup(pars->current.literal);
+//     advance_token(pars);
 
-    // expect '{'
-    node->fork_stmt->body = parse_block(pars);
-    if(!node->fork_stmt->body){
-        free_ast(node);
-        return NULL;
-    }
+//     // expect '{'
+//     node->fork_stmt->body = parse_block(pars);
+//     if(!node->fork_stmt->body){
+//         free_ast(node);
+//         return NULL;
+//     }
 
-    return node;
-}
+//     return node;
+// }
 
-struct ast_node* parse_solve(struct parser* pars)
-{
-    struct ast_node* node = new_ast(NODE_SOLVE);
-    if(!node) return NULL;
+// struct ast_node* parse_solve(struct parser* pars)
+// {
+//     struct ast_node* node = new_ast(NODE_SOLVE);
+//     if(!node) return NULL;
 
-    node->solve_stmt = (struct node_solve*)malloc(sizeof(struct node_solve));
-    if(!node->solve_stmt){
-        free_ast(node);
-        return NULL;
-    }
-    node->solve_stmt->params = NULL;
-    node->solve_stmt->param_count = 0;
-    node->solve_stmt->param_capacity = 0;
-    node->solve_stmt->body = NULL;
+//     node->solve_stmt = (struct node_solve*)malloc(sizeof(struct node_solve));
+//     if(!node->solve_stmt){
+//         free_ast(node);
+//         return NULL;
+//     }
+//     node->solve_stmt->params = NULL;
+//     node->solve_stmt->param_count = 0;
+//     node->solve_stmt->param_capacity = 0;
+//     node->solve_stmt->body = NULL;
 
-    advance_token(pars); // skip 'solve'
+//     advance_token(pars); // skip 'solve'
 
-    // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+//     // expect '('
+//     if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
-    // parse parameters
-    if(!(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_RPAREN)){
-        while(1){
-            struct ast_node* param = parse_var_decl(pars);
-            if(!param){
-                // cleanup
-                for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
-                free(node->solve_stmt->params);
-                free_ast(node);
-                return NULL;
-            }
+//     // parse parameters
+//     if(!(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_RPAREN)){
+//         while(1){
+//             struct ast_node* param = parse_var_decl(pars);
+//             if(!param){
+//                 // cleanup
+//                 for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
+//                 free(node->solve_stmt->params);
+//                 free_ast(node);
+//                 return NULL;
+//             }
 
-            // check capacity
-            if(node->solve_stmt->param_count >= node->solve_stmt->param_capacity){
-                size_t new_cap = node->solve_stmt->param_capacity == 0 ? 4 : node->solve_stmt->param_capacity * 2;
-                struct ast_node** new_arr = (struct ast_node**)realloc(node->solve_stmt->params, new_cap * sizeof(struct ast_node*));
-                if(!new_arr){
-                    free_ast(param);
-                    for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
-                    free(node->solve_stmt->params);
-                    free_ast(node);
-                    return NULL;
-                }
-                node->solve_stmt->params = new_arr;
-                node->solve_stmt->param_capacity = new_cap;
-            }
-            node->solve_stmt->params[node->solve_stmt->param_count++] = param;
+//             // check capacity
+//             if(node->solve_stmt->param_count >= node->solve_stmt->param_capacity){
+//                 size_t new_cap = node->solve_stmt->param_capacity == 0 ? 4 : node->solve_stmt->param_capacity * 2;
+//                 struct ast_node** new_arr = (struct ast_node**)realloc(node->solve_stmt->params, new_cap * sizeof(struct ast_node*));
+//                 if(!new_arr){
+//                     free_ast(param);
+//                     for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
+//                     free(node->solve_stmt->params);
+//                     free_ast(node);
+//                     return NULL;
+//                 }
+//                 node->solve_stmt->params = new_arr;
+//                 node->solve_stmt->param_capacity = new_cap;
+//             }
+//             node->solve_stmt->params[node->solve_stmt->param_count++] = param;
 
-            // consume comma
-            if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COMMA){ advance_token(pars);  continue; }
+//             // consume comma
+//             if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COMMA){ advance_token(pars);  continue; }
 
-            break;
-        }
-    }
+//             break;
+//         }
+//     }
 
-    // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){
-        for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
-        free(node->solve_stmt->params);
-        free_ast(node);
-        return NULL;
-    }
+//     // expect ')'
+//     if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){
+//         for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
+//         free(node->solve_stmt->params);
+//         free_ast(node);
+//         return NULL;
+//     }
 
-    // parse body
-    node->solve_stmt->body = parse_block(pars);
-    if(!node->solve_stmt->body){
-        free_ast(node);
-        return NULL;
-    }
+//     // parse body
+//     node->solve_stmt->body = parse_block(pars);
+//     if(!node->solve_stmt->body){
+//         free_ast(node);
+//         return NULL;
+//     }
 
-    return node;
-}
+//     return node;
+// }
 
-struct ast_node* parse_simulate(struct parser* pars)
-{
-    struct ast_node* node = new_ast(NODE_SIMULATE);
-    if(!node) return NULL;
+// struct ast_node* parse_simulate(struct parser* pars)
+// {
+//     struct ast_node* node = new_ast(NODE_SIMULATE);
+//     if(!node) return NULL;
 
-    node->simulate_stmt = (struct node_simulate*)malloc(sizeof(struct node_simulate));
-    if(!node->simulate_stmt){
-        free_ast(node);
-        return NULL;
-    }
-    node->simulate_stmt->keyw = KW_SIMULATE;
-    node->simulate_stmt->body = NULL;
+//     node->simulate_stmt = (struct node_simulate*)malloc(sizeof(struct node_simulate));
+//     if(!node->simulate_stmt){
+//         free_ast(node);
+//         return NULL;
+//     }
+//     node->simulate_stmt->keyw = KW_SIMULATE;
+//     node->simulate_stmt->body = NULL;
 
-    advance_token(pars); // skip 'simulate'
+//     advance_token(pars); // skip 'simulate'
 
-    // parse body
-    node->simulate_stmt->body = parse_block(pars);
-    if(!node->simulate_stmt->body){
-        free_ast(node);
-        return NULL;
-    }
+//     // parse body
+//     node->simulate_stmt->body = parse_block(pars);
+//     if(!node->simulate_stmt->body){
+//         free_ast(node);
+//         return NULL;
+//     }
 
-    return node;
-}
+//     return node;
+// }

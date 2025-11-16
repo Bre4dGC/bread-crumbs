@@ -1,10 +1,10 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "compiler/vm.h"
+#include "compiler/backend/vm.h"
 #include "common/debug.h"
 
-static inline int64_t read_i64(struct vm *vm)
+static inline int64_t read_i64(struct virtual_machine *vm)
 {
     int64_t v = 0;
     if (vm->ip + sizeof(int64_t) > vm->capacity) return 0;
@@ -13,19 +13,19 @@ static inline int64_t read_i64(struct vm *vm)
     return v;
 }
 
-static inline void push_val(struct vm *vm, int64_t v)
+static inline void push_val(struct virtual_machine *vm, int64_t v)
 {
     if (vm->sp >= vm->ssize) return; // simple overflow guard
     vm->stack[vm->sp++] = v;
 }
 
-static inline int64_t pop_val(struct vm *vm)
+static inline int64_t pop_val(struct virtual_machine *vm)
 {
     if (vm->sp == 0) return 0;
     return vm->stack[--vm->sp];
 }
 
-void vm_execute(struct vm* vm)
+void vm_execute(struct virtual_machine* vm)
 {
     while (vm->ip < vm->capacity) {
         const enum op_code op = (enum op_code)vm->code[vm->ip++];

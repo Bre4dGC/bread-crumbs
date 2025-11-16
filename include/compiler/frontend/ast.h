@@ -4,19 +4,16 @@
 #include <stdbool.h>
 
 #include "compiler/frontend/lexer.h"
-#include "compiler/vm.h"
 
 struct ast_node;
 
 struct node_bin_op {
     struct ast_node* left;
     struct ast_node* right;
-    enum op_code code;
 };
 
 struct node_unary_op {
     struct ast_node* right;
-    enum op_code code;
     bool is_postfix;
 };
 
@@ -137,28 +134,28 @@ struct node_import {
     char* module_name;
 };
 
-struct node_test {
-    char* name;
-    struct ast_node* body;
-};
+// struct node_test {
+//     char* name;
+//     struct ast_node* body;
+// };
 
-struct node_fork {
-    enum category_keyword keyw;
-    char* name;
-    struct ast_node* body;
-};
+// struct node_fork {
+//     enum category_keyword keyw;
+//     char* name;
+//     struct ast_node* body;
+// };
 
-struct node_simulate {
-    enum category_keyword keyw;
-    struct ast_node* body;
-};
+// struct node_simulate {
+//     enum category_keyword keyw;
+//     struct ast_node* body;
+// };
 
-struct node_solve {
-    struct ast_node** params;
-    size_t param_count;
-    size_t param_capacity;
-    struct ast_node* body;
-};
+// struct node_solve {
+//     struct ast_node** params;
+//     size_t param_count;
+//     size_t param_capacity;
+//     struct ast_node* body;
+// };
 
 enum node_type {
     NODE_LITERAL,   NODE_BIN_OP,    NODE_EXPR,
@@ -170,8 +167,8 @@ enum node_type {
     NODE_STRUCT,    NODE_ENUM,      NODE_UNION,
     NODE_FUNC,      NODE_MATCH,     NODE_CASE,
     NODE_TRAIT,     NODE_TRYCATCH,  NODE_IMPORT,
-    NODE_TEST,      NODE_FORK,      NODE_SIMULATE,
-    NODE_SOLVE,
+    // NODE_TEST,      NODE_FORK,      NODE_SIMULATE,
+    // NODE_SOLVE,
 };
 
 struct ast_node {
@@ -201,13 +198,13 @@ struct ast_node {
         struct node_trait* trait_decl;
         struct node_trycatch* trycatch_stmt;
         struct node_import* import_stmt;
-        struct node_test* test_stmt;
-        struct node_fork* fork_stmt;
-        struct node_simulate* simulate_stmt;
-        struct node_solve* solve_stmt;
+        // struct node_test* test_stmt;
+        // struct node_fork* fork_stmt;
+        // struct node_simulate* simulate_stmt;
+        // struct node_solve* solve_stmt;
     };
 };
 
 struct ast_node* new_ast(enum node_type type);
-void compile_ast(struct ast_node* node, struct vm* vm);
+// int compile_ast(struct ast_node* node, struct virtual_machine* vm);
 void free_ast(struct ast_node* node);

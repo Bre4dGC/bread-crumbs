@@ -7,8 +7,8 @@
 
 #include "compiler/frontend/lexer.h"
 #include "compiler/frontend/parser.h"
-#include "compiler/middle/semantic.h"
-#include "compiler/vm.h"
+#include "compiler/frontend/semantic.h"
+#include "compiler/backend/vm.h"
 
 static inline const char* token_to_str(const struct token* tok)
 {
@@ -36,8 +36,6 @@ static inline const char* token_to_str(const struct token* tok)
     }
 }
 
-static inline const char* opcode_to_str(enum op_code oc);
-
 static inline void ast_print(struct ast_node* node, int indent)
 {
     if (!node) return;
@@ -52,7 +50,8 @@ static inline void ast_print(struct ast_node* node, int indent)
         case NODE_VAR_REF: printf("VarRef: %s\n", node->var_ref.name);
             break;            
         case NODE_BIN_OP: 
-            printf("BinOp: %s\n", opcode_to_str(node->bin_op.code));
+            printf("BinOp\n");
+            // printf("BinOp: %s\n", opcode_to_str(node->bin_op.code));
             ast_print(node->bin_op.left, indent + 1);
             ast_print(node->bin_op.right, indent + 1);
             break;            
@@ -67,7 +66,8 @@ static inline void ast_print(struct ast_node* node, int indent)
             }
             break;
         case NODE_UNARY_OP:
-            printf("UnaryOp: %s\n", opcode_to_str(node->unary_op.code));
+            printf("UnaryOp\n");
+            // printf("UnaryOp: %s\n", opcode_to_str(node->unary_op.code));
             ast_print(node->unary_op.right, indent + 1);
             break;
         case NODE_FUNC_CALL:
@@ -169,25 +169,25 @@ static inline void ast_print(struct ast_node* node, int indent)
         case NODE_IMPORT:
             printf("Import: %s\n", node->import_stmt->module_name);
             break;
-        case NODE_TEST:
-            printf("Test: %s\n", node->test_stmt->name);
-            ast_print(node->test_stmt->body, indent + 1);
-            break;
-        case NODE_FORK:
-            printf("Fork: %s\n", node->fork_stmt->name ? node->fork_stmt->name : "(anonymous)");
-            ast_print(node->fork_stmt->body, indent + 1);
-            break;
-        case NODE_SOLVE:
-            printf("Solve:\n");
-            for (size_t i = 0; i < node->solve_stmt->param_count; i++){
-                ast_print(node->solve_stmt->params[i], indent + 1);
-            }
-            ast_print(node->solve_stmt->body, indent + 1);
-            break;
-        case NODE_SIMULATE:
-            printf("Simulate:\n");
-            ast_print(node->simulate_stmt->body, indent + 1);
-            break;
+        // case NODE_TEST:
+        //     printf("Test: %s\n", node->test_stmt->name);
+        //     ast_print(node->test_stmt->body, indent + 1);
+        //     break;
+        // case NODE_FORK:
+        //     printf("Fork: %s\n", node->fork_stmt->name ? node->fork_stmt->name : "(anonymous)");
+        //     ast_print(node->fork_stmt->body, indent + 1);
+        //     break;
+        // case NODE_SOLVE:
+        //     printf("Solve:\n");
+        //     for (size_t i = 0; i < node->solve_stmt->param_count; i++){
+        //         ast_print(node->solve_stmt->params[i], indent + 1);
+        //     }
+        //     ast_print(node->solve_stmt->body, indent + 1);
+        //     break;
+        // case NODE_SIMULATE:
+        //     printf("Simulate:\n");
+        //     ast_print(node->simulate_stmt->body, indent + 1);
+        //     break;
         case NODE_EXPR: 
         case NODE_ASSIGN:
             printf("Expression / Assignment (Unhandled display for now)");

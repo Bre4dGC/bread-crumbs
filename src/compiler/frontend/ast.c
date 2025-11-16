@@ -3,7 +3,6 @@
 
 #include "compiler/frontend/ast.h"
 #include "compiler/frontend/lexer.h"
-#include "compiler/vm.h"
 #include "compiler/diagnostic/errors.h"
 #include "common/debug.h"
 
@@ -13,19 +12,20 @@ struct ast_node* new_ast(enum node_type type)
     if(!node) return NULL;
     node->type = type;
     node->line = 0;
-
     return node;
 }
 
-void compile_ast(struct ast_node* node, struct vm* target_vm)
-{
-    if(!node) return;
-    (void)target_vm;
+// int compile_ast(struct ast_node* node, struct virtual_machine* target_vm)
+// {
+//     if(!node) return -1;
+//     (void)target_vm;
         
-    #ifdef DEBUG
-        print_node(node, 0);
-    #endif
-}
+//     #ifdef DEBUG
+//         print_node(node, 0);
+//     #endif
+
+//     return -1;
+// }
 
 void free_ast(struct ast_node* node)
 {
@@ -211,39 +211,39 @@ void free_ast(struct ast_node* node)
             }
             break;
 
-        case NODE_TEST:
-            if(node->test_stmt){
-                if(node->test_stmt->name) free(node->test_stmt->name);
-                free_ast(node->test_stmt->body);
-                free(node->test_stmt);
-            }
-            break;
+        // case NODE_TEST:
+        //     if(node->test_stmt){
+        //         if(node->test_stmt->name) free(node->test_stmt->name);
+        //         free_ast(node->test_stmt->body);
+        //         free(node->test_stmt);
+        //     }
+        //     break;
 
-        case NODE_FORK:
-            if(node->fork_stmt){
-                if(node->fork_stmt->name) free(node->fork_stmt->name);
-                free_ast(node->fork_stmt->body);
-                free(node->fork_stmt);
-            }
-            break;
+        // case NODE_FORK:
+        //     if(node->fork_stmt){
+        //         if(node->fork_stmt->name) free(node->fork_stmt->name);
+        //         free_ast(node->fork_stmt->body);
+        //         free(node->fork_stmt);
+        //     }
+        //     break;
 
-        case NODE_SOLVE:
-            if(node->solve_stmt){
-                for (size_t i = 0; i < node->solve_stmt->param_count; i++){
-                    free_ast(node->solve_stmt->params[i]);
-                }
-                if(node->solve_stmt->params) free(node->solve_stmt->params);
-                free_ast(node->solve_stmt->body);
-                free(node->solve_stmt);
-            }
-            break;
+        // case NODE_SOLVE:
+        //     if(node->solve_stmt){
+        //         for (size_t i = 0; i < node->solve_stmt->param_count; i++){
+        //             free_ast(node->solve_stmt->params[i]);
+        //         }
+        //         if(node->solve_stmt->params) free(node->solve_stmt->params);
+        //         free_ast(node->solve_stmt->body);
+        //         free(node->solve_stmt);
+        //     }
+        //     break;
 
-        case NODE_SIMULATE:
-            if(node->simulate_stmt){
-                free_ast(node->simulate_stmt->body);
-                free(node->simulate_stmt);
-            }
-            break;
+        // case NODE_SIMULATE:
+        //     if(node->simulate_stmt){
+        //         free_ast(node->simulate_stmt->body);
+        //         free(node->simulate_stmt);
+        //     }
+        //     break;
 
         default:
             break;

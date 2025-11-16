@@ -29,13 +29,13 @@ void run_test(const char* test_name, const char* input, bool should_succeed)
         return;
     }
 
-    struct ast_node* ast = parse_expr(pars);
+    struct ast_node* ast = parse_program(pars);
     
     if(should_succeed){
         if(ast){
             printf("PASS: Successfully parsed\n");
             test_passed++;
-            compile_ast(ast, NULL);
+            // compile_ast(ast, NULL);
             free_ast(ast);
         }
         else{

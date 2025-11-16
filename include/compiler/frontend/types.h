@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "compiler/middle/symbol.h"
+#include "compiler/frontend/symbol.h"
 
 enum type_kind {
     // service types

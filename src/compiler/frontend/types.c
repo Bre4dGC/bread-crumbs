@@ -2,7 +2,7 @@
 #include <stdalign.h>
 
 #include "compiler/frontend/tokenizer.h"
-#include "compiler/middle/types.h"
+#include "compiler/frontend/types.h"
 #include "compiler/diagnostic/errors.h"
 
 struct type* type_unknown = NULL;

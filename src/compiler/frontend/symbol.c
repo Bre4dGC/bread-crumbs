@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "compiler/middle/symbol.h"
+#include "compiler/frontend/symbol.h"
 #include "compiler/diagnostic/errors.h"
 #include "common/utils.h"
 

@@ -6,7 +6,7 @@
 
 #include "compiler/frontend/lexer.h"
 #include "compiler/frontend/parser.h"
-#include "compiler/middle/semantic.h"
+#include "compiler/frontend/semantic.h"
 #include "compiler/diagnostic/errors.h"
 #include "common/file_reader.h"
 
@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         return repl_mode();
     }
 
-    if(strcmp(argv[1], "help") == 0 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0){
+    if(strcmp(argv[1], "help") == 0){
         fprintf(stderr, "Usage: %s [options] <file.brc>\n", argv[0]);
         fprintf(stderr, "Options:\n");
         fprintf(stderr, "   (no arguments)   - Start REPL mode\n");
@@ -96,67 +96,63 @@ int repl_mode(void)
 
 int run_file(const char *filepath)
 {
+    int result = EXIT_FAILURE;
+    
     size_t file_size = 0;
-    char* source = read_file(filepath, &file_size);
-    if(!source) return EXIT_FAILURE;
+    char* source = NULL;
+    struct lexer* lexer = NULL;
+    struct parser* parser = NULL;
+    struct ast_node* ast = NULL;
+    // struct semantic_context* semantic = NULL;
 
-    struct lexer* lexer = new_lexer(source);
+    source = read_file(filepath, &file_size);
+    if(!source){
+        fprintf(stderr, "Error: Failed to read file '%s'\n", filepath);
+        goto cleanup;
+    }
+
+    lexer = new_lexer(source);
     if(!lexer){
         fprintf(stderr, "Error: Failed to create lexer\n");
-        free(source);
-        return EXIT_FAILURE;
+        goto cleanup;
     }
 
-    struct parser *parser = new_parser(lexer);
+    parser = new_parser(lexer);
     if(!parser){
-        printf("FAIL: Failed to create parser\n\n");
-        free_lexer(lexer);
-        free(source);
-        return EXIT_FAILURE;
+        fprintf(stderr, "Error: Failed to create parser\n");
+        goto cleanup;
     }
 
-    struct ast_node* ast = parse_expr(parser);
-
+    ast = parse_program(parser);
     if(!ast){
-        printf("FAIL: Failed to parse program\n\n");
-        free_parser(parser);
-        free(source);
-        return EXIT_FAILURE;
+        fprintf(stderr, "Error: Parsing failed\n");
+        for (size_t i = 0; i < parser->errors_count; ++i) print_error(parser->errors[i]);
+        goto cleanup;
     }
 
-    // struct semantic_context* semantic_ctx = new_semantic_context();
-    // if(!semantic_ctx){
-    //     printf("FAIL: Failed to create semantic context\n\n");
-    //     free_ast(ast);
-    //     free_parser(parser);
-    //     free(source);
-    //     return EXIT_FAILURE;
+    // semantic = new_semantic_context();
+    // if(!semantic){
+    //     fprintf(stderr, "Error: Failed to create semantic context\n");
+    //     goto cleanup;
     // }
 
-    // if(!analyze_ast(semantic_ctx, ast)){
-    //     printf("FAIL: Semantic analysis failed\n\n");
-    //     free_semantic_context(semantic_ctx);
-    //     free_ast(ast);
-    //     free_parser(parser);
-    //     free(source);
-    //     return EXIT_FAILURE;
+    // if(!analyze_ast(semantic, ast)){
+    //     fprintf(stderr, "Error: Semantic analysis failed\n");
+    //     for (size_t i = 0; i < semantic->errors_count; ++i) print_error(semantic->errors[i]);
+    //     goto cleanup;
     // }
 
-    if(ast){
-        compile_ast(ast, NULL);
-        free_ast(ast);
-    }
-    for(size_t i = 0; i < lexer->errors_count; ++i){
-        print_error(lexer->errors[i]);
-    }
-    
-    for(size_t i = 0; i < parser->errors_count; ++i){
-        print_error(parser->errors[i]);
-    }
-    
-    // free_semantic_context(semantic_ctx);
-    free_parser(parser);
-    free(source);
+    // if(!compile_ast(ast, NULL)){
+    //     fprintf(stderr, "Error: Compilation failed\n");
+    //     goto cleanup;
+    // }
+    result = EXIT_SUCCESS;
 
-    return EXIT_SUCCESS;
+cleanup:
+    // if(semantic) free_semantic_context(semantic);
+    if(ast) free_ast(ast);
+    if(parser) free_parser(parser);
+    if(source) free(source);
+    
+    return result;
 }
