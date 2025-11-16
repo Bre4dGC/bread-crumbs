@@ -15,9 +15,9 @@ SRCS_MAIN = $(SRC_DIR)/main.c 									\
             $(SRC_DIR)/compiler/frontend/lexer.c 				\
             $(SRC_DIR)/compiler/frontend/ast.c 					\
             $(SRC_DIR)/compiler/frontend/parser.c 				\
-            $(SRC_DIR)/compiler/middle/types.c 					\
-            $(SRC_DIR)/compiler/middle/symbol.c 				\
-            $(SRC_DIR)/compiler/middle/semantic.c 				\
+            $(SRC_DIR)/compiler/frontend/types.c 				\
+            $(SRC_DIR)/compiler/frontend/symbol.c 				\
+            $(SRC_DIR)/compiler/frontend/semantic.c 			\
             $(SRC_DIR)/compiler/diagnostic/errors.c 			\
             $(SRC_DIR)/compiler/vm.c
 
@@ -41,9 +41,9 @@ SRCS_TEST_SEMANTIC = tests/test_semantic.c 						\
                     $(SRC_DIR)/compiler/frontend/lexer.c 		\
                     $(SRC_DIR)/compiler/frontend/ast.c 			\
                     $(SRC_DIR)/compiler/frontend/parser.c 		\
-                    $(SRC_DIR)/compiler/middle/types.c 			\
-                    $(SRC_DIR)/compiler/middle/symbol.c 		\
-                    $(SRC_DIR)/compiler/middle/semantic.c 		\
+                    $(SRC_DIR)/compiler/frontend/types.c 		\
+                    $(SRC_DIR)/compiler/frontend/symbol.c 		\
+                    $(SRC_DIR)/compiler/frontend/semantic.c 	\
                     $(SRC_DIR)/compiler/diagnostic/errors.c
 
 OBJS_MAIN	 	   = $(SRCS_MAIN:%.c=$(OBJ_DIR)/%.o)
