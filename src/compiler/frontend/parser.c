@@ -77,17 +77,17 @@ struct parser* new_parser(struct lexer* lexer)
     return parser;
 }
 
-void new_parser_error(struct parser* pars, struct error* err)
+void new_parser_error(struct parser* pars, struct report* err)
 {
     if(!pars || !err){
-        if(err) free_error(err);
+        if(err) free_report(err);
         return;
     }
 
     if(!pars->errors){
-        pars->errors = (struct error**)malloc(sizeof(struct error*));
+        pars->errors = (struct report**)malloc(sizeof(struct report*));
         if(!pars->errors){
-            free_error(err);
+            free_report(err);
             return;
         }
         pars->errors[0] = err;
@@ -95,9 +95,9 @@ void new_parser_error(struct parser* pars, struct error* err)
         return;
     }
 
-    struct error** new_errors = (struct error**)realloc(pars->errors, (pars->errors_count + 1) * sizeof(struct error*));
+    struct report** new_errors = (struct report**)realloc(pars->errors, (pars->errors_count + 1) * sizeof(struct report*));
     if(!new_errors){
-        free_error(err);
+        free_report(err);
         return;
     }
     
@@ -115,7 +115,7 @@ void free_parser(struct parser* parser)
 
     if(parser->errors){
         for (size_t i = 0; i < parser->errors_count; ++i){
-            if(parser->errors[i]) free_error(parser->errors[i]);
+            if(parser->errors[i]) free_report(parser->errors[i]);
         }
         free(parser->errors);
         parser->errors = NULL;
@@ -135,18 +135,13 @@ void advance_token(struct parser *pars)
     pars->peek = next_token(pars->lexer);
 }
 
-bool consume_token(
-    struct parser *pars,
-    const enum category_tag expected_category,
-    const int expected_type,
-    const enum parser_error_type err)
+bool consume_token(struct parser *pars, const enum category_tag expected_category, const int expected_type, const enum report_code err)
 {
     if(!pars) return false;
     
     if(pars->current.category != expected_category){
-        struct error* new_err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, err,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* new_err = new_report(
+            SEVERITY_ERROR, err, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, new_err);
         return false;
@@ -167,9 +162,8 @@ bool consume_token(
         }
 
         if(actual_type != expected_type){
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_UNEXPECTED_TOKEN,
-                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_UNEXPECTED_TOKEN, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
             );
             new_parser_error(pars, err);
             return false;
@@ -236,7 +230,7 @@ struct ast_node* parse_paren_expr(struct parser* pars)
             struct ast_node* node = parse_expr(pars);
             if(!node) return NULL;
             
-            if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){
+            if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){
                 free_ast(node);
                 return NULL;
             }
@@ -350,9 +344,8 @@ struct ast_node* parse_block(struct parser* pars)
 
         // check for EOF
         if(pars->current.category == CATEGORY_SERVICE && pars->current.type_service == SERV_EOF){
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_PAREN,
-                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_EXPECTED_PAREN, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
             );
             new_parser_error(pars, err);
             goto error_cleanup;
@@ -375,7 +368,7 @@ struct ast_node* parse_block(struct parser* pars)
     }
     
     // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, PARSER_ERROR_EXPECTED_PAREN)){
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){
         goto error_cleanup;
     }
 
@@ -397,9 +390,8 @@ struct ast_node* parse_func_call(struct parser* pars)
 
     // expect function name
     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, err);
         free_ast(node);
@@ -449,7 +441,7 @@ struct ast_node* parse_func_call(struct parser* pars)
     }
 
     // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){
         for (size_t i = 0; i < node->func_call.arg_count; ++i) free_ast(node->func_call.args[i]);
         free(node->func_call.args);
         free_ast(node);
@@ -483,9 +475,8 @@ struct ast_node* parse_var_decl(struct parser* pars)
     
     // expect identifier
     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, err);
         free_ast(node);
@@ -502,9 +493,8 @@ struct ast_node* parse_var_decl(struct parser* pars)
     if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COLON){
         advance_token(pars);
         if(pars->current.category != CATEGORY_DATATYPE){
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_TYPE,
-                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_EXPECTED_TYPE, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
             );
             new_parser_error(pars, err);
             free_ast(node);
@@ -519,9 +509,8 @@ struct ast_node* parse_var_decl(struct parser* pars)
         advance_token(pars);
         node->var_decl->value = parse_expr(pars);
         if(!node->var_decl->value){
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_EXPRESSION,
-                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_EXPECTED_EXPRESSION, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
             );
             new_parser_error(pars, err);
             free_ast(node);
@@ -540,9 +529,8 @@ struct ast_node* parse_var_ref(struct parser* pars)
     node->var_ref.name = NULL;
     
     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, err);
         free_ast(node);
@@ -632,7 +620,7 @@ struct ast_node* parse_primary(struct parser* pars)
                 advance_token(pars);
                 struct ast_node* expr = parse_expr(pars);
                 if(!expr) return NULL;
-                if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){
+                if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){
                     free_ast(expr);
                     return NULL;
                 }
@@ -809,9 +797,8 @@ struct ast_node* parse_bin_op(struct parser* pars, int min_precedence)
         struct ast_node* right = parse_bin_op(pars, next_min_prec);
         if(!right){
             free_ast(left);
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_EXPRESSION,
-                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_EXPECTED_EXPRESSION, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
             );
             new_parser_error(pars, err);
             return NULL;
@@ -918,7 +905,7 @@ struct ast_node* parse_array(struct parser* pars)
     }
 
     // expect ']'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACKET, PARSER_ERROR_EXPECTED_PAREN)){
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACKET, ERROR_EXPECTED_PAREN)){
         for (size_t i = 0; i < node->array_decl->count; ++i) free_ast(node->array_decl->elements[i]);
         free(node->array_decl->elements);
         free_ast(node);
@@ -946,7 +933,7 @@ struct ast_node* parse_if(struct parser* pars){
     advance_token(pars); // skip 'if'
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     node->if_stmt->condition = parse_expr(pars);
     if(!node->if_stmt->condition){
@@ -955,7 +942,7 @@ struct ast_node* parse_if(struct parser* pars){
     }
 
     // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
 
     // expect '{'
     if(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_LBRACE){
@@ -978,7 +965,7 @@ struct ast_node* parse_if(struct parser* pars){
             advance_token(pars);
 
             // expect '('
-            if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+            if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
 
             struct ast_node* elif_condition = parse_expr(pars);
             if(!elif_condition){
@@ -987,7 +974,7 @@ struct ast_node* parse_if(struct parser* pars){
             }
 
             // expect ')'
-            if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(elif_condition); free_ast(node); return NULL; }
+            if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(elif_condition); free_ast(node); return NULL; }
 
             struct ast_node* elif_body;
 
@@ -1078,7 +1065,7 @@ struct ast_node* parse_while(struct parser* pars)
     advance_token(pars); // skip 'while'
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     node->while_loop->condition = parse_expr(pars);
     if(!node->while_loop->condition){
@@ -1087,7 +1074,7 @@ struct ast_node* parse_while(struct parser* pars)
     }
 
     // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
 
     // parse body (can be a block or a single statement)
     if(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_LBRACE){
@@ -1124,7 +1111,7 @@ struct ast_node* parse_for(struct parser* pars)
     advance_token(pars); // skip 'for'
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     // parse init statement
     if(pars->current.category != CATEGORY_OPERATOR && pars->current.type_operator != OPER_SEMICOLON){
@@ -1136,7 +1123,7 @@ struct ast_node* parse_for(struct parser* pars)
     }
 
     // expect ';'
-    if(!consume_token(pars, CATEGORY_OPERATOR, OPER_SEMICOLON, PARSER_ERROR_EXPECTED_DELIMITER)){ free_ast(node); return NULL; }
+    if(!consume_token(pars, CATEGORY_OPERATOR, OPER_SEMICOLON, ERROR_EXPECTED_DELIMITER)){ free_ast(node); return NULL; }
 
     // parse condition
     if(pars->current.category != CATEGORY_OPERATOR && pars->current.type_operator != OPER_SEMICOLON){
@@ -1148,7 +1135,7 @@ struct ast_node* parse_for(struct parser* pars)
     }
 
     // expect ';'
-    if(!consume_token(pars, CATEGORY_OPERATOR, OPER_SEMICOLON, PARSER_ERROR_EXPECTED_DELIMITER)){ free_ast(node); return NULL; }
+    if(!consume_token(pars, CATEGORY_OPERATOR, OPER_SEMICOLON, ERROR_EXPECTED_DELIMITER)){ free_ast(node); return NULL; }
 
     // parse update statement
     if(pars->current.category != CATEGORY_PAREN && pars->current.type_paren != PAR_RPAREN){
@@ -1160,7 +1147,7 @@ struct ast_node* parse_for(struct parser* pars)
     }
 
     // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
 
     // Parse body (can be a block or a single statement)
     if(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_LBRACE){
@@ -1199,9 +1186,8 @@ struct ast_node* parse_func(struct parser* pars)
 
     // expect function name
     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, err);
         free_ast(node);
@@ -1216,7 +1202,7 @@ struct ast_node* parse_func(struct parser* pars)
     advance_token(pars);
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     size_t params_capacity = 4;
     node->func_decl->params = malloc(params_capacity * sizeof(struct ast_node*));
@@ -1240,9 +1226,8 @@ struct ast_node* parse_func(struct parser* pars)
 
             // check if param is a variable
             if(param->type != NODE_VAR){
-                struct error* err = new_error(
-                    SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_PARAM,
-                    pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+                struct report* err = new_report(
+                    SEVERITY_ERROR, ERROR_EXPECTED_PARAM, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
                 );
                 new_parser_error(pars, err);
                 free_ast(param);
@@ -1290,9 +1275,8 @@ struct ast_node* parse_func(struct parser* pars)
         
         // expect datatype
         if(pars->current.category != CATEGORY_DATATYPE){
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_TYPE,
-                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_EXPECTED_TYPE, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
             );
             new_parser_error(pars, err);
             free_ast(node);
@@ -1333,9 +1317,8 @@ struct ast_node* parse_struct(struct parser* pars)
 
     // expect struct name
     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, err);
         free_ast(node);
@@ -1345,16 +1328,15 @@ struct ast_node* parse_struct(struct parser* pars)
     advance_token(pars);
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     // parse struct members
     while(pars->current.category != CATEGORY_PAREN && pars->current.type_paren != PAR_RBRACE){
         
         // check for EOF
         if(pars->current.category == CATEGORY_SERVICE && pars->current.type_service == SERV_EOF){
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_PAREN,
-                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_EXPECTED_PAREN, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
             );
             new_parser_error(pars, err);
             for(size_t i = 0; i < node->struct_decl->member_count; ++i) {
@@ -1402,7 +1384,7 @@ struct ast_node* parse_struct(struct parser* pars)
     }
     
     // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, PARSER_ERROR_EXPECTED_PAREN)){
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){
         for(size_t i = 0; i < node->struct_decl->member_count; ++i) {
             free_ast(node->struct_decl->members[i]);
         }
@@ -1435,9 +1417,8 @@ struct ast_node* parse_union(struct parser* pars)
 
     // expect union name
     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, err);
         free_ast(node);
@@ -1447,16 +1428,15 @@ struct ast_node* parse_union(struct parser* pars)
     advance_token(pars);
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     // parse union members
     while(pars->current.category != CATEGORY_PAREN || pars->current.type_paren != PAR_RBRACE){
 
         // check for EOF
         if(pars->current.category == CATEGORY_SERVICE && pars->current.type_service == SERV_EOF){
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_PAREN,
-                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_EXPECTED_PAREN, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
             );
             new_parser_error(pars, err);
             for(size_t i = 0; i < node->union_decl->member_count; ++i) {
@@ -1503,7 +1483,7 @@ struct ast_node* parse_union(struct parser* pars)
     }
 
     // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, PARSER_ERROR_EXPECTED_PAREN)){
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){
         for(size_t i = 0; i < node->union_decl->member_count; ++i) {
             free_ast(node->union_decl->members[i]);
         }
@@ -1535,9 +1515,8 @@ struct ast_node* parse_enum(struct parser* pars)
 
     // expect enum name
     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, err);
         free_ast(node);
@@ -1547,15 +1526,14 @@ struct ast_node* parse_enum(struct parser* pars)
     advance_token(pars);
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     // parse enum members
     while(pars->current.category != CATEGORY_PAREN || pars->current.type_paren != PAR_RBRACE){
         // check for EOF
         if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-                pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
             );
             new_parser_error(pars, err);
             // cleanup existing members
@@ -1633,17 +1611,17 @@ struct ast_node* parse_match(struct parser* pars)
     }
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){
         free_ast(node->match_stmt->target);
         free_ast(node);
         return NULL;
     }
 
     // parse cases
-    while(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, PARSER_ERROR_EXPECTED_PAREN)){
+    while(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){
 
         // check for EOF
-        if(!consume_token(pars, CATEGORY_KEYWORD, KW_CASE, PARSER_ERROR_EXPECTED_KEYWORD)){
+        if(!consume_token(pars, CATEGORY_KEYWORD, KW_CASE, ERROR_EXPECTED_KEYWORD)){
             // Only free cases array and target, individual cases were already freed
             free(node->match_stmt->cases);
             free_ast(node->match_stmt->target); 
@@ -1687,7 +1665,7 @@ struct ast_node* parse_match(struct parser* pars)
         }
 
         // expect '=>'
-        if(!consume_token(pars, CATEGORY_OPERATOR, OPER_ARROW, PARSER_ERROR_EXPECTED_OPERATOR)){
+        if(!consume_token(pars, CATEGORY_OPERATOR, OPER_ARROW, ERROR_EXPECTED_OPERATOR)){
             free_ast(case_node);
 
             // cleanup existing cases
@@ -1757,9 +1735,8 @@ struct ast_node* parse_trait(struct parser* pars)
 
     // expect name
     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, err);
         free_ast(node);
@@ -1769,7 +1746,7 @@ struct ast_node* parse_trait(struct parser* pars)
     advance_token(pars);
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     // parse body
     node->trait_decl->body = parse_block(pars);
@@ -1779,7 +1756,7 @@ struct ast_node* parse_trait(struct parser* pars)
     }
 
     // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     return node;
 }
@@ -1802,7 +1779,7 @@ struct ast_node* parse_try_catch(struct parser* pars)
     advance_token(pars); // skip 'try'
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     // parse try block
     node->trycatch_stmt->try_block = parse_block(pars);
@@ -1812,23 +1789,23 @@ struct ast_node* parse_try_catch(struct parser* pars)
     }
 
     // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
 
     // expect 'catch'
-    if(!consume_token(pars, CATEGORY_KEYWORD, KW_CATCH, PARSER_ERROR_EXPECTED_KEYWORD)){ free_ast(node); return NULL; }
+    if(!consume_token(pars, CATEGORY_KEYWORD, KW_CATCH, ERROR_EXPECTED_KEYWORD)){ free_ast(node); return NULL; }
 
     advance_token(pars);
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     // TODO: parse catch exception variable
 
     // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
     // parse catch block
     node->trycatch_stmt->catch_block = parse_block(pars);
@@ -1856,9 +1833,8 @@ struct ast_node* parse_import(struct parser* pars)
 
     // expect module name
     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-            pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
         );
         new_parser_error(pars, err);
         free_ast(node);
@@ -1887,9 +1863,8 @@ struct ast_node* parse_import(struct parser* pars)
 
 //     // expect name
 //     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-//         struct error* err = new_error(
-//             SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-//             pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+//         struct report* err = new_report(
+//             SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, //             pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
 //         );
 //         new_parser_error(pars, err);
 //         free_ast(node);
@@ -1899,7 +1874,7 @@ struct ast_node* parse_import(struct parser* pars)
 //     advance_token(pars);
 
 //     // expect '{'
-//     if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+//     if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
 //     // parse test block
 //     node->test_stmt->body = parse_block(pars);
@@ -1909,7 +1884,7 @@ struct ast_node* parse_import(struct parser* pars)
 //     }
 
 //     // expect '}'
-//     if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+//     if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
 //     return node;
 // }
@@ -1932,9 +1907,8 @@ struct ast_node* parse_import(struct parser* pars)
 
 //     // expect name
 //     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-//         struct error* err = new_error(
-//             SEVERITY_ERROR, ERROR_TYPE_PARSER, PARSER_ERROR_EXPECTED_IDENTIFIER,
-//             pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
+//         struct report* err = new_report(
+//             SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, //             pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
 //         );
 //         new_parser_error(pars, err);
 //         free_ast(node);
@@ -1971,7 +1945,7 @@ struct ast_node* parse_import(struct parser* pars)
 //     advance_token(pars); // skip 'solve'
 
 //     // expect '('
-//     if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, PARSER_ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+//     if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
 
 //     // parse parameters
 //     if(!(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_RPAREN)){
@@ -2009,7 +1983,7 @@ struct ast_node* parse_import(struct parser* pars)
 //     }
 
 //     // expect ')'
-//     if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, PARSER_ERROR_EXPECTED_PAREN)){
+//     if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){
 //         for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
 //         free(node->solve_stmt->params);
 //         free_ast(node);

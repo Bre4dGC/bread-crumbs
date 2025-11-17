@@ -19,7 +19,7 @@ struct semantic_context {
     struct symbol* current_function;
     int loop_depth;
 
-    struct error** errors;
+    struct report** errors;
     size_t errors_count;
 };
 

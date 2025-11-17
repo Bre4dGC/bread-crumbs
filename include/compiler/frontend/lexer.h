@@ -2,7 +2,7 @@
 #include <stddef.h>
 
 #include "compiler/frontend/tokenizer.h"
-#include "compiler/diagnostic/errors.h"
+#include "compiler/core/diagnostic.h"
 
 struct lexer {
     char* input;
@@ -17,7 +17,7 @@ struct lexer {
 
     int paren_balance;
 
-    struct error** errors;
+    struct report** errors;
     size_t errors_count;
 };
 

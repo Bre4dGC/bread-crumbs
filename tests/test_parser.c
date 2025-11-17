@@ -40,8 +40,8 @@ void run_test(const char* test_name, const char* input, bool should_succeed)
         }
         else{
             printf("FAIL: Expected success but parsing failed\n");
-            for(size_t i = 0; i < lex->errors_count; ++i) print_error(lex->errors[i]);
-            for(size_t i = 0; i < pars->errors_count; ++i) print_error(pars->errors[i]);
+            for(size_t i = 0; i < lex->errors_count; ++i) print_report(lex->errors[i]);
+            for(size_t i = 0; i < pars->errors_count; ++i) print_report(pars->errors[i]);
         }
     }
     else{

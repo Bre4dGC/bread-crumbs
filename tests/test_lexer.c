@@ -39,7 +39,7 @@ int main(void)
     printf("Average time per token: %f microseconds\n", microseconds / total_tokens);
 
     for(size_t i = 0; i < lex->errors_count; ++i){
-        print_error(lex->errors[i]);
+        print_report(lex->errors[i]);
     }
 
     free_token(&token);

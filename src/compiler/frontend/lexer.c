@@ -103,17 +103,17 @@ struct lexer* new_lexer(const char* input)
     return lexer;
 }
 
-void new_lexer_error(struct lexer* lex, struct error* err)
+void new_lexer_error(struct lexer* lex, struct report* err)
 {
     if(!lex || !err){
-        if(err) free_error(err);
+        if(err) free_report(err);
         return;
     }
 
     if(!lex->errors){
-        lex->errors = (struct error**)malloc(sizeof(struct error*));
+        lex->errors = (struct report**)malloc(sizeof(struct report*));
         if(!lex->errors){
-            free_error(err);
+            free_report(err);
             return;
         }
         lex->errors[0] = err;
@@ -121,12 +121,12 @@ void new_lexer_error(struct lexer* lex, struct error* err)
         return;
     }
 
-    struct error** new_errors = (struct error**)realloc(
+    struct report** new_errors = (struct report**)realloc(
         lex->errors,
-        (lex->errors_count + 1) * sizeof(struct error*)
+        (lex->errors_count + 1) * sizeof(struct report*)
     );
     if(!new_errors){
-        free_error(err);
+        free_report(err);
         return;
     }
 
@@ -177,9 +177,8 @@ struct token next_token(struct lexer* lex)
 
         case '\0':
             if(lex->paren_balance != 0){
-                struct error* err = new_error(
-                    SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_UNMATCHED_PAREN,
-                    lex->line, lex->column, 1, lex->input
+                struct report* err = new_report(
+                    SEVERITY_ERROR, ERROR_UNMATCHED_PAREN, lex->line, lex->column, 1, lex->input
                 );
                 new_lexer_error(lex, err);
             }
@@ -197,9 +196,8 @@ struct token next_token(struct lexer* lex)
                     length++;
                 }
                 token = new_token(CATEGORY_SERVICE, SERV_ILLEGAL, ch_str);
-                struct error* err = new_error(
-                    SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_ILLEGAL_CHARACTER,
-                    lex->line, lex->column - length, length, lex->input
+                struct report* err = new_report(
+                    SEVERITY_ERROR, ERROR_ILLEGAL_CHARACTER, lex->line, lex->column - length, length, lex->input
                 );
                 new_lexer_error(lex, err);
                 read_ch(lex);
@@ -316,9 +314,8 @@ struct token handle_parentesis(struct lexer *lex)
     }
     else if(lex->ch == ')' || lex->ch == '}' || lex->ch == ']'){
         if(lex->paren_balance == 0){
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_UNMATCHED_PAREN,
-                lex->line, lex->column, 1, lex->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_UNMATCHED_PAREN, lex->line, lex->column, 1, lex->input
             );
             new_lexer_error(lex, err);
         }
@@ -351,18 +348,16 @@ struct token handle_string(struct lexer* lex)
 
     char* str = read_str(lex, quote_char);
     if(!str){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_STRING,
-            lex->line, lex->column, 1, lex->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_INVALID_STRING, lex->line, lex->column, 1, lex->input
         );
         new_lexer_error(lex, err);
         return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "INVALID_STRING");
     }
     if(lex->ch != quote_char){
         free(str);
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_UNCLOSED_STRING,
-            lex->line, lex->column+1, 1, lex->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_UNCLOSED_STRING, lex->line, lex->column+1, 1, lex->input
         );
         new_lexer_error(lex, err);
         return new_token(CATEGORY_SERVICE, SERV_ILLEGAL, "UNCLOSED_STRING");
@@ -392,9 +387,8 @@ char* read_ident(struct lexer* lex)
     size_t length = 0;
 
     if(isdigit(lex->ch)){
-        struct error* err = new_error(
-            SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_IDENTIFIER,
-            lex->line, lex->column, 1, lex->input
+        struct report* err = new_report(
+            SEVERITY_ERROR, ERROR_INVALID_IDENTIFIER, lex->line, lex->column, 1, lex->input
         );
         new_lexer_error(lex, err);
         return NULL;
@@ -403,9 +397,8 @@ char* read_ident(struct lexer* lex)
     while(isalnum(lex->ch) || lex->ch == '_'){
         if(length >= MAX_IDENT_SIZE){
             if(buffer != stack_buffer) free(buffer);
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_IDENTIFIER,
-                lex->line, lex->column, length, lex->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_INVALID_IDENTIFIER, lex->line, lex->column, length, lex->input
             );
             new_lexer_error(lex, err);
             return NULL;
@@ -492,9 +485,8 @@ char* read_num(struct lexer* lex)
 
         if(length >= MAX_NUM_SIZE){
             if(buffer != stack_buffer) free(buffer);
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_NUMBER,
-                lex->line, lex->column, length, lex->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_INVALID_NUMBER, lex->line, lex->column, length, lex->input
             );
             new_lexer_error(lex, err);
             return NULL;
@@ -524,9 +516,8 @@ char* read_num(struct lexer* lex)
                 read_ch(lex);
                 length++;
             }
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_LITERAL,
-                lex->line, lex->column - length, length, lex->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_INVALID_LITERAL, lex->line, lex->column - length, length, lex->input
             );
             new_lexer_error(lex, err);
             if(buffer != stack_buffer) free(buffer);
@@ -566,9 +557,8 @@ char read_esc_seq(struct lexer* lex)
         case '0': esc_seq = '\0'; break;
         default:
             esc_seq = lex->ch;
-            struct error* err = new_error(
-                SEVERITY_WARNING, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_ESCAPE_SEQUENCE,
-                lex->line, lex->column, 1, lex->input
+            struct report* err = new_report(
+                SEVERITY_WARNING, ERROR_INVALID_ESCAPE_SEQUENCE, lex->line, lex->column, 1, lex->input
             );
             new_lexer_error(lex, err);
             break;
@@ -587,9 +577,8 @@ char* read_str(struct lexer *lex, char quote_char)
     while (lex->ch != quote_char && lex->ch != '\0'){
         if(length >= MAX_STR_SIZE){
             free(buffer);
-            struct error* err = new_error(
-                SEVERITY_ERROR, ERROR_TYPE_LEXER, LEXER_ERROR_INVALID_STRING,
-                lex->line, lex->column, length, lex->input
+            struct report* err = new_report(
+                SEVERITY_ERROR, ERROR_INVALID_STRING, lex->line, lex->column, length, lex->input
             );
             new_lexer_error(lex, err);
             return NULL;
@@ -630,7 +619,7 @@ void free_lexer(struct lexer* lex)
     if(!lex) return;
     if(lex->errors){
         for(size_t i = 0; i < lex->errors_count; i++){
-            if(lex->errors[i]) free_error(lex->errors[i]);
+            if(lex->errors[i]) free_report(lex->errors[i]);
         }
         free(lex->errors);
     }

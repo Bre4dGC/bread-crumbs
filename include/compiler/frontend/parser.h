@@ -4,13 +4,13 @@
 #include <stdlib.h>
 
 #include "compiler/frontend/ast.h"
-#include "compiler/diagnostic/errors.h"
+#include "compiler/core/diagnostic.h"
 
 struct parser {
     struct lexer* lexer;
     struct token current;
     struct token peek;
-    struct error** errors;
+    struct report** errors;
     size_t errors_count;
 };
 

@@ -2,32 +2,26 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "compiler/diagnostic/errors.h"
+#include "compiler/core/diagnostic.h"
 #include "common/utils.h"
 
 char* filepath;
 
-int main(int argc, char** argv)
+int main()
 {
-    (void)argc; // Unused parameter
-    filepath = util_strdup(argv[0]);
+    filepath = util_strdup("file_with_errors.brc");
 
-    struct error* err = new_error(
-        SEVERITY_ERROR,
-        ERROR_TYPE_LEXER,
-        LEXER_ERROR_UNCLOSED_STRING,
-        10,
-        23,
-        1,
-        "var name: str = \"bread");
+    struct report* err = new_report(
+        SEVERITY_ERROR, ERROR_UNCLOSED_STRING, 10, 23, 1, "var name: str = \"bread"
+    );
     
     if(err){
-        print_error(err);
-        free_error(err);
+        print_report(err);
+        free_report(err);
         free(filepath);
     }
     else {
-        printf("Failed to create error\n");
+        printf("Failed to create report\n");
     }
 
     return EXIT_SUCCESS;

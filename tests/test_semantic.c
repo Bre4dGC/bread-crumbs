@@ -3,10 +3,9 @@
 
 char* filepath;
 
-int main(int argc, char** argv)
+int main()
 {
-    (void)argc;
-    filepath = util_strdup(argv[0]);
+    filepath = util_strdup("file_with_errors.brc");
     free(filepath);
     return EXIT_SUCCESS;
 }

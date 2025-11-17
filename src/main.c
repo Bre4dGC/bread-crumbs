@@ -7,7 +7,7 @@
 #include "compiler/frontend/lexer.h"
 #include "compiler/frontend/parser.h"
 #include "compiler/frontend/semantic.h"
-#include "compiler/diagnostic/errors.h"
+#include "compiler/core/diagnostic.h"
 #include "common/file_reader.h"
 
 char* filepath = NULL;
@@ -126,7 +126,7 @@ int run_file(const char *filepath)
     ast = parse_program(parser);
     if(!ast){
         fprintf(stderr, "Error: Parsing failed\n");
-        for (size_t i = 0; i < parser->errors_count; ++i) print_error(parser->errors[i]);
+        for (size_t i = 0; i < parser->errors_count; ++i) print_report(parser->errors[i]);
         goto cleanup;
     }
 
@@ -138,7 +138,7 @@ int run_file(const char *filepath)
 
     // if(!analyze_ast(semantic, ast)){
     //     fprintf(stderr, "Error: Semantic analysis failed\n");
-    //     for (size_t i = 0; i < semantic->errors_count; ++i) print_error(semantic->errors[i]);
+    //     for (size_t i = 0; i < semantic->errors_count; ++i) print_report(semantic->errors[i]);
     //     goto cleanup;
     // }
 

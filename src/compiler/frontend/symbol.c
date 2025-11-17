@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "compiler/frontend/symbol.h"
-#include "compiler/diagnostic/errors.h"
+#include "compiler/core/diagnostic.h"
 #include "common/utils.h"
 
 #define INITIAL_SCOPE_CAPACITY 16

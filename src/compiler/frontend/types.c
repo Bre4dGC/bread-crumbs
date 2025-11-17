@@ -3,7 +3,7 @@
 
 #include "compiler/frontend/tokenizer.h"
 #include "compiler/frontend/types.h"
-#include "compiler/diagnostic/errors.h"
+#include "compiler/core/diagnostic.h"
 
 struct type* type_unknown = NULL;
 struct type* type_error = NULL;

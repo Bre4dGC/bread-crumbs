@@ -3,7 +3,7 @@
 
 #include "compiler/frontend/ast.h"
 #include "compiler/frontend/lexer.h"
-#include "compiler/diagnostic/errors.h"
+#include "compiler/core/diagnostic.h"
 #include "common/debug.h"
 
 struct ast_node* new_ast(enum node_type type)
