@@ -1,38 +1,38 @@
 #include "compiler/frontend/semantic.h"
 
-bool check_node(struct semantic_context* ctx, struct ast_node* node);
-bool check_function(struct semantic_context* ctx, struct ast_node* node);
-bool check_variable(struct semantic_context* ctx, struct ast_node* node);
-bool check_block(struct semantic_context* ctx, struct ast_node* node);
-bool check_if(struct semantic_context* ctx, struct ast_node* node);
-bool check_while(struct semantic_context* ctx, struct ast_node* node);
-bool check_for(struct semantic_context* ctx, struct ast_node* node);
-bool check_return(struct semantic_context* ctx, struct ast_node* node);
-bool check_break(struct semantic_context* ctx, struct ast_node* node);
-bool check_continue(struct semantic_context* ctx, struct ast_node* node);
-bool check_expression(struct semantic_context* ctx, struct ast_node* node);
-bool check_binary_op(struct semantic_context* ctx, struct ast_node* node);
-bool check_unary_op(struct semantic_context* ctx, struct ast_node* node);
-bool check_func_call(struct semantic_context* ctx, struct ast_node* node);
-bool check_var_ref(struct semantic_context* ctx, struct ast_node* node);
-bool check_literal(struct semantic_context* ctx, struct ast_node* node);
-bool check_array(struct semantic_context* ctx, struct ast_node* node);
-bool check_struct(struct semantic_context* ctx, struct ast_node* node);
-bool check_union(struct semantic_context* ctx, struct ast_node* node);
-bool check_enum(struct semantic_context* ctx, struct ast_node* node);
+bool check_node(semantic_context_t* ctx, astnode_t* node);
+bool check_function(semantic_context_t* ctx, astnode_t* node);
+bool check_variable(semantic_context_t* ctx, astnode_t* node);
+bool check_block(semantic_context_t* ctx, astnode_t* node);
+bool check_if(semantic_context_t* ctx, astnode_t* node);
+bool check_while(semantic_context_t* ctx, astnode_t* node);
+bool check_for(semantic_context_t* ctx, astnode_t* node);
+bool check_return(semantic_context_t* ctx, astnode_t* node);
+bool check_break(semantic_context_t* ctx, astnode_t* node);
+bool check_continue(semantic_context_t* ctx, astnode_t* node);
+bool check_expression(semantic_context_t* ctx, astnode_t* node);
+bool check_binary_op(semantic_context_t* ctx, astnode_t* node);
+bool check_unary_op(semantic_context_t* ctx, astnode_t* node);
+bool check_func_call(semantic_context_t* ctx, astnode_t* node);
+bool check_var_ref(semantic_context_t* ctx, astnode_t* node);
+bool check_literal(semantic_context_t* ctx, astnode_t* node);
+bool check_array(semantic_context_t* ctx, astnode_t* node);
+bool check_struct(semantic_context_t* ctx, astnode_t* node);
+bool check_union(semantic_context_t* ctx, astnode_t* node);
+bool check_enum(semantic_context_t* ctx, astnode_t* node);
 
-struct type* infer_type(struct semantic_context* ctx, struct ast_node* node);
+struct type* infer_type(semantic_context_t* ctx, astnode_t* node);
 
-bool check_type_compatibility(struct semantic_context* ctx, struct ast_node* node, struct type* expected, struct type* actual);
-// struct type* get_binary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* left, struct type* right);
-// struct type* get_unary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* operand);
+bool check_type_compatibility(semantic_context_t* ctx, astnode_t* node, struct type* expected, struct type* actual);
+// struct type* get_binary_op_result_type(semantic_context_t* ctx, enum op_code op, struct type* left, struct type* right);
+// struct type* get_unary_op_result_type(semantic_context_t* ctx, enum op_code op, struct type* operand);
 
-bool all_paths_return(struct ast_node* node);
-bool is_unreachable_code(struct ast_node* node);
+bool all_paths_return(astnode_t* node);
+bool is_unreachable_code(astnode_t* node);
 
-struct semantic_context* new_semantic_context(void)
+semantic_context_t* new_semantic_context(void)
 {
-    struct semantic_context* ctx = (struct semantic_context*)malloc(sizeof(struct semantic_context));
+    semantic_context_t* ctx = (semantic_context_t*)malloc(sizeof(semantic_context_t));
     if(!ctx) return NULL;
     
     ctx->symbols = new_symbol_table();
@@ -49,7 +49,7 @@ struct semantic_context* new_semantic_context(void)
     return ctx;
 }
 
-void new_semantic_error(struct semantic_context* ctx, struct report* err)
+void new_semantic_error(semantic_context_t* ctx, struct report_t* err)
 {
     if(!ctx || !err){
         if(err) free_report(err);
@@ -57,7 +57,7 @@ void new_semantic_error(struct semantic_context* ctx, struct report* err)
     }
 
     if(!ctx->errors){
-        ctx->errors = (struct report**)malloc(sizeof(struct report*));
+        ctx->errors = (struct report_t**)malloc(sizeof(struct report_t*));
         if(!ctx->errors){
             free_report(err);
             return;
@@ -67,7 +67,7 @@ void new_semantic_error(struct semantic_context* ctx, struct report* err)
         return;
     }
 
-    struct report** new_errors = (struct report**)realloc(ctx->errors, (ctx->errors_count + 1) * sizeof(struct report*));
+    struct report_t** new_errors = (struct report_t**)realloc(ctx->errors, (ctx->errors_count + 1) * sizeof(struct report_t*));
     if(!new_errors){
         free_report(err);
         return;
@@ -78,13 +78,13 @@ void new_semantic_error(struct semantic_context* ctx, struct report* err)
     ctx->errors_count++;
 }
 
-bool analyze_ast(struct semantic_context* ctx, struct ast_node* root)
+bool analyze_ast(semantic_context_t* ctx, astnode_t* root)
 {
     if(!ctx || !root) return false;
     return check_node(ctx, root);
 }
 
-void free_semantic_context(struct semantic_context* ctx)
+void free_semantic_context(semantic_context_t* ctx)
 {
     if(!ctx) return;
     
@@ -107,7 +107,7 @@ void free_semantic_context(struct semantic_context* ctx)
     ctx = NULL;
 }
 
-bool check_node(struct semantic_context* ctx, struct ast_node* node)
+bool check_node(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node) return false;
     
@@ -140,7 +140,7 @@ bool check_node(struct semantic_context* ctx, struct ast_node* node)
     }
 }
 
-bool check_function(struct semantic_context* ctx, struct ast_node* node)
+bool check_function(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_FUNC) return false;
     
@@ -162,7 +162,7 @@ bool check_function(struct semantic_context* ctx, struct ast_node* node)
     struct type* func_type = new_type_function(return_type, NULL, func->param_count);
     
     // add function to symbol table
-    struct symbol* func_sym = define_symbol(ctx->symbols, func->name, SYMBOL_FUNC, func_type, node);
+    symbol_t* func_sym = define_symbol(ctx->symbols, func->name, SYMBOL_FUNC, func_type, node);
     if(!func_sym){
         // semantic_error(ctx, node, "Failed to define function '%s'", func->name);
         // struct report* err = new_report(
@@ -174,7 +174,7 @@ bool check_function(struct semantic_context* ctx, struct ast_node* node)
     
     // create new scope for function body
     push_scope(ctx->symbols, SCOPE_FUNCTION, node);
-    struct symbol* prev_func = ctx->current_function;
+    symbol_t* prev_func = ctx->current_function;
     ctx->current_function = func_sym;
     
     // add parameters to function scope
@@ -199,7 +199,7 @@ bool check_function(struct semantic_context* ctx, struct ast_node* node)
     return success;
 }
 
-bool check_variable(struct semantic_context* ctx, struct ast_node* node)
+bool check_variable(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_VAR) return false;
     
@@ -264,7 +264,7 @@ bool check_variable(struct semantic_context* ctx, struct ast_node* node)
     }
     
     // add to symbol table
-    struct symbol* sym = define_symbol(ctx->symbols, var->name, kind, var_type, node);
+    symbol_t* sym = define_symbol(ctx->symbols, var->name, kind, var_type, node);
     if(!sym){
         // semantic_error(ctx, node, "Failed to define variable '%s'", var->name);
         // struct report* err = new_report(
@@ -282,7 +282,7 @@ bool check_variable(struct semantic_context* ctx, struct ast_node* node)
     return true;
 }
 
-bool check_block(struct semantic_context* ctx, struct ast_node* node)
+bool check_block(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_BLOCK) return false;
     
@@ -300,7 +300,7 @@ bool check_block(struct semantic_context* ctx, struct ast_node* node)
     return success;
 }
 
-bool check_if(struct semantic_context* ctx, struct ast_node* node)
+bool check_if(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_IF) return false;
     
@@ -315,7 +315,7 @@ bool check_if(struct semantic_context* ctx, struct ast_node* node)
     return success;
 }
 
-bool check_while(struct semantic_context* ctx, struct ast_node* node)
+bool check_while(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_WHILE) return false;
     
@@ -329,7 +329,7 @@ bool check_while(struct semantic_context* ctx, struct ast_node* node)
     return success;
 }
 
-bool check_for(struct semantic_context* ctx, struct ast_node* node)
+bool check_for(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_FOR) return false;
     
@@ -347,7 +347,7 @@ bool check_for(struct semantic_context* ctx, struct ast_node* node)
     return success;
 }
 
-bool check_return(struct semantic_context* ctx, struct ast_node* node)
+bool check_return(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_RETURN) return false;
     
@@ -367,7 +367,7 @@ bool check_return(struct semantic_context* ctx, struct ast_node* node)
     return true;
 }
 
-bool check_break(struct semantic_context* ctx, struct ast_node* node)
+bool check_break(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node) return false;
     
@@ -383,7 +383,7 @@ bool check_break(struct semantic_context* ctx, struct ast_node* node)
     return true;
 }
 
-bool check_continue(struct semantic_context* ctx, struct ast_node* node)
+bool check_continue(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node) return false;
     
@@ -399,14 +399,14 @@ bool check_continue(struct semantic_context* ctx, struct ast_node* node)
     return true;
 }
 
-bool check_expression(struct semantic_context* ctx, struct ast_node* node)
+bool check_expression(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_EXPR) return false;
     // TODO: Implement expression checking
     return true;
 }
 
-bool check_binary_op(struct semantic_context* ctx, struct ast_node* node)
+bool check_binary_op(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_BIN_OP) return false;
     
@@ -438,19 +438,19 @@ bool check_binary_op(struct semantic_context* ctx, struct ast_node* node)
     return true;
 }
 
-bool check_unary_op(struct semantic_context* ctx, struct ast_node* node)
+bool check_unary_op(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_UNARY_OP) return false;
     
     return check_node(ctx, node->unary_op.right);
 }
 
-bool check_func_call(struct semantic_context* ctx, struct ast_node* node)
+bool check_func_call(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_FUNC_CALL) return false;
     
     // Lookup function
-    struct symbol* func_sym = lookup_symbol(ctx->symbols, node->func_call.name);
+    symbol_t* func_sym = lookup_symbol(ctx->symbols, node->func_call.name);
     if(!func_sym){
         // semantic_error(ctx, node, "Undefined function '%s'", node->func_call.name);
         // struct report* report = new_report(
@@ -480,7 +480,7 @@ bool check_func_call(struct semantic_context* ctx, struct ast_node* node)
     return true;
 }
 
-bool check_var_ref(struct semantic_context* ctx, struct ast_node* node)
+bool check_var_ref(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_VAR_REF) return false;
     
@@ -488,7 +488,7 @@ bool check_var_ref(struct semantic_context* ctx, struct ast_node* node)
     if(!name) return false;
     
     // lookup variable
-    struct symbol* sym = lookup_symbol(ctx->symbols, name);
+    symbol_t* sym = lookup_symbol(ctx->symbols, name);
     if(!sym){
         // semantic_error(ctx, node, "Undefined variable '%s'", name);
         // struct report* report = new_report(
@@ -504,14 +504,14 @@ bool check_var_ref(struct semantic_context* ctx, struct ast_node* node)
     return true;
 }
 
-bool check_literal(struct semantic_context* ctx, struct ast_node* node)
+bool check_literal(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_LITERAL) return false;
     // Literals are always valid
     return true;
 }
 
-bool check_array(struct semantic_context* ctx, struct ast_node* node)
+bool check_array(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_ARRAY) return false;
     
@@ -523,21 +523,21 @@ bool check_array(struct semantic_context* ctx, struct ast_node* node)
     return true;
 }
 
-bool check_struct(struct semantic_context* ctx, struct ast_node* node)
+bool check_struct(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_STRUCT) return false;
     // TODO: Implement struct checking
     return true;
 }
 
-bool check_union(struct semantic_context* ctx, struct ast_node* node)
+bool check_union(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_UNION) return false;
     // TODO: Implement union checking
     return true;
 }
 
-bool check_enum(struct semantic_context* ctx, struct ast_node* node)
+bool check_enum(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node || node->type != NODE_ENUM) return false;
     // TODO: Implement enum checking
@@ -545,7 +545,7 @@ bool check_enum(struct semantic_context* ctx, struct ast_node* node)
 }
 
 
-struct type* infer_type(struct semantic_context* ctx, struct ast_node* node)
+struct type* infer_type(semantic_context_t* ctx, astnode_t* node)
 {
     if(!ctx || !node) return type_error;
     
@@ -570,7 +570,7 @@ struct type* infer_type(struct semantic_context* ctx, struct ast_node* node)
             }
             
         case NODE_VAR_REF: {
-            struct symbol* sym = lookup_symbol(ctx->symbols, node->var_ref.name);
+            symbol_t* sym = lookup_symbol(ctx->symbols, node->var_ref.name);
             return sym ? sym->type : type_error;
         }
         
@@ -581,7 +581,7 @@ struct type* infer_type(struct semantic_context* ctx, struct ast_node* node)
         //     return get_unary_op_result_type(ctx, node->unary_op.code, infer_type(ctx, node->unary_op.right));
         
         case NODE_FUNC_CALL: {
-            struct symbol* func = lookup_symbol(ctx->symbols, node->func_call.name);
+            symbol_t* func = lookup_symbol(ctx->symbols, node->func_call.name);
             if(func && func->type && func->type->kind == TYPE_FUNCTION){
                 return func->type->func.return_type;
             }
@@ -594,14 +594,14 @@ struct type* infer_type(struct semantic_context* ctx, struct ast_node* node)
 }
 
 
-bool check_type_compatibility(struct semantic_context* ctx, struct ast_node* node, struct type* expected, struct type* actual)
+bool check_type_compatibility(semantic_context_t* ctx, astnode_t* node, struct type* expected, struct type* actual)
 {
     (void)ctx;
     (void)node;
     return types_compatible(expected, actual);
 }
 
-// struct type* get_binary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* left, struct type* right)
+// struct type* get_binary_op_result_type(semantic_context_t* ctx, enum op_code op, struct type* left, struct type* right)
 // {
 //     (void)ctx;
 //     (void)op;
@@ -616,7 +616,7 @@ bool check_type_compatibility(struct semantic_context* ctx, struct ast_node* nod
 //     return type_error;
 // }
 
-// struct type* get_unary_op_result_type(struct semantic_context* ctx, enum op_code op, struct type* operand)
+// struct type* get_unary_op_result_type(semantic_context_t* ctx, enum op_code op, struct type* operand)
 // {
 //     (void)ctx;
 //     (void)op;
@@ -624,14 +624,14 @@ bool check_type_compatibility(struct semantic_context* ctx, struct ast_node* nod
 // }
 
 
-bool all_paths_return(struct ast_node* node)
+bool all_paths_return(astnode_t* node)
 {
     // TODO: Implement control flow analysis
     (void)node;
     return true;
 }
 
-bool is_unreachable_code(struct ast_node* node)
+bool is_unreachable_code(astnode_t* node)
 {
     // TODO: Implement unreachable code detection
     (void)node;

@@ -9,12 +9,12 @@
 #define INITIAL_SCOPE_CAPACITY 16
 #define SYMBOL_TABLE_SIZE 64
 
-struct scope* new_scope(int kind, struct ast_node* owner);
-void free_scope(struct scope* scope);
+scope_t* new_scope(int kind, astnode_t* owner);
+void free_scope(scope_t* scope);
 
-struct scope* new_scope(int kind, struct ast_node* owner)
+scope_t* new_scope(int kind, astnode_t* owner)
 {
-    struct scope* scope = (struct scope*)malloc(sizeof(struct scope));
+    scope_t* scope = (scope_t*)malloc(sizeof(scope_t));
     if(!scope) return NULL;
     
     scope->parent = NULL;
@@ -23,7 +23,7 @@ struct scope* new_scope(int kind, struct ast_node* owner)
     scope->count = 0;
     scope->capacity = SYMBOL_TABLE_SIZE;
     
-    scope->symbols = (struct symbol**)calloc(SYMBOL_TABLE_SIZE, sizeof(struct symbol*));
+    scope->symbols = (symbol_t**)calloc(SYMBOL_TABLE_SIZE, sizeof(symbol_t*));
     if(!scope->symbols){
         free(scope);
         return NULL;
@@ -32,9 +32,9 @@ struct scope* new_scope(int kind, struct ast_node* owner)
     return scope;
 }
 
-struct symbol_table* new_symbol_table(void)
+symbol_table_t* new_symbol_table(void)
 {
-    struct symbol_table* st = (struct symbol_table*)malloc(sizeof(struct symbol_table));
+    symbol_table_t* st = (symbol_table_t*)malloc(sizeof(symbol_table_t));
     if(!st) return NULL;
     
     st->global = new_scope(SCOPE_GLOBAL, NULL);
@@ -47,7 +47,7 @@ struct symbol_table* new_symbol_table(void)
     st->scope_capacity = INITIAL_SCOPE_CAPACITY;
     st->scope_count = 1;
     
-    st->scopes = (struct scope**)malloc(st->scope_capacity * sizeof(struct scope*));
+    st->scopes = (scope_t**)malloc(st->scope_capacity * sizeof(scope_t*));
     if(!st->scopes){
         free_scope(st->global);
         free(st);
@@ -68,11 +68,11 @@ unsigned int hash_string(const char* str)
     return hash % SYMBOL_TABLE_SIZE;
 }
 
-struct scope* push_scope(struct symbol_table* st, int scope_kind, struct ast_node* owner)
+scope_t* push_scope(symbol_table_t* st, int scope_kind, astnode_t* owner)
 {
     if(!st) return NULL;
     
-    struct scope* scope = new_scope(scope_kind, owner);
+    scope_t* scope = new_scope(scope_kind, owner);
     if(!scope) return NULL;
     
     scope->parent = st->current;
@@ -81,7 +81,7 @@ struct scope* push_scope(struct symbol_table* st, int scope_kind, struct ast_nod
     // add to scopes list
     if(st->scope_count >= st->scope_capacity){
         size_t new_cap = st->scope_capacity * 2;
-        struct scope** scopes = (struct scope**)realloc(st->scopes, new_cap * sizeof(struct scope*));
+        scope_t** scopes = (scope_t**)realloc(st->scopes, new_cap * sizeof(scope_t*));
         if(!scopes){
             free_scope(scope);
             return NULL;
@@ -94,26 +94,26 @@ struct scope* push_scope(struct symbol_table* st, int scope_kind, struct ast_nod
     return scope;
 }
 
-void pop_scope(struct symbol_table* st)
+void pop_scope(symbol_table_t* st)
 {
     if(!st || !st->current || st->current == st->global) return;
     st->current = st->current->parent;
 }
 
-struct scope* current_scope(struct symbol_table* st)
+scope_t* current_scope(symbol_table_t* st)
 {
     return st ? st->current : NULL;
 }
 
-struct symbol* define_symbol(struct symbol_table* st, const char* name, const enum symbol_kind kind, struct type* type, struct ast_node* decl_node)
+symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_kind kind, type_t* type, astnode_t* decl_node)
 {
     if(!st || !name) return NULL;
     
-    struct scope* scope = st->current;
+    scope_t* scope = st->current;
     unsigned int hash = hash_string(name);
     
     // Check for redefinition in current scope
-    struct symbol* existing = scope->symbols[hash];
+    symbol_t* existing = scope->symbols[hash];
     while(existing){
         if(strcmp(existing->name, name) == 0){
             return NULL;  // Symbol already exists
@@ -122,7 +122,7 @@ struct symbol* define_symbol(struct symbol_table* st, const char* name, const en
     }
     
     // Create new symbol
-    struct symbol* sym = (struct symbol*)malloc(sizeof(struct symbol));
+    symbol_t* sym = (symbol_t*)malloc(sizeof(symbol_t));
     if(!sym) return NULL;
     
     sym->name = util_strdup(name);
@@ -152,12 +152,12 @@ struct symbol* define_symbol(struct symbol_table* st, const char* name, const en
     return sym;
 }
 
-struct symbol* lookup_in_scope(struct scope* scope, const char* name)
+symbol_t* lookup_in_scope(scope_t* scope, const char* name)
 {
     if(!scope || !name) return NULL;
     
     unsigned int hash = hash_string(name);
-    struct symbol* sym = scope->symbols[hash];
+    symbol_t* sym = scope->symbols[hash];
     
     while(sym){
         if(strcmp(sym->name, name) == 0){
@@ -169,14 +169,14 @@ struct symbol* lookup_in_scope(struct scope* scope, const char* name)
     return NULL;
 }
 
-struct symbol* lookup_symbol(struct symbol_table* st, const char* name)
+symbol_t* lookup_symbol(symbol_table_t* st, const char* name)
 {
     if(!st || !name) return NULL;
     
     // Search from current scope up to global
-    struct scope* scope = st->current;
+    scope_t* scope = st->current;
     while(scope){
-        struct symbol* sym = lookup_in_scope(scope, name);
+        symbol_t* sym = lookup_in_scope(scope, name);
         if(sym) return sym;
         scope = scope->parent;
     }
@@ -184,32 +184,32 @@ struct symbol* lookup_symbol(struct symbol_table* st, const char* name)
     return NULL;
 }
 
-bool is_scope_symbol_exist(struct symbol_table* st, const char* name)
+bool is_scope_symbol_exist(symbol_table_t* st, const char* name)
 {
     if(!st || !name) return false;
     return lookup_in_scope(st->current, name) != NULL;
 }
 
-bool is_symbol_mutable(const struct symbol* sym)
+bool is_symbol_mutable(const symbol_t* sym)
 {
     if(!sym) return false;
     return sym->kind != SYMBOL_CONST;
 }
 
-bool is_symbol_initialized(const struct symbol* sym)
+bool is_symbol_initialized(const symbol_t* sym)
 {
     if(!sym) return false;
     return (sym->flags & SYM_FLAG_ASSIGNED) != 0;
 }
 
-void free_scope(struct scope* scope)
+void free_scope(scope_t* scope)
 {
     if(!scope) return;
     
     for(size_t i = 0; i < scope->capacity; i++){
-        struct symbol* sym = scope->symbols[i];
+        symbol_t* sym = scope->symbols[i];
         while(sym){
-            struct symbol* next = sym->next;
+            symbol_t* next = sym->next;
             free(sym->name);
             free(sym);
             sym = next;
@@ -225,7 +225,7 @@ void free_scope(struct scope* scope)
     scope = NULL;
 }
 
-void free_symbol_table(struct symbol_table* st)
+void free_symbol_table(symbol_table_t* st)
 {
     if(!st) return;
     

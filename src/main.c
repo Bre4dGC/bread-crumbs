@@ -4,10 +4,11 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "common/debug.h"
+#include "compiler/core/diagnostic.h"
 #include "compiler/frontend/lexer.h"
 #include "compiler/frontend/parser.h"
 #include "compiler/frontend/semantic.h"
-#include "compiler/core/diagnostic.h"
 #include "common/file_reader.h"
 
 char* filepath = NULL;
@@ -100,10 +101,10 @@ int run_file(const char *filepath)
     
     size_t file_size = 0;
     char* source = NULL;
-    struct lexer* lexer = NULL;
-    struct parser* parser = NULL;
-    struct ast_node* ast = NULL;
-    // struct semantic_context* semantic = NULL;
+    lexer_t* lexer = NULL;
+    parser_t* parser = NULL;
+    astnode_t* ast = NULL;
+    // semantic_context_t* semantic = NULL;
 
     source = read_file(filepath, &file_size);
     if(!source){
@@ -129,6 +130,10 @@ int run_file(const char *filepath)
         for (size_t i = 0; i < parser->errors_count; ++i) print_report(parser->errors[i]);
         goto cleanup;
     }
+    
+    #ifdef DEBUG
+        ast_print(ast, 0);
+    #endif
 
     // semantic = new_semantic_context();
     // if(!semantic){

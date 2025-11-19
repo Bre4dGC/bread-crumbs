@@ -6,16 +6,16 @@
 #include "compiler/core/diagnostic.h"
 #include "common/debug.h"
 
-struct ast_node* new_ast(enum node_type type)
+astnode_t* new_ast(enum node_type type)
 {
-    struct ast_node* node = (struct ast_node*)calloc(1, sizeof(struct ast_node));
+    astnode_t* node = (astnode_t*)calloc(1, sizeof(astnode_t));
     if(!node) return NULL;
     node->type = type;
     node->line = 0;
     return node;
 }
 
-// int compile_ast(struct ast_node* node, struct virtual_machine* target_vm)
+// int compile_ast(struct ast_node* node, struct virtual_machine_t* target_vm)
 // {
 //     if(!node) return -1;
 //     (void)target_vm;
@@ -27,11 +27,19 @@ struct ast_node* new_ast(enum node_type type)
 //     return -1;
 // }
 
-void free_ast(struct ast_node* node)
+void free_ast(astnode_t* node)
 {
     if(!node) return;
 
-    switch(node->type){
+    switch (node->type) {
+        case NODE_FUNC_CALL:
+            if (node->func_call.name) free(node->func_call.name);
+            for (size_t i = 0; i < node->func_call.arg_count; i++) {
+                free_ast(node->func_call.args[i]);
+            }
+            if (node->func_call.args) free(node->func_call.args);
+            break;
+
         case NODE_BIN_OP:
             free_ast(node->bin_op.left);
             free_ast(node->bin_op.right);
@@ -62,14 +70,6 @@ void free_ast(struct ast_node* node)
                 free_ast(node->block.statements[i]);
             }
             if(node->block.statements) free(node->block.statements);
-            break;
-
-        case NODE_FUNC_CALL:
-            if(node->func_call.name) free(node->func_call.name);
-            for(size_t i = 0; i < node->func_call.arg_count; i++){
-                free_ast(node->func_call.args[i]);
-            }
-            if(node->func_call.args) free(node->func_call.args);
             break;
 
         case NODE_RETURN:
@@ -249,5 +249,4 @@ void free_ast(struct ast_node* node)
             break;
     }
     free(node);
-    node = NULL;
 }

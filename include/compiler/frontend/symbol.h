@@ -32,44 +32,48 @@ enum scope_kind {
     SCOPE_STRUCT,
 };
 
+typedef struct scope scope_t;
+typedef struct symbol symbol_t;
+
+struct scope {
+    struct scope* parent;
+    enum scope_kind kind;
+    astnode_t* owner;
+    symbol_t** symbols;
+    size_t count;
+    size_t capacity;
+};
+
 struct symbol {
     char* name;
-    enum symbol_kind kind;    
-    struct type* type;
-    uint32_t flags;
 
-    struct ast_node* decl_node;
+    enum symbol_kind kind;
+    enum symbol_flags flags;
+    
+    struct type* type;
+    astnode_t* decl_node;
     
     size_t line;
     size_t column;
-    
-    struct scope* scope; // for nested scopes
-    struct symbol* next; // hash table linkage
+
+    struct scope_t* scope;
+    struct symbol* next; // for hash table chaining
 };
 
-struct scope {
-    struct scope* parent;    // enclosing scope
-    struct symbol** symbols; // hash table of symbols    
-    struct ast_node* owner;
-    enum scope_kind kind;
-    
-    size_t capacity;
-    size_t count;
-};
+typedef struct {
+    scope_t* current;
+    scope_t* global;
+    scope_t** scopes;
 
-struct symbol_table {
-    struct scope* current;
-    struct scope* global;
-    struct scope** scopes;
     size_t scope_count;
     size_t scope_capacity;
-};
+} symbol_table_t;
 
-struct symbol_table* new_symbol_table(void);
-struct symbol* lookup_symbol(struct symbol_table* st, const char* name);
-struct symbol* define_symbol(struct symbol_table* st, const char* name, const enum symbol_kind kind, struct type* type, struct ast_node* decl_node);
-struct scope* push_scope(struct symbol_table* st, int scope_kind, struct ast_node* owner);
-bool is_scope_symbol_exist(struct symbol_table* st, const char* name);
-void pop_scope(struct symbol_table* st);
-void free_scope(struct scope* scope);
-void free_symbol_table(struct symbol_table* st);
+symbol_table_t* new_symbol_table(void);
+symbol_t* lookup_symbol(symbol_table_t* st, const char* name);
+symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_kind kind, struct type* type, astnode_t* decl_node);
+scope_t* push_scope(symbol_table_t* st, int scope_kind, astnode_t* owner);
+bool is_scope_symbol_exist(symbol_table_t* st, const char* name);
+void pop_scope(symbol_table_t* st);
+void free_scope(scope_t* scope);
+void free_symbol_table(symbol_table_t* st);

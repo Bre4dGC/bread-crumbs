@@ -6,14 +6,14 @@
 #include "compiler/frontend/ast.h"
 #include "compiler/core/diagnostic.h"
 
-struct parser {
-    struct lexer* lexer;
-    struct token current;
-    struct token peek;
-    struct report** errors;
+typedef struct {
+    lexer_t* lexer;
+    token_t current;
+    token_t peek;
+    report_t** errors;
     size_t errors_count;
-};
+} parser_t;
 
-struct parser* new_parser(struct lexer* lexer);
-struct ast_node* parse_program(struct parser* pars);
-void free_parser(struct parser* parser);
+parser_t* new_parser(lexer_t* lexer);
+astnode_t* parse_program(parser_t* pars);
+void free_parser(parser_t* parser);

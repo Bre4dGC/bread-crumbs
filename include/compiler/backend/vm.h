@@ -39,13 +39,13 @@ enum op_code{
     OP_JUMP_IFNOT,  // jmp_ifnot <label>
 };
 
-struct virtual_machine {
+typedef struct {
     uint8_t* code;
     size_t capacity;
     int64_t* stack;
     size_t ssize;   // stack size
     size_t ip;      // instruction pointer 
     size_t sp;      // stack pointer
-};
+} virtual_machine_t;
 
-void vm_execute(struct virtual_machine* vm);
+void vm_execute(virtual_machine_t* vm);

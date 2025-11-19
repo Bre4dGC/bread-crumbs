@@ -3,8 +3,8 @@
 #include <stddef.h>
 
 #include "compiler/frontend/ast.h"
-#include "compiler/frontend/types.h"
 #include "compiler/frontend/symbol.h"
+#include "compiler/frontend/types.h"
 
 enum semantic_phase {
     PHASE_DECLARE, // register symbols
@@ -12,17 +12,17 @@ enum semantic_phase {
     PHASE_CHECK    // type checking and validation
 };
 
-struct semantic_context {
-    struct symbol_table* symbols;
+typedef struct {
+    symbol_table_t* symbols;
     enum semantic_phase phase;
 
-    struct symbol* current_function;
+    symbol_t* current_function;
     int loop_depth;
 
-    struct report** errors;
+    report_t** errors;
     size_t errors_count;
-};
+} semantic_context_t;
 
-struct semantic_context* new_semantic_context(void);
-void free_semantic_context(struct semantic_context* ctx);
-bool analyze_ast(struct semantic_context* ctx, struct ast_node* ast);
+semantic_context_t* new_semantic_context(void);
+void free_semantic_context(semantic_context_t* ctx);
+bool analyze_ast(semantic_context_t* ctx, astnode_t* ast);

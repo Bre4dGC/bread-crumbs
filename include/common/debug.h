@@ -10,7 +10,7 @@
 #include "compiler/frontend/semantic.h"
 #include "compiler/backend/vm.h"
 
-static inline const char* token_to_str(const struct token* tok)
+static inline const char* token_to_str(const token_t* tok)
 {
     if (!tok) return "NULL";
     switch(tok->category){
@@ -36,7 +36,7 @@ static inline const char* token_to_str(const struct token* tok)
     }
 }
 
-static inline void ast_print(struct ast_node* node, int indent)
+static inline void ast_print(astnode_t* node, int indent)
 {
     if (!node) return;
 
@@ -195,41 +195,36 @@ static inline void ast_print(struct ast_node* node, int indent)
     }
 }
 
-#define OPCODE_TO_STR(oc) \
-    _Generic((oc), \
-        enum op_code: \
-            (oc) == OP_PUSH ? "OP_PUSH" : \
-            (oc) == OP_POP ? "OP_POP" : \
-            (oc) == OP_DUP ? "OP_DUP" : \
-            (oc) == OP_ADD ? "OP_ADD" : \
-            (oc) == OP_SUB ? "OP_SUB" : \
-            (oc) == OP_MUL ? "OP_MUL" : \
-            (oc) == OP_DIV ? "OP_DIV" : \
-            (oc) == OP_AND ? "OP_AND" : \
-            (oc) == OP_OR ? "OP_OR" : \
-            (oc) == OP_NOT ? "OP_NOT" : \
-            (oc) == OP_EQ ? "OP_EQ" : \
-            (oc) == OP_NEQ ? "OP_NEQ" : \
-            (oc) == OP_LT ? "OP_LT" : \
-            (oc) == OP_GT ? "OP_GT" : \
-            (oc) == OP_STORE ? "OP_STORE" : \
-            (oc) == OP_LOAD ? "OP_LOAD" : \
-            (oc) == OP_STORE_GLOB ? "OP_STORE_GLOB" : \
-            (oc) == OP_LOAD_GLOB ? "OP_LOAD_GLOB" : \
-            (oc) == OP_JUMP ? "OP_JUMP" : \
-            (oc) == OP_CALL ? "OP_CALL" : \
-            (oc) == OP_RETURN ? "OP_RETURN" : \
-            (oc) == OP_JUMP_IF ? "OP_JUMP_IF" : \
-            (oc) == OP_JUMP_IFNOT ? "OP_JUMP_IFNOT" : \
-            "UNKNOWN_OPCODE" \
+#define OPCODE_TO_STR(oc)                               \
+    _Generic((oc),                                      \
+        enum op_code:                                   \
+            (oc) == OP_PUSH ? "OP_PUSH" :               \
+            (oc) == OP_POP  ? "OP_POP" :                \
+            (oc) == OP_DUP  ? "OP_DUP" :                \
+            (oc) == OP_ADD  ? "OP_ADD" :                \
+            (oc) == OP_SUB  ? "OP_SUB" :                \
+            (oc) == OP_MUL  ? "OP_MUL" :                \
+            (oc) == OP_DIV  ? "OP_DIV" :                \
+            (oc) == OP_AND  ? "OP_AND" :                \
+            (oc) == OP_OR   ? "OP_OR" :                 \
+            (oc) == OP_NOT  ? "OP_NOT" :                \
+            (oc) == OP_EQ   ? "OP_EQ" :                 \
+            (oc) == OP_NEQ  ? "OP_NEQ" :                \
+            (oc) == OP_LT   ? "OP_LT" :                 \
+            (oc) == OP_GT   ? "OP_GT" :                 \
+            (oc) == OP_STORE ? "OP_STORE" :             \
+            (oc) == OP_LOAD  ? "OP_LOAD" :              \
+            (oc) == OP_STORE_GLOB ? "OP_STORE_GLOB" :   \
+            (oc) == OP_LOAD_GLOB ? "OP_LOAD_GLOB" :     \
+            (oc) == OP_JUMP     ? "OP_JUMP" :           \
+            (oc) == OP_CALL     ? "OP_CALL" :           \
+            (oc) == OP_RETURN   ? "OP_RETURN" :         \
+            (oc) == OP_JUMP_IF  ? "OP_JUMP_IF" :        \
+            (oc) == OP_JUMP_IFNOT ? "OP_JUMP_IFNOT" :   \
+            "UNKNOWN_OPCODE"                            \
     )
 
-static inline const char* opcode_to_str(enum op_code oc)
-{
-    return OPCODE_TO_STR(oc);
-}
-
-static inline const char* type_to_string(const struct type* type)
+static inline const char* type_to_string(const type_t* type)
 {
     if(!type) return "<null>";
     
@@ -267,15 +262,15 @@ static inline const char* symbol_kind_name(enum symbol_kind kind)
     }
 }
 
-static inline void print_scope(const struct scope* scope, int indent)
+static inline void print_scope(const scope_t* scope_t, int indent)
 {
-    if(!scope) return;
+    if(!scope_t) return;
     
     const char* scope_name[] = {"global", "function", "block", "struct"};
-    printf("%*sScope: %s (%zu symbols)\n", indent, "", scope_name[scope->kind], scope->count);
+    printf("%*sScope: %s (%zu symbols)\n", indent, "", scope_name[scope_t->kind], scope_t->count);
     
-    for(size_t i = 0; i < scope->capacity; i++){
-        struct symbol* sym = scope->symbols[i];
+    for(size_t i = 0; i < scope_t->capacity; i++){
+        symbol_t* sym = scope_t->symbols[i];
         while(sym){
             printf("%*s  %s '%s': %s\n", indent, "", symbol_kind_name(sym->kind), sym->name, type_to_string(sym->type));
             sym = sym->next;
@@ -283,7 +278,7 @@ static inline void print_scope(const struct scope* scope, int indent)
     }
 }
 
-static inline void print_symbol_table(const struct symbol_table* st)
+static inline void print_symbol_table(const symbol_table_t* st)
 {
     if(!st) return;
     
@@ -293,7 +288,7 @@ static inline void print_symbol_table(const struct symbol_table* st)
 
 #define print_token(t) do{ if (t) printf("\033[34m%s\033[0m(\033[1m%s\033[0m)\n", token_to_str(t), (t)->literal ? (t)->literal : ""); } while(0)
 #define print_node(n, i) ast_print(n, i)
-#define print_opcode(op) opcode_to_str(op)
+#define print_opcode(op) OPCODE_TO_STR(oc)
 #define print_scope(scope, indent) print_scope(scope, indent)
 #define print_symbol_table(st) print_symbol_table(st)
 

@@ -1,24 +1,24 @@
 #include <stdlib.h>
 #include <stdalign.h>
 
+#include "compiler/core/diagnostic.h"
 #include "compiler/frontend/tokenizer.h"
 #include "compiler/frontend/types.h"
-#include "compiler/core/diagnostic.h"
 
-struct type* type_unknown = NULL;
-struct type* type_error = NULL;
-struct type* type_void = NULL;
-struct type* type_bool = NULL;
-struct type* type_int = NULL;
-struct type* type_uint = NULL;
-struct type* type_float = NULL;
-struct type* type_str = NULL;
-struct type* type_char = NULL;
-struct type* type_array = NULL;
-struct type* type_function = NULL;
-struct type* type_aggregate = NULL;
+type_t* type_unknown = NULL;
+type_t* type_error = NULL;
+type_t* type_void = NULL;
+type_t* type_bool = NULL;
+type_t* type_int = NULL;
+type_t* type_uint = NULL;
+type_t* type_float = NULL;
+type_t* type_str = NULL;
+type_t* type_char = NULL;
+type_t* type_array = NULL;
+type_t* type_function = NULL;
+type_t* type_aggregate = NULL;
 
-struct type* new_type(const enum type_kind kind, const size_t size, const size_t align);
+type_t* new_type(const enum type_kind kind, const size_t size, const size_t align);
 
 void init_types(void)
 {
@@ -33,9 +33,9 @@ void init_types(void)
     type_char =    new_type(TYPE_CHAR,  sizeof(char),  alignof(char));
 }
 
-struct type* new_type(const enum type_kind kind, const size_t size, const size_t align)
+type_t* new_type(const enum type_kind kind, const size_t size, const size_t align)
 {
-    struct type* type = (struct type*)malloc(sizeof(struct type));
+    type_t* type = (type_t*)malloc(sizeof(type_t));
     if(!type) return NULL;
     type->kind = kind;
     type->size = size;
@@ -43,9 +43,9 @@ struct type* new_type(const enum type_kind kind, const size_t size, const size_t
     return type;
 }
 
-struct type* new_type_array(struct type* elem_type, const size_t length)
+type_t* new_type_array(type_t* elem_type, const size_t length)
 {
-    struct type* type = (struct type*)malloc(sizeof(struct type));
+    type_t* type = (type_t*)malloc(sizeof(type_t));
     if(!type) return NULL;
     
     type->kind = TYPE_ARRAY;
@@ -64,9 +64,9 @@ struct type* new_type_array(struct type* elem_type, const size_t length)
     return type;
 }
 
-struct type* new_type_function(struct type* return_type, struct type** param_types, const size_t param_count)
+type_t* new_type_function(type_t* return_type, type_t** param_types, const size_t param_count)
 {
-    struct type* type = (struct type*)malloc(sizeof(struct type));
+    type_t* type = (type_t*)malloc(sizeof(type_t));
     if(!type) return NULL;
 
     type->kind = TYPE_FUNCTION;
@@ -80,9 +80,9 @@ struct type* new_type_function(struct type* return_type, struct type** param_typ
     return type;
 }
 
-struct type* new_type_aggregate(struct symbol* scope, const size_t member_count)
+type_t* new_type_aggregate(struct symbol* scope, const size_t member_count)
 {
-    struct type* type = (struct type*)malloc(sizeof(struct type));
+    type_t* type = (type_t*)malloc(sizeof(type_t));
     if(!type) return NULL;
     
     type->kind = TYPE_STRUCT;
@@ -94,7 +94,7 @@ struct type* new_type_aggregate(struct symbol* scope, const size_t member_count)
     return type;
 }
 
-bool types_equal(const struct type* a, const struct type* b)
+bool types_equal(const type_t* a, const type_t* b)
 {
     if(!a || !b) return a == b;
     if(a->kind != b->kind) return false;
@@ -128,7 +128,7 @@ bool types_equal(const struct type* a, const struct type* b)
     }
 }
 
-bool types_compatible(const struct type* a, const struct type* b)
+bool types_compatible(const type_t* a, const type_t* b)
 {
     // compatible is more relaxed than equal
     if(types_equal(a, b)) return true;
@@ -146,25 +146,25 @@ bool types_compatible(const struct type* a, const struct type* b)
     return false;
 }
 
-bool is_numeric_type(const struct type* type)
+bool is_numeric_type(const type_t* type)
 {
     if(!type) return false;
     return type->kind == TYPE_INT || type->kind == TYPE_UINT || type->kind == TYPE_FLOAT;
 }
 
-bool is_integer_type(const struct type* type)
+bool is_integer_type(const type_t* type)
 {
     if(!type) return false;
     return type->kind == TYPE_INT || type->kind == TYPE_UINT;
 }
 
-bool is_signed_type(const struct type* type)
+bool is_signed_type(const type_t* type)
 {
     if(!type) return false; 
     return type->kind == TYPE_INT || type->kind == TYPE_FLOAT;
 }
 
-struct type* datatype_to_type(enum category_datatype dt)
+type_t* datatype_to_type(enum category_datatype dt)
 {
     switch(dt){
         case DT_VOID:  return type_void;

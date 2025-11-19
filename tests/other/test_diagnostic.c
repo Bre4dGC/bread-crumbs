@@ -11,7 +11,7 @@ int main()
 {
     filepath = util_strdup("file_with_errors.brc");
 
-    struct report* err = new_report(
+    report_t* err = new_report(
         SEVERITY_ERROR, ERROR_UNCLOSED_STRING, 10, 23, 1, "var name: str = \"bread"
     );
     

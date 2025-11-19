@@ -4,7 +4,7 @@
 #include "compiler/frontend/tokenizer.h"
 #include "compiler/core/diagnostic.h"
 
-struct lexer {
+typedef struct {
     char* input;
     size_t input_len;
     
@@ -17,10 +17,10 @@ struct lexer {
 
     int paren_balance;
 
-    struct report** errors;
+    report_t** errors;
     size_t errors_count;
-};
+} lexer_t;
 
-struct lexer* new_lexer(const char* input);
-void free_lexer(struct lexer* lex);
-struct token next_token(struct lexer* lex);
+lexer_t* new_lexer(const char* input);
+void free_lexer(lexer_t* lex);
+token_t next_token(lexer_t* lex);

@@ -1,3 +1,11 @@
+enum Direction
+{
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+}
+
 struct Person
 {
     var name: str
@@ -7,5 +15,6 @@ struct Person
 
 func main()
 {
-    var person_direction: int
+    # var person: Person = {"Bread", 16, 170}
+    # const person_direction: Direction = Direction.NAHUI
 }

@@ -104,13 +104,13 @@ enum category_tag {
     CATEGORY_LITERAL,   CATEGORY_MODIFIER,
 };
 
-struct keyword {
+typedef struct {
     char* literal;
     int type;
     enum category_tag category;
-};
+} keyword_t;
 
-struct token {
+typedef struct {
     enum category_tag category;
 	union {
         enum category_service type_service;
@@ -123,13 +123,13 @@ struct token {
         enum category_modifier type_modifier;
 	};
 	char* literal;
-};
+} token_t;
 
-extern const struct keyword operators[];
-extern const struct keyword keywords[];
+extern const keyword_t operators[];
+extern const keyword_t keywords[];
 
 extern const size_t operators_count;
 extern const size_t keywords_count;
 
-struct token new_token(const enum category_tag category, const int type, const char* literal);
-void free_token(struct token* token);
+token_t new_token(const enum category_tag category, const int type, const char* literal);
+void free_token(token_t* token);

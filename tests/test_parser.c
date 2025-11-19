@@ -16,20 +16,20 @@ void run_test(const char* test_name, const char* input, bool should_succeed)
     printf("Running test: %s\n", test_name);
     printf("Input: %s\n", input);
     
-    struct lexer *lex = new_lexer(input);
+    lexer_t *lex = new_lexer(input);
     if(!lex){
         printf("FAIL: Failed to create lexer\n\n");
         return;
     }
 
-    struct parser *pars = new_parser(lex);
+    parser_t *pars = new_parser(lex);
     if(!pars){
         printf("FAIL: Failed to create parser\n\n");
         free_lexer(lex);
         return;
     }
 
-    struct ast_node* ast = parse_program(pars);
+    astnode_t* ast = parse_program(pars);
     
     if(should_succeed){
         if(ast){
@@ -74,7 +74,7 @@ int main(void)
     run_test("If Statement", "if (x > 0) { return x; }", true);
     run_test("While Loop", "while (true) { break; }", true);
     run_test("For Loop", "for (var i = 0; i < 10; i++) { print(i); }", true);
-    run_test("Struct Declaration", "struct Point { x: int, y: int }", true);
+    run_test("Struct Declaration", "struct Point { var x: int, var y: int }", true);
     run_test("Invalid Syntax", "func ( { }", false);
     run_test("If-Elif-Else Statement", "if (x > 0) { return x; } elif (x < 0) { return -x; } else { return 0; }", true);
     run_test("Union Declaration", "union Color { Red, Green, Blue }", true);

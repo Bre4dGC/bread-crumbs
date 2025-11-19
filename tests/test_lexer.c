@@ -15,7 +15,7 @@ int main(void)
     char* source = read_file(filepath, &file_size);
     if(!source) return EXIT_FAILURE;
 
-    struct lexer *lex = new_lexer(source);
+    lexer_t *lex = new_lexer(source);
     if(!lex){
         fprintf(stderr, "Failed to create lexer\n");
         return 1;
@@ -24,7 +24,7 @@ int main(void)
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
-    struct token token;
+    token_t token;
     int total_tokens = 0;
     while((token = next_token(lex)).category != CATEGORY_SERVICE || token.type_service != SERV_EOF){
         free_token(&token);

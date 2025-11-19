@@ -1,6 +1,6 @@
-func simple_function()
+func simple_function(something: str, something: str)
 {
-    print("This is a simple function.")
+    print("This is a simple function." + something)
 }
 
 func get_float() : float
@@ -13,21 +13,21 @@ func get_string() : str
     return "Hello, World!"
 }
 
-func get_array() : int[5]
-{
-    return {1, 2, 3, 4, 5}
-}
+# func get_array() : int[5]
+# {
+#     return {1, 2, 3, 4, 5}
+# }
 
 func main() : int
 {
     simple_function()
     var x = get_float()
     var y = get_string()
-    var arr = get_array()
+    # var arr = get_array()
 
-    var some_int: any = 52
-    var some_str: any = "yado aura farmer"
-    var some_some: any = if(yado.aura > 10000000) "daddy" else +1000
+    # var some_int: any = 52
+    # var some_str: any = "yado aura farmer"
+    # var some_some: any = if(yado.aura > 10000000) "daddy" else +1000
 
     return 0
 }

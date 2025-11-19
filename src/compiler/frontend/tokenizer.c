@@ -17,7 +17,7 @@
 #define C_PR (CATEGORY_PAREN)
 #define C_DL (CATEGORY_DELIMITER)
 
-const struct keyword operators[] = {
+const keyword_t operators[] = {
     {"++", OPER_INCREM, C_OP}, {"--", OPER_DECREM,  C_OP},
     {"==", OPER_EQ,     C_OP}, {"!=", OPER_NEQ,     C_OP},
     {"+=", OPER_ADD,    C_OP}, {"-=", OPER_SUB,     C_OP},
@@ -28,7 +28,7 @@ const struct keyword operators[] = {
     {"=>", OPER_ARROW,  C_OP}
 };
 
-const struct keyword keywords[] = {
+const keyword_t keywords[] = {
     /* сontrol structures */
     {"if",      KW_IF,      C_KW}, {"else",     KW_ELSE,      C_KW},
     {"elif",    KW_ELIF,    C_KW}, {"for",      KW_FOR,       C_KW},
@@ -67,12 +67,12 @@ const struct keyword keywords[] = {
     {"final", MOD_FINAL, C_MD}, {"static", MOD_STATIC, C_MD},
 };
 
-const size_t operators_count = sizeof(operators) / sizeof(struct keyword);
-const size_t keywords_count  = sizeof(keywords)  / sizeof(struct keyword);
+const size_t operators_count = sizeof(operators) / sizeof(keyword_t);
+const size_t keywords_count  = sizeof(keywords)  / sizeof(keyword_t);
 
-struct token new_token(const enum category_tag category, const int type, const char *literal)
+token_t new_token(const enum category_tag category, const int type, const char *literal)
 {
-    struct token tok = {.category = category, .literal = NULL};
+    token_t tok = {.category = category, .literal = NULL};
 
     if (literal){
         tok.literal = util_strdup(literal);
@@ -101,7 +101,7 @@ struct token new_token(const enum category_tag category, const int type, const c
     return tok;
 }
 
-void free_token(struct token *tok)
+void free_token(token_t *tok)
 {
     if(!tok) return;
     free(tok->literal);

@@ -5,21 +5,23 @@
 
 #include "compiler/frontend/lexer.h"
 
-struct ast_node;
+typedef struct astnode astnode_t;
 
 struct node_bin_op {
-    struct ast_node* left;
-    struct ast_node* right;
+    astnode_t* left;
+    astnode_t* right;
+    int operator;
 };
 
 struct node_unary_op {
-    struct ast_node* right;
+    astnode_t* right;
+    int operator;
     bool is_postfix;
 };
 
 struct node_var_assign {
     char* name;
-    struct ast_node* value;
+    astnode_t* value;
 };
 
 struct node_var_ref {
@@ -27,19 +29,19 @@ struct node_var_ref {
 };
 
 struct node_block {
-    struct ast_node** statements;
+    astnode_t** statements;
     size_t count;
     size_t capacity;
 };
 
 struct node_func_call {
     char* name;
-    struct ast_node* *args;
+    astnode_t** args;
     size_t arg_count;
 };
 
 struct node_return_stmt {
-    struct ast_node* body;
+    astnode_t* body;
 };
 
 struct node_literal {
@@ -50,57 +52,57 @@ struct node_var {
     enum category_modifier modif;
     char* name;
     enum category_datatype dtype;
-    struct ast_node* value;
+    astnode_t* value;
 };
 
 struct node_array {
-    struct ast_node** elements;
+    astnode_t** elements;
     size_t count;
     size_t capacity;
 };
 
 struct node_if {
-    struct ast_node* condition;
-    struct ast_node* then_block;
-    struct ast_node* else_block;
-    struct ast_node* elif_blocks;
+    astnode_t* condition;
+    astnode_t* then_block;
+    astnode_t* else_block;
+    astnode_t* elif_blocks;
 };
 
 struct node_while {
-    struct ast_node* condition;
-    struct ast_node* body;
+    astnode_t* condition;
+    astnode_t* body;
 };
 
 struct node_for {
-    struct ast_node* init;
-    struct ast_node* condition;
-    struct ast_node* update;
-    struct ast_node* body;
+    astnode_t* init;
+    astnode_t* condition;
+    astnode_t* update;
+    astnode_t* body;
 };
 
 struct node_func {
     char* name;
-    struct ast_node** params;
+    astnode_t** params;
     enum category_datatype return_type;
-    struct ast_node* body;
+    astnode_t* body;
     size_t param_count;
 };
 
 struct node_case {
-    struct ast_node* condition;
-    struct ast_node* body;
+    astnode_t* condition;
+    astnode_t* body;
 };
 
 struct node_match {
-    struct ast_node* target;
-    struct ast_node** cases;
+    astnode_t* target;
+    astnode_t** cases;
     size_t case_count;
     size_t case_capacity;
 };
 
 struct node_struct {
     char* name;
-    struct ast_node** members;
+    astnode_t** members;
     size_t member_count;
     size_t member_capacity;
 };
@@ -114,20 +116,20 @@ struct node_enum {
 
 struct node_union {
     char* name;
-    struct ast_node** members;
+    astnode_t** members;
     size_t member_count;
     size_t member_capacity;
 };
 
 struct node_trait {
     char* name;
-    struct ast_node* body;
+    astnode_t* body;
 };
 
 struct node_trycatch {
-    struct ast_node* try_block;
-    struct ast_node* catch_block;
-    struct ast_node* finally_block;
+    astnode_t* try_block;
+    astnode_t* catch_block;
+    astnode_t* finally_block;
 };
 
 struct node_import {
@@ -136,25 +138,25 @@ struct node_import {
 
 // struct node_test {
 //     char* name;
-//     struct ast_node* body;
+//     astnode_t* body;
 // };
 
 // struct node_fork {
 //     enum category_keyword keyw;
 //     char* name;
-//     struct ast_node* body;
+//     astnode_t* body;
 // };
 
 // struct node_simulate {
 //     enum category_keyword keyw;
-//     struct ast_node* body;
+//     astnode_t* body;
 // };
 
 // struct node_solve {
-//     struct ast_node** params;
+//     astnode_t** params;
 //     size_t param_count;
 //     size_t param_capacity;
-//     struct ast_node* body;
+//     astnode_t* body;
 // };
 
 enum node_type {
@@ -171,7 +173,7 @@ enum node_type {
     // NODE_SOLVE,
 };
 
-struct ast_node {
+struct astnode {
     enum node_type type;
     size_t line;
     union {
@@ -205,6 +207,6 @@ struct ast_node {
     };
 };
 
-struct ast_node* new_ast(enum node_type type);
-// int compile_ast(struct ast_node* node, struct virtual_machine* vm);
-void free_ast(struct ast_node* node);
+astnode_t* new_ast(enum node_type type);
+// int compile_ast(astnode_t* node, struct virtual_machine_t* vm);
+void free_ast(astnode_t* node);
