@@ -94,35 +94,27 @@ type_t* new_type_compound(struct symbol* scope, const size_t member_count)
 
 bool types_equal(const type_t* a, const type_t* b)
 {
-    if(!a || !b) return a == b;
+    if(!a || !b) return false;
     if(a->kind != b->kind) return false;
-    
+
     switch(a->kind){
-        case TYPE_UNKNOWN: case TYPE_ERROR:
-        case TYPE_VOID:    case TYPE_BOOL:
-        case TYPE_STR:     case TYPE_CHAR:
-        case TYPE_INT:     case TYPE_UINT:
-        case TYPE_FLOAT:
-            return true;  // primitive types are equal if kinds match
-            
         case TYPE_ARRAY:
-            return a->array.length == b->array.length && types_equal(a->array.elem_type, b->array.elem_type);
-                   
+            return types_equal(a->array.elem_type, b->array.elem_type) && (a->array.length == b->array.length);
+
         case TYPE_FUNCTION:
-            if(!types_equal(a->func.return_type, b->func.return_type)){
-                return false;
-            }
-            if(a->func.param_count != b->func.param_count){
-                return false;
-            }
-            for(size_t i = 0; i < a->func.param_count; i++){
+            if(!types_equal(a->func.return_type, b->func.return_type)) return false;
+            if(a->func.param_count != b->func.param_count) return false;
+            for(size_t i = 0; i < a->func.param_count; ++i){
                 if(!types_equal(a->func.param_types[i], b->func.param_types[i])){
                     return false;
                 }
             }
             return true;
-            
-        default: return a == b; // for struct/enum/union, compare by identity
+
+        case TYPE_STRUCT: case TYPE_UNION: 
+            return a->compound.member_count == b->compound.member_count;
+
+        default: return true;
     }
 }
 

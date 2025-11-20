@@ -4,7 +4,7 @@ SRC_DIR = src
 BIN_DIR = bin
 OBJ_DIR = build
 
-MAIN =     		$(BIN_DIR)/crumbs
+MAIN =     		$(BIN_DIR)/crum
 TEST_LEXER =  	$(BIN_DIR)/test_lexer
 TEST_PARSER = 	$(BIN_DIR)/test_parser
 TEST_SEMANTIC = $(BIN_DIR)/test_semantic

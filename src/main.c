@@ -132,7 +132,7 @@ int run_file(const char *filepath)
     }
     
     #ifdef DEBUG
-        ast_print(ast, 0);
+        print_node(ast, 0);
     #endif
 
     // semantic = new_semantic_context();
