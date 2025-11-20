@@ -49,7 +49,7 @@ semantic_context_t* new_semantic_context(void)
     return ctx;
 }
 
-void new_semantic_error(semantic_context_t* ctx, struct report_t* err)
+void new_semantic_error(semantic_context_t* ctx, report_t* err)
 {
     if(!ctx || !err){
         if(err) free_report(err);
@@ -57,7 +57,7 @@ void new_semantic_error(semantic_context_t* ctx, struct report_t* err)
     }
 
     if(!ctx->errors){
-        ctx->errors = (struct report_t**)malloc(sizeof(struct report_t*));
+        ctx->errors = (report_t**)malloc(sizeof(report_t*));
         if(!ctx->errors){
             free_report(err);
             return;
@@ -67,7 +67,7 @@ void new_semantic_error(semantic_context_t* ctx, struct report_t* err)
         return;
     }
 
-    struct report_t** new_errors = (struct report_t**)realloc(ctx->errors, (ctx->errors_count + 1) * sizeof(struct report_t*));
+    report_t** new_errors = (report_t**)realloc(ctx->errors, (ctx->errors_count + 1) * sizeof(report_t*));
     if(!new_errors){
         free_report(err);
         return;
@@ -132,7 +132,7 @@ bool check_node(semantic_context_t* ctx, astnode_t* node)
         case NODE_ENUM:      return check_enum(ctx, node);
         default:
             // semantic_warning(ctx, node, "Unimplemented node type in semantic analysis");
-            // struct report* report = new_report(
+            // report* report = new_report(
             //     SEVERITY_WARNING, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_UNIMPLEMENTED_NODE,
             //     node->line, node->column, node->length, node->input
             // );
@@ -150,7 +150,7 @@ bool check_function(semantic_context_t* ctx, astnode_t* node)
     // check if function already exists
     if(is_scope_symbol_exist(ctx->symbols, func->name)){
         // semantic_error(ctx, node, "Function '%s' already defined", func->name);
-        // struct report* report = new_report(
+        // report* report = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_FUNCTION_ALREADY_DECLARED,
         //     node->line, node->column, node->length, node->input
         // );
@@ -165,7 +165,7 @@ bool check_function(semantic_context_t* ctx, astnode_t* node)
     symbol_t* func_sym = define_symbol(ctx->symbols, func->name, SYMBOL_FUNC, func_type, node);
     if(!func_sym){
         // semantic_error(ctx, node, "Failed to define function '%s'", func->name);
-        // struct report* err = new_report(
+        // report* err = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_ALREADY_DECLARED,
         //     node->line, node->column, node->length, node->input
         // );
@@ -208,7 +208,7 @@ bool check_variable(semantic_context_t* ctx, astnode_t* node)
     
     if(is_scope_symbol_exist(ctx->symbols, var->name)){
         // semantic_error(ctx, node, "Variable '%s' must have either a type annotation or initializer", var->name);
-        // struct report* err = new_report(
+        // report* err = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_ALREADY_DECLARED,
         //     node->line, node->column, node->length, node->input
         // );
@@ -228,7 +228,7 @@ bool check_variable(semantic_context_t* ctx, astnode_t* node)
     else {
         // no type and no initializer
         // semantic_error(ctx, node, "Variable '%s' must have either a type annotation or initializer", var->name);
-        // struct report* err = new_report(
+        // report* err = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_NO_TYPE_OR_INITIALIZER,
         //     node->line, node->column, node->length, node->input
         // )
@@ -237,7 +237,7 @@ bool check_variable(semantic_context_t* ctx, astnode_t* node)
     
     if(!var_type || var_type == type_error){
         // semantic_error(ctx, node, "Cannot determine type for variable '%s'", var->name);
-        // struct report* err = new_report(
+        // report* err = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_NO_TYPE_OR_INITIALIZER,
         //     node->line, node->column, node->length, node->input
         // );
@@ -249,7 +249,7 @@ bool check_variable(semantic_context_t* ctx, astnode_t* node)
         struct type* init_type = infer_type(ctx, var->value);
         if(!check_type_compatibility(ctx, node, var_type, init_type)){
             // semantic_error(ctx, node, "Type mismatch: cannot assign %s to %s", type_to_string(init_type), type_to_string(var_type));
-            // struct report* err = new_report(
+            // report* err = new_report(
             //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_TYPE_MISMATCH,
             //     node->line, node->column, node->length, node->input
             // );
@@ -267,7 +267,7 @@ bool check_variable(semantic_context_t* ctx, astnode_t* node)
     symbol_t* sym = define_symbol(ctx->symbols, var->name, kind, var_type, node);
     if(!sym){
         // semantic_error(ctx, node, "Failed to define variable '%s'", var->name);
-        // struct report* err = new_report(
+        // report* err = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_NO_TYPE_OR_INITIALIZER,
         //     node->line, node->column, node->length, node->input
         // );
@@ -353,7 +353,7 @@ bool check_return(semantic_context_t* ctx, astnode_t* node)
     
     if(!ctx->current_function){
         // semantic_error(ctx, node, "Return statement outside function");
-        // struct report* report = new_report(
+        // report* report = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_RETURN_OUTSIDE_FUNCTION,
         //     node->line, node->column, node->length, node->input
         // );
@@ -373,7 +373,7 @@ bool check_break(semantic_context_t* ctx, astnode_t* node)
     
     if(ctx->loop_depth == 0){
         // semantic_error(ctx, node, "Break statement outside loop");
-        // struct report* report = new_report(
+        // report* report = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_BREAK_OUTSIDE_LOOP,
         //     node->line, node->column, node->length, node->input
         // );
@@ -389,7 +389,7 @@ bool check_continue(semantic_context_t* ctx, astnode_t* node)
     
     if(ctx->loop_depth == 0){
         // semantic_error(ctx, node, "Continue statement outside loop");
-        // struct report* report = new_report(
+        // report* report = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_CONTINUE_OUTSIDE_LOOP,
         //     node->line, node->column, node->length, node->input
         // );
@@ -428,7 +428,7 @@ bool check_binary_op(semantic_context_t* ctx, astnode_t* node)
     
     if(!types_compatible(left_type, right_type)){
         // semantic_error(ctx, node, "Type mismatch in binary operation: %s and %s", type_to_string(left_type), type_to_string(right_type));
-        // struct report* report = new_report(
+        // report* report = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_TYPE_MISMATCH,
         //     node->line, node->column, node->length, node->input
         // );
@@ -453,7 +453,7 @@ bool check_func_call(semantic_context_t* ctx, astnode_t* node)
     symbol_t* func_sym = lookup_symbol(ctx->symbols, node->func_call.name);
     if(!func_sym){
         // semantic_error(ctx, node, "Undefined function '%s'", node->func_call.name);
-        // struct report* report = new_report(
+        // report* report = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_UNDECLARED_FUNCTION,
         //     node->line, node->column, node->length, node->input
         // );
@@ -462,7 +462,7 @@ bool check_func_call(semantic_context_t* ctx, astnode_t* node)
     
     if(func_sym->kind != SYMBOL_FUNC){
         // semantic_error(ctx, node, "'%s' is not a function", node->func_call.name);
-        // struct report* report = new_report(
+        // report* report = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_NOT_A_FUNCTION,
         //     node->line, node->column, node->length, node->input
         // );
@@ -491,7 +491,7 @@ bool check_var_ref(semantic_context_t* ctx, astnode_t* node)
     symbol_t* sym = lookup_symbol(ctx->symbols, name);
     if(!sym){
         // semantic_error(ctx, node, "Undefined variable '%s'", name);
-        // struct report* report = new_report(
+        // report* report = new_report(
         //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_UNDECLARED_VARIABLE,
         //     node->line, node->column, node->length, node->input
         // );
