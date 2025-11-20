@@ -9,9 +9,6 @@
 #define INITIAL_SCOPE_CAPACITY 16
 #define SYMBOL_TABLE_SIZE 64
 
-scope_t* new_scope(int kind, astnode_t* owner);
-void free_scope(scope_t* scope);
-
 scope_t* new_scope(int kind, astnode_t* owner)
 {
     scope_t* scope = (scope_t*)malloc(sizeof(scope_t));
@@ -25,7 +22,7 @@ scope_t* new_scope(int kind, astnode_t* owner)
     
     scope->symbols = (symbol_t**)calloc(SYMBOL_TABLE_SIZE, sizeof(symbol_t*));
     if(!scope->symbols){
-        free(scope);
+        free_scope(scope);
         return NULL;
     }
     
@@ -39,7 +36,7 @@ symbol_table_t* new_symbol_table(void)
     
     st->global = new_scope(SCOPE_GLOBAL, NULL);
     if(!st->global){
-        free(st);
+        free_symbol_table(st);
         return NULL;
     }
     
@@ -49,8 +46,7 @@ symbol_table_t* new_symbol_table(void)
     
     st->scopes = (scope_t**)malloc(st->scope_capacity * sizeof(scope_t*));
     if(!st->scopes){
-        free_scope(st->global);
-        free(st);
+        free_symbol_table(st);
         return NULL;
     }
     
@@ -62,9 +58,7 @@ unsigned int hash_string(const char* str)
 {
     unsigned int hash = 5381;
     int c;
-    while((c = *str++)){
-        hash = ((hash << 5) + hash) + c;  // hash * 33 + c
-    }
+    while((c = *str++)) hash = ((hash << 5) + hash) + c;  // hash * 33 + c
     return hash % SYMBOL_TABLE_SIZE;
 }
 
@@ -115,9 +109,7 @@ symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_
     // Check for redefinition in current scope
     symbol_t* existing = scope->symbols[hash];
     while(existing){
-        if(strcmp(existing->name, name) == 0){
-            return NULL;  // Symbol already exists
-        }
+        if(strcmp(existing->name, name) == 0)  NULL; // Symbol already exists
         existing = existing->next;
     }
     

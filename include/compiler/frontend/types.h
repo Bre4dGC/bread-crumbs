@@ -41,14 +41,13 @@ typedef struct type {
             struct type* return_type;
             struct type** param_types;
             size_t param_count;
-            // bool is_variadic;
         } func;
         
-        // struct/union
+        // struct/unions
         struct {
             struct symbol* scope; // members are symbols in this scope
             size_t member_count;
-        } aggregate;
+        } compound;
     };
 } type_t;
 
@@ -62,14 +61,14 @@ extern type_t* type_float;
 extern type_t* type_str;
 extern type_t* type_char;
 
-extern type_t* type_array;
-extern type_t* type_function;
-extern type_t* type_aggregate;
-
 void init_types(void);
+void free_type(type_t* type);
 void free_types(void);
-bool types_compatible(const type_t* a, const type_t* b);
-type_t* datatype_to_type(enum category_datatype dt);
-type_t* new_type_array(type_t* elem_type, size_t length);
+
+type_t* new_type(const enum type_kind kind, const size_t size, const size_t align);
+type_t* new_type_array(type_t* elem_type, const size_t length);
 type_t* new_type_function(type_t* return_type, type_t** param_types, const size_t param_count);
-type_t* new_type_aggregate(struct symbol* scope, size_t member_count);
+type_t* new_type_compound(struct symbol* scope, const size_t member_count);
+
+bool types_compatible(const type_t* a, const type_t* b);
+type_t* datatype_to_type(const enum category_datatype dt);
