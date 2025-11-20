@@ -214,39 +214,50 @@ void free_type(type_t* type)
 
 void free_types(void)
 {
-    free_type(type_unknown);
-    free(type_unknown);
-    type_unknown = NULL;
-
-    free_type(type_error);
-    free(type_error);
-    type_error = NULL;
-
-    free_type(type_void);
-    free(type_void);
-    type_void = NULL;
-
-    free_type(type_bool);
-    free(type_bool);
-    type_bool = NULL;
-
-    free_type(type_int);
-    free(type_int);
-    type_int = NULL;
-
-    free_type(type_uint);
-    free(type_uint);
-    type_uint = NULL;
-
-    free_type(type_float);
-    free(type_float);
-    type_float = NULL;
-
-    free_type(type_str);
-    free(type_str);
-    type_str = NULL;
-
-    free_type(type_char);
-    free(type_char);
-    type_char = NULL;
+    if(type_unknown){
+        free_type(type_unknown);
+        free(type_unknown);
+        type_unknown = NULL;
+    }
+    
+    if(type_error){
+        free_type(type_error);
+        free(type_error);
+        type_error = NULL;
+    }
+    if(type_void){
+        free_type(type_void);
+        free(type_void);
+        type_void = NULL;
+    }
+    if(type_bool){
+        free_type(type_bool);
+        free(type_bool);
+        type_bool = NULL;
+    }
+    if(type_int){
+        free_type(type_int);
+        free(type_int);
+        type_int = NULL;
+    }
+    if(type_uint){
+        free_type(type_uint);
+        free(type_uint);
+        type_uint = NULL;
+    }
+    if(type_float){
+        free_type(type_float);
+        free(type_float);
+        type_float = NULL;
+    }
+    if(type_str){
+        free_type(type_str);
+        free(type_str);
+        type_str = NULL;
+    }
+    if(type_char){
+        free_type(type_char);
+        free(type_char);
+        type_char = NULL;
+    }
 }
