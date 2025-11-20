@@ -65,7 +65,6 @@ void init_types(void);
 void free_type(type_t* type);
 void free_types(void);
 
-type_t* new_type(const enum type_kind kind, const size_t size, const size_t align);
 type_t* new_type_array(type_t* elem_type, const size_t length);
 type_t* new_type_function(type_t* return_type, type_t** param_types, const size_t param_count);
 type_t* new_type_compound(struct symbol* scope, const size_t member_count);

@@ -197,8 +197,7 @@ void free_type(type_t* type)
             }
             break;
 
-        case TYPE_STRUCT:
-        case TYPE_UNION:
+        case TYPE_STRUCT: case TYPE_UNION:
             if(type->compound.scope){
                 free_scope(type->compound.scope);
                 type->compound.scope = NULL;

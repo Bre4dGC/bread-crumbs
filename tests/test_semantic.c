@@ -34,7 +34,7 @@ int main(void)
            type_function->kind, type_function->size, type_function->align,
            type_function->func.return_type->kind, type_function->func.param_count);
 
-           
+    type_struct = new_type_compound(NULL, 0);
     if(!type_struct){
         fprintf(stderr, "Failed to create struct type\n");
         free_type(type_array);
@@ -48,7 +48,7 @@ int main(void)
     free_type(type_array);
     free_type(type_function);
     free_type(type_struct);
-
+    
     free(type_array);
     free(type_function);
     free(type_struct);
