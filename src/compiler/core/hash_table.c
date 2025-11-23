@@ -1,13 +1,15 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "compiler/core/hash_table.h"
 
-unsigned int ht_hash(int key)
+unsigned int ht_hash(const char* str)
 {
-    int hash, c;
-    while((c = key++)) hash = ((hash << 5) + hash) + c;
+    unsigned int hash = 5381;
+    int c;
+    while((c = *str++)) hash = ((hash << 5) + hash) + c;
     return hash;
 }
 
@@ -20,7 +22,7 @@ hash_table_t* new_hashtable()
     return table;
 }
 
-void ht_insert(hash_table_t* table, int key, void* value)
+void ht_insert(hash_table_t* table, char* key, void* value)
 {
     hash_table_t* entry = table;
     while(entry->next != NULL){
@@ -41,7 +43,7 @@ void ht_insert(hash_table_t* table, int key, void* value)
     entry->next = new_entry;
 }
 
-void* ht_lookup(hash_table_t* table, int key)
+void* ht_lookup(hash_table_t* table, char* key)
 {
     while(table != NULL){
         if(table->key == key) return table->value;
@@ -50,7 +52,7 @@ void* ht_lookup(hash_table_t* table, int key)
     return NULL;
 }
 
-void ht_delete(hash_table_t* table, int key)
+void ht_delete(hash_table_t* table, char* key)
 {
     hash_table_t* entry = table;
     hash_table_t* next = entry->next;
