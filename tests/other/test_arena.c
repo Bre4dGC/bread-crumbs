@@ -5,18 +5,38 @@
 int main(void)
 {
     arena_t arena = new_arena(ARENA_DEFAULT_SIZE);
-    if(!arena.data) fprintf(stderr, "Error: Could not allocate arena\n");
+    
+    double* value = arena_alloc(&arena, sizeof(double), alignof(double));
+    if(!value){
+        printf("something wrong with value");
+        return 1;
+    }
 
-    printf("size: %lu\n", arena.size);
-    printf("address: %p\n", arena.data);
+    int* numbers = arena_alloc_array(&arena, sizeof(int), 10, alignof(int));
+    if(!numbers){
+        printf("something wrong with numbers");
+        return 1;
+    }
 
-    int i = 42;
-    int* p = (int*)arena_alloc(&arena, sizeof(int), alignof(int));
+    char* string = arena_alloc_default(&arena, 256);
+    if(!string){
+        printf("something wrong with string");
+        return 1;
+    }
 
-    memcpy(p, &i, sizeof(int));
+    *value = 3.1415;
+    printf("value: %f\n", *value);
+    
+    if (numbers && value && string) {
+        for (int i = 0; i < 10; i++) {
+            numbers[i] = i;
+            printf("%d ", numbers[i]);
+        }
+    }
 
-    printf("data: %d at %p\n", *p, p);
-
+    strcpy(string, "hello world");
+    printf("\nstring: %s\n", string);
+    
     free_arena(&arena);
     return 0;
 }
