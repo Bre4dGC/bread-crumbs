@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "compiler/core/string_pool.h"
+#include "common/benchmark.h"
 
 int main(void)
 {
+    bench_start();
+
     string_pool_t pool = new_string_pool(ARENA_DEFAULT_SIZE);
     char* string = new_string(&pool, "Hello, World!");
     if(!string){
@@ -25,5 +29,9 @@ int main(void)
     }
 
     free_string_pool(&pool);
+
+    bench_stop();
+    bench_print();
+    
     return 0;
 }
