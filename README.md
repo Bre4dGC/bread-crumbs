@@ -1,7 +1,7 @@
 # Bread Crumbs
 
 <div align="center"> 
-    <img src="logo.jpg" alt="Bread Crumbs Logo" style="border-radius: 50px;">
+    <img src="logo.png" alt="Bread Crumbs Logo" style="border-radius: 50px;">
 </div>
 
 Bread Crumbs is a modern programming language designed for **testing**, **simulations**, **scientific computing**, **AI planning**, and **rapid prototyping**. With its unique features like declarative problem-solving (`solve`), scenario simulation (`simulate`), state management (`snapshot`/`rollback`), and execution tracing (`trace`), Bread Crumbs empowers developers to tackle complex problems with ease.
