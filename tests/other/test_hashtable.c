@@ -1,12 +1,16 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "compiler/core/hash_table.h"
+#include "common/benchmark.h"
 
 int main(void)
 {
     srand(time(NULL));
+    
+    bench_start();
 
     hash_table_t* table = new_hashtable();
     printf("Created hashtable at %p\n", table);
@@ -32,5 +36,9 @@ int main(void)
     printf("Deleted key %s\n", i_key);
 
     free_hashtable(table);
+
+    bench_stop();
+    bench_print();
+
     return 0;
 }

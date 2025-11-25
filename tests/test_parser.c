@@ -2,8 +2,9 @@
 #include <sys/time.h>
 
 #include "compiler/frontend/parser.h"
-#include "common/file_reader.h"
 #include "common/utils.h"
+#include "common/file_reader.h"
+#include "common/benchmark.h"
 
 char* filepath;
 
@@ -62,10 +63,7 @@ void run_test(const char* test_name, const char* input, bool should_succeed)
 
 int main(void)
 {
-    printf("=== Parser Test Suite ===\n\n");
-
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
+    bench_start();
 
     run_test("Function Declaration", "func main() : int { return 0; }", true);
     run_test("Variable Declaration", "var x: int = 42", true);
@@ -83,10 +81,8 @@ int main(void)
     // run_test("Match Statement", "match (x) { 1 => print(\"one\"), 2 => print(\"two\"), _ => print(\"other\") }", true);
     // run_test("Trait Declaration", "trait Printable { fn print() }", true);
 
-    gettimeofday(&end, NULL);
-    double microseconds = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_usec - start.tv_usec);
-    
-    printf("Processed in %.2f microseconds\n", microseconds);
+    bench_stop();
+    bench_print();
     
     printf("\n=== Test Results ===\n");
     printf("Tests run: %d\n", test_count);

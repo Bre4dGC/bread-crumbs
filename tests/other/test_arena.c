@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
+
 #include "compiler/core/arena_alloc.h"
+#include "common/benchmark.h"
 
 int main(void)
 {
+    bench_start();
+
     arena_t arena = new_arena(ARENA_DEFAULT_SIZE);
     
     double* value = arena_alloc(&arena, sizeof(double), alignof(double));
@@ -38,5 +43,8 @@ int main(void)
     printf("\nstring: %s\n", string);
     
     free_arena(&arena);
+    
+    bench_stop();
+    bench_print();
     return 0;
 }
