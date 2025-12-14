@@ -1,39 +1,43 @@
 #include <stdio.h>
 #include <sys/time.h>
-
-enum bench_time {
-    BENCH_TIME_S,
-    BENCH_TIME_MS,
-    BENCH_TIME_MCS,
-};
+#include <string.h>
 
 static struct timeval start, end;
+static double times[10];
+static int time_count = 0;
 
 void bench_start(void)
 {
     gettimeofday(&start, NULL);
 }
 
-double bench_gettime(enum bench_time type)
-{
-    double seconds = (double)(end.tv_sec - start.tv_sec);
-    double microseconds = (double)(end.tv_usec - start.tv_usec);
-    double total_time = (seconds * 1000000.0) + microseconds;
-
-    return type == BENCH_TIME_S  ? total_time / 1000000.0 :
-           type == BENCH_TIME_MS ? total_time / 1000.0    :
-                                   total_time;
-}
-
 void bench_stop(void)
 {
     gettimeofday(&end, NULL);
+    if(time_count < 10){
+        times[time_count++] = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
+    }
 }
 
-void bench_print(void)
+void bench_print(const char *test_name)
 {
-    printf("\nBenchmark results:\n");
-    printf(" - Seconds: %.5f\n", bench_gettime(BENCH_TIME_S));
-    printf(" - Miliseconds: %.5f\n", bench_gettime(BENCH_TIME_MS));
-    printf(" - Microseconds: %.5f\n", bench_gettime(BENCH_TIME_MCS));
+    double total = 0.0, min = 1e9, max = 0.0;
+    for(int i = 0; i < time_count; i++){
+        total += times[i];
+        if(times[i] < min) min = times[i];
+        if(times[i] > max) max = times[i];
+    }
+    double avg = total / time_count;
+
+    printf("\033[1;34m[Benchmark]\033[0m %s\n", test_name);
+    printf("  Runs: %d\n", time_count);
+    printf("  Total Time: \033[1;32m%.6f seconds\033[0m\n", total);
+    printf("  Average Time: \033[1;33m%.6f seconds\033[0m\n", avg);
+    printf("  Min Time: \033[1;36m%.6f seconds\033[0m\n", min);
+    printf("  Max Time: \033[1;31m%.6f seconds\033[0m\n", max);
+}
+
+void bench_reset(void)
+{
+    time_count = 0;
 }
