@@ -1,6 +1,4 @@
-#include <time.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/time.h>
 
 #include "compiler/core/hash_table.h"
@@ -8,12 +6,9 @@
 
 int main(void)
 {
-    srand(time(NULL));
-    
     bench_start();
 
     hash_table_t* table = new_hashtable();
-    printf("Created hashtable at %p\n", table);
     
     int i_val = 42;
     char* i_key = "int_key";
@@ -38,7 +33,7 @@ int main(void)
     free_hashtable(table);
 
     bench_stop();
-    bench_print();
+    bench_print("Test hash table");
 
     return 0;
 }
