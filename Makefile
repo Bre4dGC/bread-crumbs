@@ -21,9 +21,9 @@ DIR_RUNTIME = src/runtime
 
 ####################### EXECUTABLE ########################
 EXEC_MAIN 		   = $(DIR_BIN)/crum
-EXEC_TEST_LEXER    = $(DIR_TESTS)/output/lexing
-EXEC_TEST_PARSER   = $(DIR_TESTS)/output/parsing
-EXEC_TEST_SEMANTIC = $(DIR_TESTS)/output/analisis
+EXEC_TEST_LEXER    = $(DIR_BIN)/lexing
+EXEC_TEST_PARSER   = $(DIR_BIN)/parsing
+EXEC_TEST_SEMANTIC = $(DIR_BIN)/analisis
 ###########################################################
 
 ###################### SOURCE FILES #######################

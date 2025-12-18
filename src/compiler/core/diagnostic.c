@@ -6,8 +6,6 @@
 #include "compiler/core/diagnostic.h"
 #include "common/utils.h"
 
-extern char* filepath;
-
 const char* report_msg(const enum report_code code);
 
 report_t* new_report(
@@ -29,7 +27,7 @@ report_t* new_report(
     report->length = length;
     report->input = input ? util_strdup(input) : "NO INPUT";
     report->message = util_strdup(report_msg(code));
-    report->filepath = util_strdup(filepath);
+    report->filepath = util_strdup("unknown");
 
     if((input && !report->input) || !report->message){
         free_report(report);

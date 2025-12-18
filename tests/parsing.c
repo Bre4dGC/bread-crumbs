@@ -1,5 +1,6 @@
 #include "compiler/frontend/parser.h"
 #include "common/benchmark.h"
+#include "common/debug.h"
 
 int main(void)
 {
@@ -22,6 +23,9 @@ int main(void)
 
     if(ast){
         printf("PASS: Successfully parsed\n");
+        #ifdef DEBUG
+        print_node(ast, 0);
+        #endif
         free_ast(ast);
     }
     else{
