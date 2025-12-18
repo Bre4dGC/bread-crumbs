@@ -1,78 +1,90 @@
+########################## MAIN ###########################
 CC = clang
 CFLAGS = -Wall -Wextra -pedantic -std=c11 -g -I include/ -DDEBUG
-SRC_DIR = src
-BIN_DIR = bin
-OBJ_DIR = build
+###########################################################
 
-MAIN =     		$(BIN_DIR)/crum
-TEST_LEXER =  	$(BIN_DIR)/test_lexer
-TEST_PARSER = 	$(BIN_DIR)/test_parser
-TEST_SEMANTIC = $(BIN_DIR)/test_semantic
+####################### DIRECTORIES #######################
+DIR_BIN   = bin
+DIR_OBJ   = build
+DIR_SRC   = src
+DIR_TESTS = tests
 
-SRCS_MAIN = $(SRC_DIR)/main.c 									\
-            $(SRC_DIR)/compiler/core/diagnostic.c 				\
-            $(SRC_DIR)/compiler/frontend/tokenizer.c 			\
-            $(SRC_DIR)/compiler/frontend/lexer.c 				\
-            $(SRC_DIR)/compiler/frontend/ast.c 					\
-            $(SRC_DIR)/compiler/frontend/parser.c 				\
-            $(SRC_DIR)/compiler/frontend/types.c 				\
-            $(SRC_DIR)/compiler/frontend/symbol.c 				\
-            $(SRC_DIR)/compiler/frontend/semantic.c 			\
+DIR_COMP 		  = src/compiler
+DIR_COMP_CORE 	  = src/compiler/core
+DIR_COMP_FRONTEND = src/compiler/frontend
+DIR_COMP_MIDDLE   = src/compiler/middle
+DIR_COMP_BACKEND  = src/compiler/backend
 
-SRCS_TEST_LEXER = tests/test_lexer.c 			    			\
-                    $(SRC_DIR)/compiler/core/diagnostic.c		\
-                    $(SRC_DIR)/compiler/frontend/lexer.c 		\
-                    $(SRC_DIR)/compiler/frontend/tokenizer.c
+DIR_CLI     = src/cli
+DIR_RUNTIME = src/runtime
+###########################################################
+
+####################### EXECUTABLE ########################
+EXEC_MAIN 		   = $(DIR_BIN)/crum
+EXEC_TEST_LEXER    = $(DIR_TESTS)/output/lexing
+EXEC_TEST_PARSER   = $(DIR_TESTS)/output/parsing
+EXEC_TEST_SEMANTIC = $(DIR_TESTS)/output/analisis
+###########################################################
+
+###################### SOURCE FILES #######################
+SRC_MAIN =  $(DIR_SRC)/main.c 							\
+            $(DIR_COMP_CORE)/arena_alloc.c 				\
+            $(DIR_COMP_CORE)/string_pool.c 				\
+            $(DIR_COMP_CORE)/diagnostic.c 				\
+            $(DIR_COMP_CORE)/hash_table.c 				\
+            $(DIR_COMP_FRONTEND)/tokenizer.c 			\
+            $(DIR_COMP_FRONTEND)/lexer.c 				\
+            $(DIR_COMP_FRONTEND)/ast.c 					\
+            $(DIR_COMP_FRONTEND)/parser.c 				\
+            $(DIR_COMP_FRONTEND)/types.c 				\
+            $(DIR_COMP_FRONTEND)/symbol.c 				\
+            $(DIR_COMP_FRONTEND)/semantic.c 			\
+
+SRC_TEST_LEXER = 	$(DIR_TESTS)/lexing.c 		    	\
+					$(DIR_COMP_CORE)/arena_alloc.c 		\
+					$(DIR_COMP_CORE)/string_pool.c 		\
+					$(DIR_COMP_CORE)/diagnostic.c 		\
+					$(DIR_COMP_CORE)/hash_table.c 		\
+                    $(DIR_COMP_FRONTEND)/lexer.c 		\
+                    $(DIR_COMP_FRONTEND)/tokenizer.c
 				
-SRCS_TEST_PARSER = tests/test_parser.c							\
-                    $(SRC_DIR)/compiler/core/diagnostic.c		\
-                    $(SRC_DIR)/compiler/frontend/parser.c 		\
-                    $(SRC_DIR)/compiler/frontend/lexer.c 		\
-                    $(SRC_DIR)/compiler/frontend/tokenizer.c 	\
-                    $(SRC_DIR)/compiler/frontend/ast.c
+SRC_TEST_PARSER = 	$(DIR_TESTS)/parsing.c				\
+					$(DIR_COMP_CORE)/arena_alloc.c 		\
+					$(DIR_COMP_CORE)/string_pool.c 		\
+					$(DIR_COMP_CORE)/diagnostic.c 		\
+					$(DIR_COMP_CORE)/hash_table.c 		\
+                    $(DIR_COMP_FRONTEND)/tokenizer.c 	\
+                    $(DIR_COMP_FRONTEND)/lexer.c 		\
+                    $(DIR_COMP_FRONTEND)/ast.c			\
+                    $(DIR_COMP_FRONTEND)/parser.c
 				
-SRCS_TEST_SEMANTIC = tests/test_semantic.c 						\
-                    $(SRC_DIR)/compiler/core/diagnostic.c		\
-                    $(SRC_DIR)/compiler/frontend/tokenizer.c 	\
-                    $(SRC_DIR)/compiler/frontend/lexer.c 		\
-                    $(SRC_DIR)/compiler/frontend/ast.c 			\
-                    $(SRC_DIR)/compiler/frontend/parser.c 		\
-                    $(SRC_DIR)/compiler/frontend/types.c 		\
-                    $(SRC_DIR)/compiler/frontend/symbol.c 		\
-                    $(SRC_DIR)/compiler/frontend/semantic.c
+SRC_TEST_SEMANTIC = $(DIR_TESTS)/analisis.c		 		\
+					$(DIR_COMP_CORE)/arena_alloc.c 		\
+					$(DIR_COMP_CORE)/string_pool.c 		\
+					$(DIR_COMP_CORE)/diagnostic.c 		\
+					$(DIR_COMP_CORE)/hash_table.c 		\
+                    $(DIR_COMP_FRONTEND)/tokenizer.c 	\
+                    $(DIR_COMP_FRONTEND)/lexer.c 		\
+                    $(DIR_COMP_FRONTEND)/ast.c 			\
+                    $(DIR_COMP_FRONTEND)/parser.c 		\
+                    $(DIR_COMP_FRONTEND)/types.c 		\
+                    $(DIR_COMP_FRONTEND)/symbol.c 		\
+                    $(DIR_COMP_FRONTEND)/semantic.c
+###########################################################
 
-OBJS_MAIN	 	   = $(SRCS_MAIN:%.c=$(OBJ_DIR)/%.o)
-OBJS_TEST_LEXER    = $(SRCS_TEST_LEXER:%.c=$(OBJ_DIR)/%.o)
-OBJS_TEST_PARSER   = $(SRCS_TEST_PARSER:%.c=$(OBJ_DIR)/%.o)
-OBJS_TEST_SEMANTIC = $(SRCS_TEST_SEMANTIC:%.c=$(OBJ_DIR)/%.o)
+################### COMPILE TO OBJECTS ####################
+OBJS_MAIN	 	   = $(SRC_MAIN:%.c=$(DIR_OBJ)/%.o)
+OBJS_TEST_LEXER    = $(SRC_TEST_LEXER:%.c=$(DIR_OBJ)/%.o)
+OBJS_TEST_PARSER   = $(SRC_TEST_PARSER:%.c=$(DIR_OBJ)/%.o)
+OBJS_TEST_SEMANTIC = $(SRC_TEST_SEMANTIC:%.c=$(DIR_OBJ)/%.o)
+###########################################################
 
+####################### MAKE FLAGS ########################
 .PHONY: all build test clean
 
 all: build
 
-build: $(MAIN) $(TEST_LEXER) $(TEST_PARSER) $(TEST_SEMANTIC)
-
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
-
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
-
-$(OBJ_DIR)/%.o: %.c | $(OBJ_DIR)
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(MAIN): $(OBJS_MAIN) | $(BIN_DIR)
-	$(CC) $(CFLAGS) $^ -o $@
-
-$(TEST_LEXER): $(OBJS_TEST_LEXER) | $(BIN_DIR)
-	$(CC) $(CFLAGS) $^ -o $@
-
-$(TEST_PARSER): $(OBJS_TEST_PARSER) | $(BIN_DIR)
-	$(CC) $(CFLAGS) $^ -o $@
-
-$(TEST_SEMANTIC): $(OBJS_TEST_SEMANTIC) | $(BIN_DIR)
-	$(CC) $(CFLAGS) $^ -o $@
+build: $(EXEC_MAIN) $(EXEC_TEST_LEXER) $(EXEC_TEST_PARSER) $(EXEC_TEST_SEMANTIC)
 
 test: build
 	$(TEST_LEXER) 	 | cat
@@ -87,4 +99,29 @@ install:
 	sudo cp $(MAIN) /usr/local/bin/
 
 clean:
-	rm -rf $(BIN_DIR) $(OBJ_DIR)
+	rm -rf $(DIR_BIN) $(DIR_OBJ)
+###########################################################
+
+################## COMPILE TO EXECUTABLE ##################
+$(DIR_BIN):
+	mkdir -p $(DIR_BIN)
+
+$(DIR_OBJ):
+	mkdir -p $(DIR_OBJ)
+
+$(DIR_OBJ)/%.o: %.c | $(DIR_OBJ)
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(EXEC_MAIN): $(OBJS_MAIN) | $(DIR_BIN)
+	$(CC) $(CFLAGS) $^ -o $@
+
+$(EXEC_TEST_LEXER): $(OBJS_TEST_LEXER) | $(DIR_BIN)
+	$(CC) $(CFLAGS) $^ -o $@
+
+$(EXEC_TEST_PARSER): $(OBJS_TEST_PARSER) | $(DIR_BIN)
+	$(CC) $(CFLAGS) $^ -o $@
+
+$(EXEC_TEST_SEMANTIC): $(OBJS_TEST_SEMANTIC) | $(DIR_BIN)
+	$(CC) $(CFLAGS) $^ -o $@
+###########################################################
