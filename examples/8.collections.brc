@@ -1,0 +1,43 @@
+#[ Collections usage
+
+<mod> <name> [: <collection><<generic>>] = {<data>}
+
+        === Collection types ===
+list<t>     -- A list is an ordered collection of elements of type t.
+stack<t>    -- A stack is a collection of elements of type t that follows the Last In First Out (LIFO) principle.
+queue<t>    -- A queue is a collection of elements of type t that follows the First In First Out (FIFO) principle.
+map<t,v>    -- A map is a collection of key-value pairs, where keys are of type t and values are of type v.
+set<t>      -- A set is a collection of unique elements of type t.
+graph<t>    -- A graph is a collection of nodes of type t, where each node may be connected to other nodes.
+tree<t>     -- A tree is a hierarchical collection of nodes of type t, where each node has a parent-child relationship with other nodes.
+
+        === Methods ===
+.add(element : type)                -- add element to the collection
+.remove(element : type)             -- remove element from the collection
+.contains(element : type) : bool    -- check if the collection contains the element
+.is_empty() : bool                  -- check if the collection is empty
+.clear()                            -- remove all elements from the collection
+
+        === Properties ===
+.len    : int        -- number of elements in the collection
+.front  : type      -- get the first element of the collection
+.back   : type      -- get the last element of the collection
+]#
+
+import std.collection
+
+var my_list   : list<int>     = {1, 2, 3, 4, 5}
+var my_stack  : stack<str>    = {"first", "second", "third"}
+var my_queue  : queue<float>  = {1.1, 2.2, 3.3}
+var my_map    : map<str, int> = { "one": 1, "two": 2, "three": 3 }
+var my_set    : set<int>      = {1, 2, 3, 4, 5}
+var my_graph  : graph<str>    = { "A": ["B", "C"], "B": ["A", "D"], "C": ["A"], "D": ["B"] }
+var my_tree   : tree<int>     = {1: [2, 3], 2: [4, 5], 3: [], 4: [], 5: []}
+
+print("List length: " + my_list.len)           # Output: List length: 5
+print("Stack top: " + my_stack.back)           # Output: Stack top: third
+print("Queue front: " + my_queue.front)        # Output: Queue front: 1.1
+print("Map value for 'two': " + my_map["two"])  # Output: Map value for 'two': 2
+print("Set contains 3: " + my_set.contains(3)) # Output: Set contains 3: true
+print("Graph connections for 'A': " + my_graph["A"]) # Output: Graph connections for 'A': ["B", "C"]
+print("Tree children of node 2: " + my_tree[2]) # Output: Tree children of node 2: [4, 5]

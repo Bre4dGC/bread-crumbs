@@ -1,0 +1,29 @@
+#[ Compound types base usage
+
+<compound-type> <name>
+{
+    ...
+}
+
+]#
+
+enum Direction
+{
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+}
+
+struct Person 
+{
+    var name   : str
+    var age    : int
+    var height : float
+}
+
+func main()
+{
+    var person : Person = {"Bread", 16, 170}
+    const person_direction : Direction = Direction.NAHUI
+}

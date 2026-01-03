@@ -1,0 +1,73 @@
+#[ Variable declarations
+
+<mod> <name> [: <type>] = <value>
+
+        === Modifiers ===
+var         -- Variable that can be reassigned.
+const       -- Constant variable that cannot be reassigned.
+final       -- Variable that can be assigned only once.
+static      -- Variable with static storage duration.
+
+        === Types ===
+int         -- Integer type.
+float       -- Floating-point type.
+str         -- String type.
+bool        -- Boolean type.
+any         -- A type that can hold any literal.
+
+        === Literals ===
+<int>               -- Integer literal (e.g., 42 | 0x2a | 0b0101010 | 0o52).
+<float>             -- Floating-point literal (e.g., 3.14).
+"<string>"          -- String literal (e.g., "Hello, World!").
+true | false        -- Boolean literals.
+
+        === Tuple ===
+(<type1>, <type2>, ...)             -- Tuple type with specified types.
+(var1:<type1>, var2:<type2>, ...)   -- Named tuple type.
+
+        === Array ===
+<type>[]            -- Dynamic array of <type>.
+<type>[<size>]      -- Static array of <type> with fixed <size>.
+.len                -- Property to get the length of an array.
+]#
+
+#   === Inferred types ===
+var x = 42              # -- int
+var name = "Bread"      # -- str
+
+#   === Explicit types ===
+var age        : int = 16
+var height     : float = 175.5
+var is_student : bool = true
+
+#   === Multiple declarations ===
+var a, b   : int = 10, 20     # -- a = 10, b = 20
+var (a, b) : int = 52         # -- a = 52, b = 52
+
+#   === Any type ===
+var any_type : any = 10 # -- any_type = 10
+any_type = "string"     # -- any_type = "string"
+
+#   === Constants ===
+const PI        : float = 3.14159
+const MAX_USERS : int = 1000
+
+#   === Final variables ===
+final username : str = "admin"
+username = "user"   # -- error
+final score : int
+score = 100
+score = 200         # -- error
+
+#   === Static variables ===
+static counter : int = 0
+counter = counter + 1
+
+#   === Tuples ===
+var point  : (float, float) = (10.5, 20.5)
+var (x, y) : (float, float) = point
+var rgb    : (r:int, g:int, b:int) = (255, 0, 128)
+
+#   === Array ===
+var numbers      : int[] = {1, 2, 3, 4, 5}
+var first_number : int = numbers[0]

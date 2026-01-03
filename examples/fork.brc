@@ -1,0 +1,12 @@
+#[ Fork and branching
+
+fork <type> {
+    branch <name> {
+        ...
+    }
+    branch <name> {
+        ...
+    }
+}
+
+##

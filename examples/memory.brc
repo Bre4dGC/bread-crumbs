@@ -1,0 +1,49 @@
+#[ Base memory API
+
+        === Static methods ===
+memory.reserve(size : int) : memory -- reserve memory block
+
+        === Methods ===
+.store(element : type)      -- store element in memory
+.delete(element : type)     -- delete element from memory
+.split(size : int) : memory -- split memory block into two parts
+.extend(size : int)         -- increase memory block size
+.shrink(size : int)         -- decrease memory block size
+.release()                  -- clear all used memory
+.compact()                  -- compact memory block
+
+        === Properties ===
+.volume    : int    -- total size of memory block
+.used      : int    -- currently used memory size
+.available : int    -- available memory size
+.data      : type[] -- array of stored elements
+]#
+
+import std.memory
+
+var mem : memory = memory.reserve(64)
+
+print(mem.volume) # -- 64 byte
+
+var part_1 = mem.split(mem.volume / 2) #split memory between 'mem' and 'partition'
+
+var hw : str = "hello world"
+var x : int = 42
+
+#copy variables to the memory
+mem.store(hw)
+mem.store(x)
+
+print(mem.used)      # -- 12 byte engaged
+print(mem.available) # -- 20 byte that you can use
+
+print(mem.data[0]) # -- "hello world"
+
+mem.delete(mem.data[0]) #delete "hello world" from memory
+
+mem.extend(32)  #increase to 64 byte
+mem.shrink(16)  #decrease to 48 byte
+
+mem.compact()   #compacting memory: 12 byte available
+
+mem.release()   #clearing all of used memory: 12 byte available

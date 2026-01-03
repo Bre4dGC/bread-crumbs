@@ -1,0 +1,47 @@
+#[ Basic loop constructs
+while(<condition>) {                -- standard while loop
+    ...
+}
+
+for(<init>; <condition>; <update>) {-- standard for loop
+    ...
+}
+
+for(<var || start>..<iterator>) {   -- range-based for loop
+    ...
+}
+
+loop {                              -- infinite loop
+    ...
+}
+
+var array : type[] = {...}          -- array declaration
+array[0..array.len] {               -- inline array iteration
+    ...
+}
+
+]#
+
+var count : int = 0
+while(count < 3) {
+    print("while loop count: " + count)
+    count += 1
+}
+
+for(var i : int = 0; i < 3; i++) {
+    print("for loop index: " + i)
+}
+
+for(var i..3) {
+    print("range-based for loop index: " + i)
+}
+
+#   === Inline array iteration ===
+var array : int[] = {1..5}
+print(array[0..array.len]) #12345
+
+array[0..array.len] = 0 # [0] - 0, [1] - 0, ...
+
+array[0..array.len] {
+    print("array element: " + self)
+}

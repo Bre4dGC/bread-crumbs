@@ -1,0 +1,36 @@
+#[ Function definitions
+
+func <name>(<parameters>) : <return-type>
+{
+    ...
+}
+
+]#
+
+func simple_function()
+{
+    print("This is a simple function.")
+}
+
+func get_float() : float
+{
+    return 3.14
+}
+
+func get_string() : str
+{
+    return "Hello, World!"
+}
+
+func get_array() : int[5]
+{
+    return int[5]{1, 2, 3, 4, 5}
+}
+
+func main()
+{
+    simple_function()
+    var x   : float  = get_float()
+    var y   : int    = get_string()
+    var arr : int[5] = get_array()
+}

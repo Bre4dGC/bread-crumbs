@@ -1,0 +1,39 @@
+#[ Base pointer API
+
+        === Methods ===
+.ref(element : type) : int        -- reference to element address
+.set(value : type) : void         -- set value at pointer
+.offset(offset : int) : ptr<type> -- get pointer offset by given amount
+.copy() : ptr<type>               -- create a copy of the pointer
+.delete() : void                  -- delete pointer
+
+        === Properties ===
+.addr    : int      -- get address of pointer
+.value   : type     -- get value at pointer
+.is_null : bool     -- check if pointer is null
+.type    : type     -- get type of pointer
+.size    : int      -- get size of pointer
+.align   : int      -- get alignment of pointer
+]#
+
+import std.pointer
+
+var a : int = 42
+var ptr_a : ptr<int> = ptr.ref(a)
+print($"Address of a: {ptr_a.addr}")    #address of a: 0x7ffeedcba098
+print($"Value at pointer: {ptr_a}")     #value at pointer: 42
+
+var ptr_b : ptr<int> = ptr_a.copy()
+ptr_b.set(100)
+print($"New value of a: {a}") #new value of a: 100
+
+var ptr_c : ptr<int> = ptr_a.offset(4)          #assuming int is 4 bytes
+print($"Pointer c address: {ptr_c.addr}")       #pointer c address: (address of a + 4)
+print($"Is pointer c null? {ptr_c.is_null}")    #is pointer c null? false
+print($"Pointer a type: {ptr_a.type}")          #pointer a type: int
+print($"Pointer a size: {ptr_a.size}")          #pointer a size: 4
+print($"Pointer a alignment: {ptr_a.align}")    #pointer a alignment: 4
+
+ptr_a.delete() #delete pointer a
+ptr_b.delete() #delete pointer b
+ptr_c.delete() #delete pointer c

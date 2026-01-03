@@ -1,0 +1,49 @@
+#[ Standard library
+    inout           -- input/output operations
+    system          -- system-related functions
+    format          -- string formatting utilities
+    collection      -- data structures and collections
+    math            -- mathematical functions and constants
+    thread          -- threading and concurrency
+    network         -- network-related functionalities
+    time            -- time and date utilities
+    console         -- console input/output operations
+    memory          -- memory management and operations
+    pointer         -- pointer manipulations
+    debug           -- debug utilities
+    benchmark       -- benchmarking utilities
+]#
+
+#   === Import recursevly ===
+import std
+
+#   === Inline import ===
+import std.inout, std.system, std.format
+
+#   === Multiline import ===
+import {
+    std.math,
+    std.thread
+}
+
+#   === Import only std modules ===
+import std {
+    network,
+    console,
+    time
+}
+
+#   === Importing std.collection content ===
+import std {
+    collection {
+        list,
+        map,
+        set
+    }
+}
+
+#   === Importing external packages installed via package manager ===
+import package.raylib
+import package.box2d
+import package.sqlite
+import package.zlib
