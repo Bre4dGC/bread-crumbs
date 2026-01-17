@@ -1,6 +1,6 @@
 #[ Compound types base usage
 
-<compound-type> <name>
+[<visibility>] <compound-type> <name>
 {
     ...
 }
@@ -22,8 +22,15 @@ struct Person
     var height : float
 }
 
+func Person.display()
+{
+    print($"name: {self.name}, age: {self.age}, height: {self.height}")
+}
+
 func main()
 {
     var person : Person = {"Bread", 16, 170}
+    person.display() # name: Bread, age: 16, height: 170
+    
     const person_direction : Direction = Direction.NAHUI
 }

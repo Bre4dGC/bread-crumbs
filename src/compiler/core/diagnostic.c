@@ -1,51 +1,68 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "compiler/core/diagnostic.h"
-#include "common/utils.h"
+#include "compiler/core/arena_alloc.h"
+#include "compiler/core/string_pool.h"
 
 const char* report_msg(const enum report_code code);
 
-report_t* new_report(
-    const enum report_severity severity,
+report_table_t* new_report_table(arena_t* arena)
+{
+    report_table_t* table = (report_table_t*)arena_alloc(arena, sizeof(report_table_t), alignof(report_table_t));
+    if(!table) return NULL;
+    
+    table->arena = new_arena(DEFAULT_REPORT_POOL_SIZE);
+    if(!table->arena){
+        return NULL;
+    }
+    
+    table->string_pool = new_string_pool(DEFAULT_REPORT_POOL_SIZE);
+    table->count = 0;
+    
+    return table;
+}
+
+void add_report(
+    report_table_t* rt,
+    const enum report_severity sev,
     const enum report_code code,
-    const size_t line,
-    const size_t column,
+    const location_t loc,
     const size_t length,
     const char* input)
 {
+    if(!rt || !input) return;
 
-    report_t* report = (report_t*)malloc(sizeof(report_t));
-    if (!report) return NULL;
-
-    report->severity = severity;
-    report->code = code;
-    report->line = line;
-    report->column = column;
-    report->length = length;
-    report->input = input ? util_strdup(input) : "NO INPUT";
-    report->message = util_strdup(report_msg(code));
-    report->filepath = util_strdup("unknown");
-
-    if((input && !report->input) || !report->message){
-        free_report(report);
-        return NULL;
+    if(!arena_has_space(rt->arena, sizeof(report_t), alignof(report_t))){
+        if(!arena_expand(rt->arena, rt->arena->capacity * 2)){
+            return;
+        }
     }
 
-    return report;
+    report_t* store_report = arena_alloc(rt->arena, sizeof(report_t), alignof(report_t));
+    if(!store_report) return;
+    
+    *store_report = (report_t){
+        .severity = sev,
+        .code = code,
+        .loc = loc,
+        .length = length,
+        .input = new_string(&rt->string_pool, input),
+        .filepath = new_string(&rt->string_pool, "unknown")
+    };
+    rt->count += 1;
 }
 
 void print_report(const report_t* report)
 {
-    if (!report || !report->input) return;
+    if(!report || !report->input.data) return;
 
-    printf("\n %zu |\t%s\n", report->line, report->input);
-    printf(" %*s |\t%*s\033[31m",   (int)report->line < 10   ? 1 :
-                                    (int)report->line < 100  ? 2 :
-                                    (int)report->line < 1000 ? 3 : 4,
-                                    "", report->column != 0 ? (int)report->column - 1 : 0, "");
+    printf("\n %zu |\t%s\n", report->loc.line, report->input.data);
+    printf(" %*s |\t%*s\033[31m",   (int)report->loc.line < 10   ? 1 :
+                                    (int)report->loc.line < 100  ? 2 :
+                                    (int)report->loc.line < 1000 ? 3 : 4,
+                                    "", report->loc.column != 0 ? (int)report->loc.column - 1 : 0, "");
 
     if(report->length == 1){
         printf("^");
@@ -54,66 +71,71 @@ void print_report(const report_t* report)
         printf("~");
     }
 
-    printf(" \033[36m%s\033[0m", report->message);
+    printf(" \033[36m%s\033[0m", report_msg(report->code));
 
-    printf("\n%s\033[0m %s at %zu:%zu\n",   report->severity == SEVERITY_ERROR   ? "\033[31m[ERROR]"   :
-                                            report->severity == SEVERITY_WARNING ? "\033[33m[WARNING]" :
-                                            report->severity == SEVERITY_NOTE    ? "\033[34m[NOTE]"    :
-                                                                                   "\033[31m[UNKNOWN]",
-                                            report->filepath, report->line, report->column);
+    printf("\n%s\033[0m %s at %zu:%zu\n",   report->severity == SEV_ERR  ? "\033[31m[ERR]"   :
+                                            report->severity == SEV_WARN ? "\033[33m[WARNING]" :
+                                            report->severity == SEV_NOTE ? "\033[34m[NOTE]"    :
+                                                                           "\033[31m[UNKNOWN]",
+                                            report->filepath.data, report->loc.line, report->loc.column);
 }
 
-void free_report(report_t *report)
+void print_report_table(const report_table_t* table)
 {
-    if (!report) return;
-    free(report->input);
-    free(report->message);
-    free(report->filepath);
+    if(!table) return;
+    
+    const unsigned char* data = table->arena->data;
+    size_t offset = 0;
+    for(size_t i = 0; i < table->count; i++){
+        report_t* report = (report_t*)(data + offset);
+        print_report(report);
+        offset += sizeof(report_t);
+    }
+}
 
-    report->input = NULL;
-    report->message = NULL;
-    report->filepath = NULL;
-
-    free(report);
-    report = NULL;
+void free_report_table(report_table_t* table)
+{
+    if(!table) return;
+    free_string_pool(&table->string_pool);
+    free_arena(table->arena);
 }
 
 const char* report_msg(const enum report_code code)
 {
     switch(code){
-        case ERROR_ILLEGAL_CHARACTER:  return "Illegal character";
-        case ERROR_INVALID_LITERAL:    return "Invalid literal";
-        case ERROR_INVALID_NUMBER:     return "Invalid number format";
-        case ERROR_INVALID_IDENTIFIER: return "Invalid identifier";
-        case ERROR_INVALID_STRING:     return "Invalid string";
-        case ERROR_UNCLOSED_STRING:    return "Unclosed string literal";
-        case ERROR_UNMATCHED_PAREN:    return "Unmatched parenthesis";
-        case ERROR_UNEXPECTED_END_OF_FILE:  return "Unexpected end of file";
-        case ERROR_INVALID_ESCAPE_SEQUENCE: return "Invalid escape sequence";
-        case ERROR_UNEXPECTED_TOKEN:    return "Unexpected token";
-        case ERROR_INVALID_EXPRESSION:  return "Invalid expression";
-        case ERROR_EXPECTED_IDENTIFIER: return "Expected name";
-        case ERROR_EXPECTED_TYPE:       return "Expected type";
-        case ERROR_EXPECTED_PAREN:      return "Expected parenthesis";
-        case ERROR_EXPECTED_OPERATOR:   return "Expected operator";
-        case ERROR_EXPECTED_KEYWORD:    return "Expected keyword";
-        case ERROR_EXPECTED_EXPRESSION: return "Expected expression";
-        case ERROR_EXPECTED_PARAM:      return "Expected parameter";
-        case ERROR_INVALID_UNARY_OP:    return "Invalid unary operator";
-        case ERROR_TYPE_MISMATCH:       return "Type mismatch";
-        case ERROR_UNDECLARED_VARIABLE: return "Undeclared variable";
-        case ERROR_UNDECLARED_FUNCTION: return "Undeclared function";
-        case ERROR_VARIABLE_ALREADY_DECLARED: return "Variable already declared";
-        case ERROR_INVALID_OPERATION:      return "Invalid operation";
-        case ERROR_INVALID_FUNCTION_CALL:  return "Invalid function call";
-        case ERROR_INVALID_ARGUMENT_COUNT: return "Invalid argument count";
-        case ERROR_INVALID_ARGUMENT_TYPE:  return "Invalid argument type";
-        case ERROR_INVALID_RETURN_TYPE:    return "Invalid return type";
-        case ERROR_NOT_A_FUNCTION:         return "Not a function";
-        case ERROR_BREAK_OUTSIDE_LOOP:     return "Break outside loop";
-        case ERROR_UNIMPLEMENTED_NODE:     return "Unimplemented node";
-        case ERROR_CONTINUE_OUTSIDE_LOOP:  return "Continue outside loop";
-        case ERROR_VARIABLE_NO_TYPE_OR_INITIALIZER: return "Variable has no type or initializer";
+        case ERR_ILLEG_CHAR:    return "Illegal character";
+        case ERR_INVAL_LIT:     return "Invalid literal";
+        case ERR_INVAL_NUM:     return "Invalid number format";
+        case ERR_INVAL_IDENT:   return "Invalid identifier";
+        case ERR_INVAL_STR:     return "Invalid string";
+        case ERR_UNCLO_STR:     return "Unclosed string literal";
+        case ERR_UNMAT_PAREN:   return "Unmatched parenthesis";
+        case ERR_UNEXP_EOF:     return "Unexpected end of file";
+        case ERR_INVAL_ESCSEQ:  return "Invalid escape sequence";
+        case ERR_UNEXP_TOKEN:   return "Unexpected token";
+        case ERR_INVAL_EXPR:    return "Invalid expression";
+        case ERR_EXPEC_IDENT:   return "Expected name";
+        case ERR_EXPEC_TYPE:    return "Expected type";
+        case ERR_EXPEC_PAREN:   return "Expected parenthesis";
+        case ERR_EXPEC_OPER:    return "Expected operator";
+        case ERR_EXPEC_KEYWORD: return "Expected keyword";
+        case ERR_EXPEC_EXPR:    return "Expected expression";
+        case ERR_EXPEC_PARAM:   return "Expected parameter";
+        case ERR_INVAL_UNARYOP: return "Invalid unary operator";
+        case ERR_TYPE_MISMATCH: return "Type mismatch";
+        case ERR_UNDEC_VAR:     return "Undeclared variable";
+        case ERR_UNDEC_FUNC:    return "Undeclared function";
+        case ERR_VAR_ALREADY_DECL:  return "Variable already declared";
+        case ERR_INVAL_OPER:        return "Invalid operation";
+        case ERR_INVAL_FUNC_CALL:   return "Invalid function call";
+        case ERR_INVAL_ARG_COUNT:   return "Invalid argument count";
+        case ERR_INVAL_ARG_TYPE:    return "Invalid argument type";
+        case ERR_INVAL_RET_TYPE:    return "Invalid return type";
+        case ERR_NOT_A_FUNC:        return "Not a function";
+        case ERR_BREAK_OUTSIDE_LOOP:    return "Break outside loop";
+        case ERR_UNIMPL_NODE:           return "Unimplemented node";
+        case ERR_CONTINUE_OUTSIDE_LOOP: return "Continue outside loop";
+        case ERR_VAR_NO_TYPE_OR_INITIALIZER: return "Variable has no type or initializer";
         default: return "Unknown report";
     }
 }

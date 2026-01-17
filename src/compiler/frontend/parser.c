@@ -1,50 +1,59 @@
+#include <stddef.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
+#include "compiler/core/arena_alloc.h"
+#include "compiler/core/diagnostic.h"
+#include "compiler/core/string_pool.h"
+#include "compiler/frontend/tokenizer.h"
+#include "compiler/frontend/ast.h"
 #include "compiler/frontend/parser.h"
-#include "common/utils.h"
 
-astnode_t* parse_expr(parser_t* pars);
-astnode_t* parse_operator_expr(parser_t* pars);
-astnode_t* parse_keyword_expr(parser_t* pars);
-astnode_t* parse_paren_expr(parser_t* pars);
-astnode_t* parse_literal_expr(parser_t* pars);
+node_t* parse_expr(parser_t* parser);
+node_t* parse_operator_expr(parser_t* parser);
+node_t* parse_keyword_expr(parser_t* parser);
+node_t* parse_paren_expr(parser_t* parser);
+node_t* parse_literal_expr(parser_t* parser);
 
-astnode_t* parse_stmt(parser_t* pars);
-astnode_t* parse_primary(parser_t* pars);
+node_t* parse_stmt(parser_t* parser);
+node_t* parse_primary(parser_t* parser);
 
-astnode_t* parse_block(parser_t* pars);
-bool add_block_stmt(astnode_t* block, astnode_t* stmt);
+node_t* parse_block(parser_t* parser);
+bool add_block_stmt(parser_t* parser, node_t* block, node_t* stmt);
 
-astnode_t* parse_postfix(parser_t* pars);
-astnode_t* parse_unary_op(parser_t* pars);
-astnode_t* parse_bin_op(parser_t* pars, int min_precedence);
+node_t* parse_postfix(parser_t* parser);
+node_t* parse_unary_op(parser_t* parser);
+node_t* parse_bin_op(parser_t* parser, int min_preced);
 
-astnode_t* parse_func_call(parser_t* pars);
-astnode_t* parse_var_decl(parser_t* pars);
-astnode_t* parse_var_ref(parser_t* pars);
-astnode_t* parse_return(parser_t* pars);
-astnode_t* parse_break(parser_t* pars);
-astnode_t* parse_continue(parser_t* pars);
-astnode_t* parse_if(parser_t* pars);
-astnode_t* parse_while(parser_t* pars);
-astnode_t* parse_for(parser_t* pars);
-astnode_t* parse_func(parser_t* pars);
-astnode_t* parse_array(parser_t* pars);
-astnode_t* parse_struct(parser_t* pars);
-astnode_t* parse_union(parser_t* pars);
-astnode_t* parse_enum(parser_t* pars);
-astnode_t* parse_match(parser_t* pars);
-astnode_t* parse_trait(parser_t* pars);
-astnode_t* parse_try_catch(parser_t* pars);
-astnode_t* parse_import(parser_t* pars);
-// astnode_t* parse_test(struct parser* pars);
-// astnode_t* parse_fork(struct parser* pars);
-// astnode_t* parse_solve(struct parser* pars);
-// astnode_t* parse_simulate(struct parser* pars);
+node_t* parse_func_call(parser_t* parser);
+node_t* parse_var_decl(parser_t* parser);
+node_t* parse_var_ref(parser_t* parser);
+node_t* parse_jump_stmt(parser_t* parser);
 
-typedef astnode_t* (*parse_func_t)(parser_t*);
+node_t* parse_if(parser_t* parser);
+node_t* parse_while(parser_t* parser);
+node_t* parse_for(parser_t* parser);
+node_t* parse_func(parser_t* parser);
+node_t* parse_array(parser_t* parser);
+node_t* parse_struct(parser_t* parser);
+node_t* parse_enum(parser_t* parser);
+node_t* parse_match(parser_t* parser);
+
+node_t* parse_trait(parser_t* parser);
+node_t* parse_type(parser_t* parser);
+node_t* parse_impl(parser_t* parser);
+node_t* parse_trycatch(parser_t* parser);
+node_t* parse_module(parser_t* parser);
+node_t* parse_import(parser_t* parser);
+node_t* parse_test(parser_t* parser);
+node_t* parse_fork(parser_t* parser);
+node_t* parse_solve(parser_t* parser);
+node_t* parse_simulate(parser_t* parser);
+node_t* parse_special(parser_t* parser);
+
+typedef node_t* (*parse_func_t)(parser_t*);
 
 parse_func_t parse_table[] = {
     [KW_IF]       = parse_if,
@@ -53,181 +62,129 @@ parse_func_t parse_table[] = {
     [KW_FUNC]     = parse_func,
     [KW_STRUCT]   = parse_struct,
     [KW_ENUM]     = parse_enum,
-    [KW_UNION]    = parse_union,
     [KW_MATCH]    = parse_match,
-    [KW_IMPL]     = parse_trait,
-    [KW_TRY]      = parse_try_catch,
+    
+    [KW_TYPE]     = parse_type,
+    [KW_MODULE]   = parse_module,
     [KW_IMPORT]   = parse_import,
-    [KW_RETURN]   = parse_return,
-    [KW_BREAK]    = parse_break,
-    [KW_CONTINUE] = parse_continue,
-    // [KW_TEST]     = parse_test,
-    // [KW_FORK]     = parse_fork,
-    // [KW_SOLVE]    = parse_solve,
-    // [KW_SIMULATE] = parse_simulate,
+    [KW_TRAIT]    = parse_trait,
+    [KW_IMPL]     = parse_impl,
+    [KW_TRY]      = parse_trycatch,
+    [KW_TEST]     = parse_test,
+    [KW_FORK]     = parse_fork,
+    [KW_SOLVE]    = parse_solve,
+    [KW_SIMULATE] = parse_simulate,
+    
+    [KW_RETURN]   = parse_jump_stmt,
+    [KW_BREAK]    = parse_jump_stmt,
+    [KW_CONTINUE] = parse_jump_stmt,
+
+    [KW_WRITE]     = parse_special,
+    [KW_READ]      = parse_special,
+    [KW_NAMEOF]    = parse_special,
+    [KW_TYPEOF]    = parse_special,
 };
 
-parser_t* new_parser(lexer_t* lexer)
+parser_t* new_parser(arena_t* arena, arena_t* ast, report_table_t* reports, lexer_t* lexer)
 {
-    parser_t* parser = malloc(sizeof(parser_t));
+    parser_t* parser = (parser_t*)arena_alloc(arena, sizeof(parser_t), alignof(parser_t));
     if(!parser) return NULL;
-
+    parser->token.current = next_token(lexer);
+    parser->token.next = next_token(lexer);
     parser->lexer = lexer;
-
-    parser->current = next_token(lexer);
-    parser->peek = next_token(lexer);
-    parser->errors = NULL;
-    parser->errors_count = 0;
-
+    parser->ast = ast;
+    parser->reports = reports;
     return parser;
 }
 
-void new_parser_error(parser_t* pars, report_t* err)
+bool check_token(parser_t* parser, enum category_tag category, int type)
 {
-    if(!pars || !err){
-        if(err) free_report(err);
-        return;
-    }
-
-    if(!pars->errors){
-        pars->errors = (report_t**)malloc(sizeof(report_t*));
-        if(!pars->errors){
-            free_report(err);
-            return;
-        }
-        pars->errors[0] = err;
-        pars->errors_count = 1;
-        return;
-    }
-
-    report_t** new_errors = (report_t**)realloc(pars->errors, (pars->errors_count + 1) * sizeof(report_t*));
-    if(!new_errors){
-        free_report(err);
-        return;
-    }
-    
-    pars->errors = new_errors;
-    pars->errors[pars->errors_count] = err;
-    pars->errors_count++;
+    return parser->token.current.category == category && parser->token.current.type == type;
 }
 
-void free_parser(parser_t* parser)
+void advance_token(parser_t* parser)
 {
-    if(!parser) return;
-
-    free_token(&parser->current);
-    free_token(&parser->peek);
-
-    if(parser->errors){
-        for (size_t i = 0; i < parser->errors_count; ++i){
-            if(parser->errors[i]) free_report(parser->errors[i]);
-        }
-        free(parser->errors);
-        parser->errors = NULL;
-        parser->errors_count = 0;
-    }
-    if(parser->lexer) free_lexer(parser->lexer);
-    free(parser);
+    if(!parser || check_token(parser, CAT_SERVICE, SERV_EOF)) return;    
+    parser->token.current = parser->token.next;
+    parser->token.next = next_token(parser->lexer);
 }
 
-void advance_token(parser_t *pars)
+bool consume_token(parser_t* parser, const enum category_tag expec_category, const int expec_type, const enum report_code err)
 {
-    if(!pars || (pars->current.category == CATEGORY_SERVICE && pars->current.type_service == SERV_EOF)) return;
-
-    free_token(&pars->current);
+    if(!parser) return false;
     
-    pars->current = pars->peek;
-    pars->peek = next_token(pars->lexer);
-}
-
-bool consume_token(parser_t *pars, const enum category_tag expected_category, const int expected_type, const enum report_code err)
-{
-    if(!pars) return false;
-    
-    if(pars->current.category != expected_category){
-        report_t* new_err = new_report(
-            SEVERITY_ERROR, err, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, new_err);
+    if(parser->token.current.category == expec_category){
+        add_report(parser->reports, SEV_ERR, err, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
         return false;
     }
 
-    if(expected_type >= 0){
-        int actual_type = -1;
-        switch (expected_category){
-            case CATEGORY_SERVICE:  actual_type = pars->current.type_service;  break;
-            case CATEGORY_OPERATOR: actual_type = pars->current.type_operator; break;
-            case CATEGORY_KEYWORD:  actual_type = pars->current.type_keyword;  break;
-            case CATEGORY_PAREN:    actual_type = pars->current.type_paren;    break;
-            case CATEGORY_DELIMITER:actual_type = pars->current.type_delim;    break;
-            case CATEGORY_DATATYPE: actual_type = pars->current.type_datatype; break;
-            case CATEGORY_LITERAL:  actual_type = pars->current.type_literal;  break;
-            case CATEGORY_MODIFIER: actual_type = pars->current.type_modifier; break;
-            default: actual_type = -1; break;
-        }
+    if(expec_type >= 0){
+        int actual_type = parser->token.current.type;
 
-        if(actual_type != expected_type){
-            report_t* err = new_report(
-                SEVERITY_ERROR, ERROR_UNEXPECTED_TOKEN, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-            );
-            new_parser_error(pars, err);
+        if(actual_type != expec_type){
+            add_report(parser->reports, SEV_ERR, ERR_UNEXP_TOKEN, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
             return false;
         }
     }
 
-    advance_token(pars);
+    advance_token(parser);
     return true;
 }
 
-astnode_t* parse_program(parser_t* pars)
+ast_t* parse_program(parser_t* parser)
 {
-    if(!pars) return NULL;
+    if(!parser) return NULL;
 
-    astnode_t* node = new_ast(NODE_BLOCK);
-    if(!node) return NULL;
+    ast_t* ast = (ast_t*)arena_alloc(parser->ast, parser->ast->capacity, alignof(ast_t));
 
-    node->block.statements = NULL;
-    node->block.count = 0;
-    node->block.capacity = 0;
+    ast->nodes = new_node(parser->ast, NODE_BLOCK);
+    ast->count = 0;
+    
+    ast->nodes->block.statement.elems = NULL;
+    ast->nodes->block.statement.count = 0;
+    ast->nodes->block.statement.capacity = 0;
 
-    while(pars->current.category != CATEGORY_SERVICE || pars->current.type_service != SERV_EOF){
-        astnode_t* stmt = parse_stmt(pars);
+    while(!check_token(parser, CAT_SERVICE, SERV_EOF))
+    {
+        node_t* stmt = parse_stmt(parser);
         if(!stmt) continue;
 
-        if(!add_block_stmt(node, stmt)){
-            free_ast(stmt);
-            free_ast(node);
-            return NULL;
-        }
+        if(!add_block_stmt(parser, ast->nodes, stmt)) goto cleanup;
 
         // optionally consume ';'
-        if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_SEMICOLON) {
-            advance_token(pars);
+        if(check_token(parser, CAT_OPERATOR, OPER_SEMICOLON)){
+            advance_token(parser);
         }
+
+        ast->count++;
     }
 
-    return node;
+    return ast;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_expr(parser_t* pars)
+node_t* parse_expr(parser_t* parser)
 {
-    if(!pars) return NULL;
+    if(!parser) return NULL;
 
-    switch(pars->current.category){
-        case CATEGORY_OPERATOR: return parse_operator_expr(pars);
-        case CATEGORY_KEYWORD:  return parse_keyword_expr(pars);
-        case CATEGORY_PAREN:    return parse_paren_expr(pars);
-        case CATEGORY_MODIFIER: return parse_var_decl(pars);
-        case CATEGORY_LITERAL:  return parse_bin_op(pars, 0);
+    switch(parser->token.current.category){
+        case CAT_OPERATOR: return parse_operator_expr(parser);
+        case CAT_KEYWORD:  return parse_keyword_expr(parser);
+        case CAT_PAREN:    return parse_paren_expr(parser);
+        case CAT_MODIFIER: return parse_var_decl(parser);
+        case CAT_LITERAL:  return parse_bin_op(parser, 0);
         default: return NULL;
     }
 
     return NULL;
 }
 
-astnode_t* parse_keyword_expr(parser_t* pars)
+node_t* parse_keyword_expr(parser_t* parser)
 {
-    const int kw = pars->current.type_keyword;
+    const int kw = parser->token.current.type;
     
     if(kw < 0 || (size_t)kw >= sizeof(parse_table)/sizeof(parse_table[0])){
         return NULL;
@@ -239,22 +196,22 @@ astnode_t* parse_keyword_expr(parser_t* pars)
         return NULL;
     }
     
-    return func(pars);
+    return func(parser);
 }
 
-astnode_t* parse_paren_expr(parser_t* pars)
+node_t* parse_paren_expr(parser_t* parser)
 {
-    switch(pars->current.type_paren){
-        case PAR_LBRACE:   return parse_block(pars);            
-        case PAR_LBRACKET: return parse_array(pars);            
+    switch(parser->token.current.type){
+        case PAR_LBRACE:   return parse_block(parser);            
+        case PAR_LBRACKET: return parse_array(parser);            
         case PAR_LPAREN:
-            advance_token(pars);
+            advance_token(parser);
             
-            astnode_t* node = parse_expr(pars);
+            node_t* node = parse_expr(parser);
             if(!node) return NULL;
             
-            if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){
-                free_ast(node);
+            if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+                free_ast(parser->ast);
                 return NULL;
             }
             return node;
@@ -262,42 +219,42 @@ astnode_t* parse_paren_expr(parser_t* pars)
     }
 }
 
-astnode_t* parse_literal_expr(parser_t* pars)
+node_t* parse_literal_expr(parser_t* parser)
 {
-    if(pars->current.type_literal == LIT_IDENT){
-        if(pars->peek.category == CATEGORY_OPERATOR && pars->peek.type_operator == OPER_ASSIGN){
-            return parse_var_decl(pars);
+    if(parser->token.current.type == LIT_IDENT){
+        if(parser->token.next.category == CAT_OPERATOR && parser->token.next.type == OPER_ASSIGN){
+            return parse_var_decl(parser);
         }
-        if(pars->peek.category == CATEGORY_PAREN && pars->peek.type_paren == PAR_LPAREN){
-            return parse_func_call(pars);
+        if(parser->token.next.category == CAT_PAREN && parser->token.next.type == PAR_LPAREN){
+            return parse_func_call(parser);
         }        
-        return parse_var_ref(pars);
+        return parse_var_ref(parser);
     }
     
-    astnode_t* node = new_ast(NODE_LITERAL);
+    node_t* node = new_node(parser->ast, NODE_LITERAL);
     if(!node) return NULL;
 
-    node->literal.value = pars->current.literal ? util_strdup(pars->current.literal) : util_strdup("");
-    node->literal.type = pars->current.type_literal;
+    node->lit.value = new_string(NULL, NULL);// parser->token.current.literal ? FIX
+    node->lit.type = parser->token.current.type;
     
-    advance_token(pars);
+    advance_token(parser);
     return node;
 }
 
-astnode_t* parse_operator_expr(parser_t* pars)
+node_t* parse_operator_expr(parser_t* parser)
 {
-    bool is_unary = (pars->peek.category == CATEGORY_LITERAL) ||
-                    (pars->peek.category == CATEGORY_PAREN &&
-                    (pars->peek.type_paren == PAR_LPAREN ||
-                     pars->peek.type_paren == PAR_LBRACE ||
-                     pars->peek.type_paren == PAR_LBRACKET));
+    bool is_unary = (parser->token.next.category == CAT_LITERAL) ||
+                    (parser->token.next.category == CAT_PAREN    &&
+                    (parser->token.next.type     == PAR_LPAREN   ||
+                     parser->token.next.type     == PAR_LBRACE   ||
+                     parser->token.next.type     == PAR_LBRACKET));
     
-    return is_unary ? parse_unary_op(pars) : parse_bin_op(pars, 0);
+    return is_unary ? parse_unary_op(parser) : parse_bin_op(parser, 0);
 }
 
-astnode_t* parse_keyword_stmt(parser_t* pars)
+node_t* parse_keyword_stmt(parser_t* parser)
 {
-    int kw = pars->current.type_keyword;
+    int kw = parser->token.current.type;
 
     if(kw < 0 || (size_t)kw >= sizeof(parse_table)/sizeof(parse_table[0])){
         return NULL;
@@ -308,355 +265,309 @@ astnode_t* parse_keyword_stmt(parser_t* pars)
         return NULL;
     }
     
-    return func(pars);
+    return func(parser);
 }
 
-astnode_t* parse_stmt(parser_t* pars)
+node_t* parse_stmt(parser_t* parser)
 {
-    if(!pars) return NULL;
+    if(!parser) return NULL;
     
     // skip empty statements
-    if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_SEMICOLON){
-        advance_token(pars);
+    if(check_token(parser, CAT_OPERATOR, OPER_SEMICOLON)){
+        advance_token(parser);
         return NULL;
     }
     
-    if(pars->current.category == CATEGORY_KEYWORD){
-        return parse_keyword_stmt(pars);
+    if(parser->token.current.category == CAT_KEYWORD){
+        return parse_keyword_stmt(parser);
     }
     
-    if(pars->current.category == CATEGORY_PAREN && 
-        pars->current.type_paren == PAR_LBRACE){
-        return parse_block(pars);
+    if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
+        return parse_block(parser);
     }
     
-    return parse_expr(pars);
+    return parse_expr(parser);
 }
 
-bool add_block_stmt(astnode_t* block, astnode_t* stmt)
+bool add_block_stmt(parser_t* parser, node_t* node, node_t* stmt)
 {
-    if(block->type != NODE_BLOCK) return false;
+    if(node->kind != NODE_BLOCK) return false;
     
-    if(block->block.count >= block->block.capacity){
-        size_t new_capacity = block->block.capacity == 0 ? 4 : block->block.capacity * 2;
-        astnode_t** new_statements = realloc(block->block.statements, 
-                                                 new_capacity * sizeof(astnode_t*));
+    if(node->block.statement.count >= node->block.statement.capacity){
+        size_t new_capacity = node->block.statement.capacity == 0 ? 4 : node->block.statement.capacity * 2;
+        node_t** new_statements = (node_t**)arena_alloc_array(parser->ast, sizeof(node->block.statement.elems), new_capacity * sizeof(node_t*), alignof(node_t*));
         if(!new_statements) return false;
         
-        block->block.statements = new_statements;
-        block->block.capacity = new_capacity;
+        node->block.statement.elems = new_statements;
+        node->block.statement.capacity = new_capacity;
     }
     
-    block->block.statements[block->block.count++] = stmt;
+    node->block.statement.elems[node->block.statement.count++] = stmt;
     return true;
 }
 
-astnode_t* parse_block(parser_t* pars)
+node_t* parse_block(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_BLOCK);
+    node_t* node = new_node(parser->ast, NODE_BLOCK);
     if(!node) return NULL;
     
-    node->block.statements = NULL;
-    node->block.count = 0;
-    node->block.capacity = 0;
+    node->block.statement.elems = NULL;
+    node->block.statement.count = 0;
+    node->block.statement.capacity = 0;
         
-    advance_token(pars); // skip '{'
+    advance_token(parser); // skip '{'
     
     // parse statements until '}'
-    while(pars->current.category != CATEGORY_PAREN && pars->current.type_paren != PAR_RBRACE){
-
+    while(!check_token(parser,  CAT_PAREN, PAR_RBRACE))
+    {
         // check for EOF
-        if(pars->current.category == CATEGORY_SERVICE && pars->current.type_service == SERV_EOF){
-            report_t* err = new_report(
-                SEVERITY_ERROR, ERROR_EXPECTED_PAREN, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-            );
-            new_parser_error(pars, err);
-            goto error_cleanup;
+        if(check_token(parser, CAT_SERVICE, SERV_EOF)){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            goto cleanup;
         }
         
         // parse statement
-        astnode_t* stmt = parse_stmt(pars);
+        node_t* stmt = parse_stmt(parser);
         if(!stmt) continue;
         
         // add to block
-        if(!add_block_stmt(node, stmt)){
-            free_ast(stmt);
-            goto error_cleanup;
-        }
+        if(!add_block_stmt(parser, node, stmt)) goto cleanup;
         
         // optionally consume ';'
-        if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_SEMICOLON) {
-            advance_token(pars);
+        if(check_token(parser, CAT_OPERATOR, OPER_SEMICOLON)){
+            advance_token(parser);
         }
     }
     
     // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){
-        goto error_cleanup;
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
     }
 
     return node;
 
-error_cleanup:
-    for (size_t i = 0; i < node->block.count; i++){
-        free_ast(node->block.statements[i]);
-    }
-    free(node->block.statements);
-    free_ast(node);
+cleanup:
+    free_ast(parser->ast);
     return NULL;
 }
 
-astnode_t* parse_func_call(parser_t* pars)
+node_t* parse_func_call(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_FUNC_CALL);
-    if (!node) return NULL;
+    node_t* node = new_node(parser->ast, NODE_CALL);
+    if(!node) return NULL;
 
     // Expect function name
-    if (pars->current.category != CATEGORY_LITERAL || pars->current.type_literal != LIT_IDENT) {
-        free_ast(node); // Free the node on error
-        return NULL;
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        goto cleanup;
     }
 
-    node->func_call.name = util_strdup(pars->current.literal);
-    if (!node->func_call.name) {
-        free_ast(node); // Free the node on error
-        return NULL;
-    }
+    node->call.name = new_string(NULL, NULL); // FIX
+    if(!node->call.name.data) goto cleanup;
 
-    advance_token(pars); // Skip function name
+    advance_token(parser); // Skip function name
 
     // Parse arguments
-    node->func_call.args = NULL;
-    node->func_call.arg_count = 0;
+    node->call.args.elems = NULL;
+    node->call.args.count = 0;
     size_t capacity = 0;
 
-    if (pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_LPAREN) {
-        advance_token(pars); // Skip '('
-        while (pars->current.category != CATEGORY_PAREN || pars->current.type_paren != PAR_RPAREN) {
-            astnode_t* arg = parse_expr(pars);
-            if (!arg) {
-                free_ast(node); // Free the node and its arguments on error
-                return NULL;
-            }
+    if(check_token(parser, CAT_PAREN, PAR_LPAREN)){
+        advance_token(parser); // Skip '('
+        while (!check_token(parser,  CAT_PAREN, PAR_RPAREN)){
+            node_t* arg = parse_expr(parser);
+            if(!arg) goto cleanup;
 
-            if (node->func_call.arg_count >= capacity) {
+            if(node->call.args.count >= capacity){
                 size_t new_capacity = capacity == 0 ? 4 : capacity * 2;
-                astnode_t** new_args = realloc(node->func_call.args, new_capacity * sizeof(astnode_t*));
-                if (!new_args) {
-                    free_ast(arg);
-                    free_ast(node); // Free the node and its arguments on error
-                    return NULL;
-                }
-                node->func_call.args = new_args;
+                node_t** new_args = (node_t**)arena_alloc_array(parser->ast, sizeof(node->call.args), new_capacity * sizeof(node_t*), alignof(node_t*));
+                if(!new_args) goto cleanup;
+                node->call.args.elems = new_args;
                 capacity = new_capacity;
             }
 
-            node->func_call.args[node->func_call.arg_count++] = arg;
+            node->call.args.elems[node->call.args.count++] = arg;
 
-            if (pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COMMA) {
-                advance_token(pars); // Skip ','
-            } else {
+            if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
+                advance_token(parser); // Skip ','
+            }
+            else {
                 break;
             }
         }
 
-        if (pars->current.category != CATEGORY_PAREN || pars->current.type_paren != PAR_RPAREN) {
-            free_ast(node); // Free the node and its arguments on error
-            return NULL;
+        if(!check_token(parser,  CAT_PAREN, PAR_RPAREN)){
+            goto cleanup;
         }
-        advance_token(pars); // Skip ')'
+        advance_token(parser); // Skip ')'
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_var_decl(parser_t* pars)
+node_t* parse_var_decl(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_VAR);
+    node_t* node = new_node(parser->ast, NODE_VAR);
     if(!node) return NULL;
     
-    node->var_decl = (struct node_var*)malloc(sizeof(struct node_var));
-    if(!node->var_decl){
-        free_ast(node);
-        return NULL;
-    }
+    node->var_decl = (struct node_var*)arena_alloc(parser->ast, sizeof(struct node_var), alignof(struct node_var));
+    if(!node->var_decl) goto cleanup;
 
     node->var_decl->modif = MOD_VAR;
-    node->var_decl->name = NULL;
+    node->var_decl->name = new_string(NULL, NULL);
     node->var_decl->dtype = DT_INT;
     node->var_decl->value = NULL;
 
     // optional modifier
-    if(pars->current.category == CATEGORY_MODIFIER){
-        node->var_decl->modif = pars->current.type_modifier;
-        advance_token(pars);
+    if(parser->token.current.category == CAT_MODIFIER){
+        node->var_decl->modif = parser->token.current.type;
+        advance_token(parser);
     }
     
     // expect identifier
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        report_t* err = new_report(
-            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
     }
-    node->var_decl->name = util_strdup(pars->current.literal);
-    if(!node->var_decl->name){
-        free_ast(node);
-        return NULL;
+    node->var_decl->name = new_string(NULL, NULL); // FIX
+    if(!node->var_decl->name.data){
+        goto cleanup;
     }
-    advance_token(pars);
+    advance_token(parser);
 
     // optional type annotation
-    if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COLON){
-        advance_token(pars);
-        if(pars->current.category != CATEGORY_DATATYPE){
-            report_t* err = new_report(
-                SEVERITY_ERROR, ERROR_EXPECTED_TYPE, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-            );
-            new_parser_error(pars, err);
-            free_ast(node);
-            return NULL;
+    if(check_token(parser, CAT_OPERATOR, OPER_COLON)){
+        advance_token(parser);
+        if(parser->token.current.category !=  CAT_DATATYPE){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            goto cleanup;
         }
-        node->var_decl->dtype = pars->current.type_datatype;
-        advance_token(pars);
+        node->var_decl->dtype = parser->token.current.type;
+        advance_token(parser);
     }
 
     // optional assignment
-    if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_ASSIGN){
-        advance_token(pars);
-        node->var_decl->value = parse_expr(pars);
+    if(check_token(parser, CAT_OPERATOR, OPER_ASSIGN)){
+        advance_token(parser);
+        node->var_decl->value = parse_expr(parser);
         if(!node->var_decl->value){
-            report_t* err = new_report(
-                SEVERITY_ERROR, ERROR_EXPECTED_EXPRESSION, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-            );
-            new_parser_error(pars, err);
-            free_ast(node);
-            return NULL;
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_EXPR, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            goto cleanup;
         }
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_var_ref(parser_t* pars)
+node_t* parse_var_ref(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_VAR_REF);
+    node_t* node = new_node(parser->ast, NODE_REF);
     if(!node) return NULL;
 
-    node->var_ref.name = NULL;
+    node->ref.name = new_string(NULL, NULL);
     
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        report_t* err = new_report(
-            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
     }
 
-    node->var_ref.name = util_strdup(pars->current.literal);
-    if(!node->var_ref.name){
-        free_ast(node);
-        return NULL;
-    }
+    node->ref.name = new_string(NULL, NULL); // FIX
+    if(!node->ref.name.data) goto cleanup;
 
-    advance_token(pars);
+    advance_token(parser);
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_return(parser_t* pars)
+node_t* parse_jump_stmt(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_RETURN);
+    node_t* node = new_node(parser->ast, 0);
     if(!node) return NULL;
 
-    advance_token(pars); // skip 'return'
+    int type = parser->token.current.type;
 
-    node->return_stmt.body = parse_expr(pars);
-    if(!node->return_stmt.body){free_ast(node); return NULL;}
+    advance_token(parser); // skip
 
-    // optionally consume ';'
-    if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_SEMICOLON){
-        advance_token(pars);
+    switch(type){
+        case KW_BREAK:
+            node->kind = NODE_BREAK;
+            break;
+        case KW_CONTINUE:
+            node->kind = NODE_CONTINUE;
+            break;
+        case KW_RETURN:
+            node->kind = NODE_RETURN;
+            node->ret.body = parse_expr(parser);
+            if(!node->ret.body) goto cleanup;
+            break;
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_break(parser_t* pars)
+node_t* parse_primary(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_BREAK);
-    if(!node) return NULL;
-
-    advance_token(pars); // skip 'break'
-
-    // optionally consume ';'
-    if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_SEMICOLON){
-        advance_token(pars);
-    }
-
-    return node;
-}
-astnode_t* parse_continue(parser_t* pars)
-{
-    astnode_t* node = new_ast(NODE_CONTINUE);
-    if(!node) return NULL;
-
-    // skip 'continue'
-    advance_token(pars);
-
-    // optionally consume ';'
-    if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_SEMICOLON){
-        advance_token(pars);
-    }
-
-    return node;
-}
-
-astnode_t* parse_primary(parser_t* pars)
-{
-    switch (pars->current.category){
-        case CATEGORY_LITERAL:
-            if(pars->current.type_literal == LIT_IDENT){
-                if(pars->peek.category == CATEGORY_PAREN && pars->peek.type_paren == PAR_LPAREN){
-                    return parse_func_call(pars);
+    switch(parser->token.current.category){
+        case CAT_LITERAL:
+            if(parser->token.current.type == LIT_IDENT){
+                if(parser->token.next.category == CAT_PAREN && parser->token.next.type == PAR_LPAREN){
+                    return parse_func_call(parser);
                 }
-                return parse_var_ref(pars);
+                return parse_var_ref(parser);
             }
             else{
-                astnode_t* node = new_ast(NODE_LITERAL);
+                node_t* node = new_node(parser->ast, NODE_LITERAL);
                 if(!node) return NULL;
-                node->literal.value = util_strdup(pars->current.literal);
-                node->literal.type = pars->current.type_literal;
-                advance_token(pars);
+                node->lit.value = new_string(NULL, NULL); // FIX
+                node->lit.type = parser->token.current.type;
+                advance_token(parser);
                 return node;
             }
 
-        case CATEGORY_PAREN:
-            if(pars->current.type_paren == PAR_LPAREN){
-                advance_token(pars);
-                astnode_t* expr = parse_expr(pars);
+        case CAT_PAREN:
+            if(parser->token.current.type == PAR_LPAREN){
+                advance_token(parser);
+                node_t* expr = parse_expr(parser);
                 if(!expr) return NULL;
-                if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){
-                    free_ast(expr);
-                    return NULL;
+                if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+                    goto cleanup;
                 }
                 return expr;
             }
-            else if(pars->current.type_paren == PAR_LBRACKET){
-                return parse_array(pars);
+            else if(parser->token.current.type == PAR_LBRACKET){
+                return parse_array(parser);
             }
             break;
-        case CATEGORY_OPERATOR:
+        case CAT_OPERATOR:
             // check for unary operators
-            if(pars->current.type_operator == OPER_PLUS || pars->current.type_operator == OPER_MINUS || pars->current.type_operator == OPER_NOT){
-                return parse_unary_op(pars);
+            if(parser->token.current.type == OPER_PLUS  ||
+               parser->token.current.type == OPER_MINUS ||
+               parser->token.current.type == OPER_NOT)
+            {
+                return parse_unary_op(parser);
             }
             break;
         default: break;
     }
+    return NULL;
+    
+cleanup:
+    free_ast(parser->ast);
     return NULL;
 }
 
@@ -717,7 +628,7 @@ int get_operator_precedence(enum category_operator op)
 
 bool is_right_associative(enum category_operator op)
 {
-    switch (op){
+    switch(op){
         case OPER_ASSIGN: case OPER_ADD: case OPER_SUB: case OPER_MUL: case OPER_DIV: case OPER_MOD:
             return true;
         default:
@@ -731,57 +642,25 @@ bool is_binary_operator(enum category_operator op)
     return precedence > 0 && op != OPER_SEMICOLON && op != OPER_COMMA;
 }
 
-// enum op_code operator_to_opcode(enum category_operator op)
-// {
-//     switch(op){
-//         case OPER_PLUS: case OPER_ADD:
-//             return OP_ADD;
-
-//         case OPER_MINUS: case OPER_SUB:
-//             return OP_SUB;
-
-//         case OPER_ASTERISK: case OPER_MUL:
-//             return OP_MUL;
-
-//         case OPER_SLASH: case OPER_DIV:
-//             return OP_DIV;
-
-//         case OPER_INCREM: case OPER_DECREM:
-//             return OP_DUP;
-
-//         case OPER_EQ:     return OP_EQ;
-//         case OPER_NEQ:    return OP_NEQ;
-//         case OPER_LANGLE: return OP_LT;
-//         case OPER_RANGLE: return OP_GT;
-//         case OPER_AND:    return OP_AND;
-//         case OPER_OR:     return OP_OR;
-//         case OPER_NOT:    return OP_NOT;
-//         case OPER_ASSIGN: return OP_STORE;
-        
-//         default: return OP_PUSH;
-//     }
-// }
-
-astnode_t* parse_postfix(parser_t* pars)
+node_t* parse_postfix(parser_t* parser)
 {
-    astnode_t* expr = parse_primary(pars);
+    node_t* expr = parse_primary(parser);
     if(!expr) return NULL;
 
-    while(pars->current.category == CATEGORY_OPERATOR){
-        enum category_operator op = pars->current.type_operator;
-        
+    while(parser->token.current.category == CAT_OPERATOR){
+        int op = parser->token.current.type;
+
         if(op == OPER_INCREM || op == OPER_DECREM){
-            astnode_t* postfix = new_ast(NODE_UNARY_OP);
+            node_t* postfix = new_node(parser->ast, NODE_UNARYOP);
             if(!postfix){
-                free_ast(expr);
+                free_ast(parser->ast);
                 return NULL;
             }
             
-            postfix->unary_op.right = expr;
-            // postfix->unary_op.code = operator_to_opcode(op);
-            postfix->unary_op.is_postfix = true;
+            postfix->unaryop.right = expr;
+            postfix->unaryop.is_postfix = true;
             
-            advance_token(pars);
+            advance_token(parser);
             expr = postfix;
         }
         else break;
@@ -789,154 +668,148 @@ astnode_t* parse_postfix(parser_t* pars)
     return expr;
 }
 
-astnode_t* parse_bin_op(parser_t* pars, int min_precedence)
+node_t* parse_bin_op(parser_t* parser, int min_precedence)
 {
-    astnode_t* left = parse_postfix(pars);
+    node_t* left = parse_postfix(parser);
     if(!left) return NULL;
 
-    while(pars->current.category == CATEGORY_OPERATOR){
-        enum category_operator op = pars->current.type_operator;        
+    while(parser->token.current.category == CAT_OPERATOR){
+        enum category_operator op = parser->token.current.type;        
         if(op == OPER_SEMICOLON || op == OPER_COMMA) break;
         
         int precedence = get_operator_precedence(op);        
         if(precedence == 0 || precedence < min_precedence) break;
 
-        advance_token(pars);
+        advance_token(parser);
 
         // calculate next minimum precedence
         int next_min_prec;
-        if (is_right_associative(op)) next_min_prec = precedence;
+        if(is_right_associative(op)) next_min_prec = precedence;
         else next_min_prec = precedence + 1;
 
-        astnode_t* right = parse_bin_op(pars, next_min_prec);
+        node_t* right = parse_bin_op(parser, next_min_prec);
         if(!right){
-            free_ast(left);
-            report_t* err = new_report(
-                SEVERITY_ERROR, ERROR_EXPECTED_EXPRESSION, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-            );
-            new_parser_error(pars, err);
-            return NULL;
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_EXPR, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            goto cleanup;
         }
 
-        astnode_t* node = new_ast(NODE_BIN_OP);
+        node_t* node = new_node(parser->ast, NODE_BINOP);
         if(!node){
-            free_ast(left);
-            free_ast(right);
-            return NULL;
+            goto cleanup;
         }
 
-        node->bin_op.left = left;
-        node->bin_op.right = right;
-        node->bin_op.operator = op;
+        node->binop.left = left;
+        node->binop.right = right;
+        node->binop.operator = op;
+    #ifdef DEBUG
+        node->binop.lit = parser->token.current.literal;
+    #endif
 
         left = node;
     }
 
     return left;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_unary_op(parser_t* pars)
+node_t* parse_unary_op(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_UNARY_OP);
+    node_t* node = new_node(parser->ast, NODE_UNARYOP);
     if(!node) return NULL;
 
-    enum category_operator op_type = pars->current.type_operator;
+    int op_type = parser->token.current.type;
     
-    if(op_type != OPER_PLUS && op_type != OPER_MINUS && op_type != OPER_NOT && op_type != OPER_INCREM && op_type != OPER_DECREM){
-        free_ast(node);
-        return NULL;
+    if(op_type != OPER_PLUS
+    && op_type != OPER_MINUS
+    && op_type != OPER_NOT
+    && op_type != OPER_INCREM
+    && op_type != OPER_DECREM)
+    {
+        goto cleanup;
     }
 
-    node->unary_op.operator = op_type;
-    node->unary_op.is_postfix = false;
-    advance_token(pars);
+    node->unaryop.operator = op_type;
+    node->unaryop.is_postfix = false;
+#ifdef DEBUG
+    node->unaryop.lit = parser->token.current.literal;
+#endif
+    advance_token(parser);
 
     if(op_type == OPER_INCREM || op_type == OPER_DECREM){
-        node->unary_op.right = parse_postfix(pars);
+        node->unaryop.right = parse_postfix(parser);
     }
     else{
-        node->unary_op.right = parse_primary(pars);
+        node->unaryop.right = parse_primary(parser);
     }
     
-    if(!node->unary_op.right){
-        free_ast(node);
-        return NULL;
+    if(!node->unaryop.right){
+        goto cleanup;
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_array(parser_t* pars)
+node_t* parse_array(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_ARRAY);
+    node_t* node = new_node(parser->ast, NODE_ARRAY);
     if(!node) return NULL;
 
-    node->array_decl = (struct node_array*)malloc(sizeof(struct node_array));
-    if(!node->array_decl){
-        free_ast(node);
-        return NULL;
-    }
+    node->array_decl = (struct node_array*)arena_alloc(parser->ast, sizeof(struct node_array), alignof(struct node_array));
+    if(!node->array_decl) goto cleanup;
 
     node->array_decl->elements = NULL;
     node->array_decl->count = 0;
     node->array_decl->capacity = 0;
 
-    advance_token(pars); // skip '['
+    advance_token(parser); // skip '['
 
     // parse elements (comma separated)
-    if(!(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_RBRACKET)){
-        while(1){
-            astnode_t* element = parse_primary(pars);
-            if(!element){
-                // cleanup
-                for (size_t i = 0; i < node->array_decl->count; ++i) free_ast(node->array_decl->elements[i]);
-                free(node->array_decl->elements);
-                free_ast(node);
-                return NULL;
-            }
+    while(!check_token(parser, CAT_PAREN, PAR_RBRACKET)){
+        node_t* element = parse_primary(parser);
+        if(!element) goto cleanup;
 
-            if(node->array_decl->count >= node->array_decl->capacity){
-                size_t new_cap = node->array_decl->capacity == 0 ? 4 : node->array_decl->capacity * 2;
-                astnode_t** new_arr = (astnode_t**)realloc(node->array_decl->elements, new_cap * sizeof(astnode_t*));
-                if(!new_arr){
-                    free_ast(element);
-                    for (size_t i = 0; i < node->array_decl->count; ++i) free_ast(node->array_decl->elements[i]);
-                    free(node->array_decl->elements);
-                    free_ast(node);
-                    return NULL;
-                }
-                node->array_decl->elements = new_arr;
-                node->array_decl->capacity = new_cap;
-            }
-            node->array_decl->elements[node->array_decl->count++] = element;
-
-            if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COMMA){
-                advance_token(pars); // consume comma
-                continue;
-            }
-            break;
+        if(node->array_decl->count >= node->array_decl->capacity){
+            size_t new_cap = node->array_decl->capacity == 0 ? 4 : node->array_decl->capacity * 2;
+            node_t** new_arr = (node_t**)arena_alloc_array(parser->ast, sizeof(node->array_decl->elements[0]), new_cap * sizeof(node_t*), alignof(node_t*));
+            if(!new_arr) goto cleanup;
+            node->array_decl->elements = new_arr;
+            node->array_decl->capacity = new_cap;
         }
+        node->array_decl->elements[node->array_decl->count++] = element;
+
+        if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
+            advance_token(parser); // consume comma
+            continue;
+        }
+        break;
     }
 
     // expect ']'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACKET, ERROR_EXPECTED_PAREN)){
-        for (size_t i = 0; i < node->array_decl->count; ++i) free_ast(node->array_decl->elements[i]);
-        free(node->array_decl->elements);
-        free_ast(node);
-        return NULL;
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACKET, ERR_EXPEC_PAREN)){
+        goto cleanup;
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_if(parser_t* pars){
-    astnode_t* node = new_ast(NODE_IF);
+node_t* parse_if(parser_t* parser){
+    node_t* node = new_node(parser->ast, NODE_IF);
     if(!node) return NULL;
 
-    node->if_stmt = (struct node_if*)malloc(sizeof(struct node_if));
+    node->if_stmt = (struct node_if*)arena_alloc(parser->ast, sizeof(struct node_if), alignof(struct node_if));
     if(!node->if_stmt){
-        free_ast(node);
-        return NULL;
+        goto cleanup;
     }
     
     node->if_stmt->condition = NULL;
@@ -944,84 +817,72 @@ astnode_t* parse_if(parser_t* pars){
     node->if_stmt->else_block = NULL;
     node->if_stmt->elif_blocks = NULL;
 
-    advance_token(pars); // skip 'if'
+    advance_token(parser); // skip 'if'
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
-
-    node->if_stmt->condition = parse_expr(pars);
-    if(!node->if_stmt->condition){
-        free_ast(node);
-        return NULL;
+    if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
     }
+
+    node->if_stmt->condition = parse_expr(parser);
+    if(!node->if_stmt->condition) goto cleanup;
 
     // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // expect '{'
-    if(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_LBRACE){
-        node->if_stmt->then_block = parse_block(pars);
+    if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
+        node->if_stmt->then_block = parse_block(parser);
     }
     else{
-        node->if_stmt->then_block = parse_stmt(pars);
+        node->if_stmt->then_block = parse_stmt(parser);
     }
 
     if(!node->if_stmt->then_block){
-        free_ast(node);
-        return NULL;
+        goto cleanup;
     }
 
     // parse elif/else blocks
-    while(pars->current.category == CATEGORY_KEYWORD && (pars->current.type_keyword == KW_ELIF || pars->current.type_keyword == KW_ELSE)){
+    while(parser->token.current.category == CAT_KEYWORD &&
+         (parser->token.current.type == KW_ELIF || parser->token.current.type == KW_ELSE))
+    {
 
         // expect optional 'elif'
-        if(pars->current.type_keyword == KW_ELIF){
-            advance_token(pars);
+        if(parser->token.current.type == KW_ELIF){
+            advance_token(parser);
 
             // expect '('
-            if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
-
-            astnode_t* elif_condition = parse_expr(pars);
-            if(!elif_condition){
-                free_ast(node);
-                return NULL;
+            if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+                goto cleanup;
             }
+
+            node_t* elif_condition = parse_expr(parser);
+            if(!elif_condition) goto cleanup;
 
             // expect ')'
-            if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(elif_condition); free_ast(node); return NULL; }
+            if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+                goto cleanup;
+            }
 
-            astnode_t* elif_body;
+            node_t* elif_body;
 
             // expect '{'
-            if(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_LBRACE){
-                elif_body = parse_block(pars);
+            if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
+                elif_body = parse_block(parser);
             }
             else{
-                elif_body = parse_stmt(pars);
+                elif_body = parse_stmt(parser);
             }
 
-            if(!elif_body){
-                free_ast(elif_condition);
-                free_ast(node);
-                return NULL;
-            }
+            if(!elif_body) goto cleanup;
 
-            astnode_t* elif_node = new_ast(NODE_IF);
-            if(!elif_node){
-                free_ast(elif_condition);
-                free_ast(elif_body);
-                free_ast(node);
-                return NULL;
-            }
+            node_t* elif_node = new_node(parser->ast, NODE_IF);
+            if(!elif_node) goto cleanup;
 
-            elif_node->if_stmt = malloc(sizeof(struct node_if));
-            if(!elif_node->if_stmt){
-                free_ast(elif_condition);
-                free_ast(elif_body);
-                free_ast(elif_node);
-                free_ast(node);
-                return NULL;
-            }
+            elif_node->if_stmt = (struct node_if*)arena_alloc(parser->ast, sizeof(struct node_if), alignof(struct node_if));
+            if(!elif_node->if_stmt) goto cleanup;
 
             elif_node->if_stmt->condition = elif_condition;
             elif_node->if_stmt->then_block = elif_body;
@@ -1032,7 +893,7 @@ astnode_t* parse_if(parser_t* pars){
                 node->if_stmt->elif_blocks = elif_node;
             }
             else{
-                astnode_t* current = node->if_stmt->elif_blocks;
+                node_t* current = node->if_stmt->elif_blocks;
                 while(current->if_stmt->elif_blocks){
                     current = current->if_stmt->elif_blocks;
                 }
@@ -1041,80 +902,83 @@ astnode_t* parse_if(parser_t* pars){
         }
 
         // expect optional 'else'
-        else if(pars->current.type_keyword == KW_ELSE){
-            advance_token(pars);
+        else if(parser->token.current.type == KW_ELSE){
+            advance_token(parser);
 
             // expect '{'
-            if(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_LBRACE){
-                node->if_stmt->else_block = parse_block(pars);
+            if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
+                node->if_stmt->else_block = parse_block(parser);
             }
             else{
-                node->if_stmt->else_block = parse_stmt(pars);
+                node->if_stmt->else_block = parse_stmt(parser);
             }
 
             if(!node->if_stmt->else_block){
-                free_ast(node);
-                return NULL;
+                goto cleanup;
             }
             break; 
         }
     }
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_while(parser_t* pars)
+node_t* parse_while(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_WHILE);
+    node_t* node = new_node(parser->ast, NODE_WHILE);
     if(!node) return NULL;
 
-    node->while_loop = (struct node_while*)malloc(sizeof(struct node_while));
-    if(!node->while_loop){
-        free_ast(node);
-        return NULL;
-    }
+    node->while_loop = (struct node_while*)arena_alloc(parser->ast, sizeof(struct node_while), alignof(struct node_while));
+    if(!node->while_loop) goto cleanup;
 
     node->while_loop->condition = NULL;
     node->while_loop->body = NULL;
 
-    advance_token(pars); // skip 'while'
+    advance_token(parser); // skip 'while'
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
-
-    node->while_loop->condition = parse_expr(pars);
-    if(!node->while_loop->condition){
-        free_ast(node);
-        return NULL;
+    if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
     }
+
+    node->while_loop->condition = parse_expr(parser);
+    if(!node->while_loop->condition) goto cleanup;
 
     // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // parse body (can be a block or a single statement)
-    if(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_LBRACE){
-        node->while_loop->body = parse_block(pars);
+    if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
+        node->while_loop->body = parse_block(parser);
     }
     else{
-        node->while_loop->body = parse_stmt(pars);
+        node->while_loop->body = parse_stmt(parser);
     }
     
     if(!node->while_loop->body){
-        free_ast(node);
-        return NULL;
+        goto cleanup;
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_for(parser_t* pars)
+node_t* parse_for(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_FOR);
+    node_t* node = new_node(parser->ast, NODE_FOR);
     if(!node) return NULL;
     
-    node->for_loop = (struct node_for*)malloc(sizeof(struct node_for));
+    node->for_loop = (struct node_for*)arena_alloc(parser->ast, sizeof(struct node_for), alignof(struct node_for));
     if(!node->for_loop){
-        free_ast(node);
-        return NULL;
+        goto cleanup;
     }
 
     node->for_loop->init = NULL;
@@ -1122,919 +986,801 @@ astnode_t* parse_for(parser_t* pars)
     node->for_loop->update = NULL;
     node->for_loop->body = NULL;
 
-    advance_token(pars); // skip 'for'
+    advance_token(parser); // skip 'for'
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // parse init statement
-    if(pars->current.category != CATEGORY_OPERATOR && pars->current.type_operator != OPER_SEMICOLON){
-        node->for_loop->init = parse_expr(pars);
+    if(!check_token(parser, CAT_OPERATOR, OPER_SEMICOLON)){
+        node->for_loop->init = parse_expr(parser);
         if(!node->for_loop->init){
-            free_ast(node);
-            return NULL;
+            goto cleanup;
         }
     }
 
     // expect ';'
-    if(!consume_token(pars, CATEGORY_OPERATOR, OPER_SEMICOLON, ERROR_EXPECTED_DELIMITER)){ free_ast(node); return NULL; }
+    if(!consume_token(parser, CAT_OPERATOR, OPER_SEMICOLON, ERR_EXPEC_DELIM)){
+        goto cleanup;
+    }
 
     // parse condition
-    if(pars->current.category != CATEGORY_OPERATOR && pars->current.type_operator != OPER_SEMICOLON){
-        node->for_loop->condition = parse_expr(pars);
+    if(!check_token(parser, CAT_OPERATOR, OPER_SEMICOLON)){
+        node->for_loop->condition = parse_expr(parser);
         if(!node->for_loop->condition){
-            free_ast(node);
-            return NULL;
+            goto cleanup;
         }
     }
 
     // expect ';'
-    if(!consume_token(pars, CATEGORY_OPERATOR, OPER_SEMICOLON, ERROR_EXPECTED_DELIMITER)){ free_ast(node); return NULL; }
+    if(!consume_token(parser, CAT_OPERATOR, OPER_SEMICOLON, ERR_EXPEC_DELIM)){
+        goto cleanup;
+    }
 
     // parse update statement
-    if(pars->current.category != CATEGORY_PAREN && pars->current.type_paren != PAR_RPAREN){
-        node->for_loop->update = parse_expr(pars);
+    if(!check_token(parser,  CAT_PAREN, PAR_RPAREN)){
+        node->for_loop->update = parse_expr(parser);
         if(!node->for_loop->update){
-            free_ast(node);
-            return NULL;
+            goto cleanup;
         }
     }
 
     // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // Parse body (can be a block or a single statement)
-    if(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_LBRACE){
-        node->for_loop->body = parse_block(pars);
+    if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
+        node->for_loop->body = parse_block(parser);
     }
     else{
-        node->for_loop->body = parse_stmt(pars);
+        node->for_loop->body = parse_stmt(parser);
     }
     
     if(!node->for_loop->body){
-        free_ast(node);
-        return NULL;
+        goto cleanup;
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_func(parser_t* pars)
+node_t* parse_func(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_FUNC);
+    node_t* node = new_node(parser->ast, NODE_FUNC);
     if(!node) return NULL;
 
-    node->func_decl = malloc(sizeof(struct node_func));
-    if(!node->func_decl){
-        free_ast(node);
-        return NULL;
-    }
+    node->func_decl = (struct node_func*)arena_alloc(parser->ast, sizeof(struct node_func), alignof(struct node_func));
+    if(!node->func_decl) goto cleanup;
 
-    node->func_decl->name = NULL;
-    node->func_decl->params = NULL;
-    node->func_decl->param_count = 0;
+    node->func_decl->name = new_string(NULL, NULL);
+    node->func_decl->param.elems = NULL;
+    node->func_decl->param.count = 0;
+    node->func_decl->param.count = 4;
     node->func_decl->return_type = DT_VOID;
     node->func_decl->body = NULL;
 
-    advance_token(pars); // skip 'func'
+    advance_token(parser); // skip 'func'
 
     // expect function name
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        report_t* err = new_report(
-            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
     }
     
-    node->func_decl->name = util_strdup(pars->current.literal);
-    if(!node->func_decl->name){
-        free_ast(node);
-        return NULL;
-    }
-    advance_token(pars);
+    node->func_decl->name = new_string(NULL, NULL); // FIX
+    if(!node->func_decl->name.data) goto cleanup;
+    advance_token(parser);
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
-
-    size_t params_capacity = 4;
-    node->func_decl->params = malloc(params_capacity * sizeof(astnode_t*));
-    if(!node->func_decl->params){
-        free_ast(node);
-        return NULL;
+    if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
     }
 
+    node->func_decl->param.elems = (node_t**)arena_alloc(parser->ast, node->func_decl->param.capacity * sizeof(node_t*), alignof(node_t*));
+    if(!node->func_decl->param.elems) goto cleanup;
+
     // parsing params until ')'
-    if(!(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_RPAREN)){
-        while(1){
-            astnode_t* param = parse_var_decl(pars);
-            if(!param){
-                for(size_t i = 0; i < node->func_decl->param_count; i++){
-                    free_ast(node->func_decl->params[i]);
-                }
-                free(node->func_decl->params);
-                free_ast(node);
-                return NULL;
-            }
+    if(!check_token(parser, CAT_PAREN, PAR_RPAREN)){
+        while(true){
+            node_t* param = parse_var_decl(parser);
+            if(!param) goto cleanup;
 
             // check if param is a variable
-            if(param->type != NODE_VAR){
-                report_t* err = new_report(
-                    SEVERITY_ERROR, ERROR_EXPECTED_PARAM, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-                );
-                new_parser_error(pars, err);
-                free_ast(param);
-                for(size_t i = 0; i < node->func_decl->param_count; i++){
-                    free_ast(node->func_decl->params[i]);
-                }
-                free(node->func_decl->params);
-                free_ast(node);
-                return NULL;
+            if(param->kind != NODE_VAR){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_PARAM, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+                goto cleanup;
             }
 
             // check if there is enough capacity
-            if(node->func_decl->param_count >= params_capacity){
-                params_capacity *= 2;
-                astnode_t** new_params = realloc(node->func_decl->params, 
-                                                     params_capacity * sizeof(astnode_t*));
-                if(!new_params){
-                    free_ast(param);
-                    for(size_t i = 0; i < node->func_decl->param_count; i++){
-                        free_ast(node->func_decl->params[i]);
-                    }
-                    free(node->func_decl->params);
-                    free_ast(node);
-                    return NULL;
-                }
-                node->func_decl->params = new_params;
+            if(node->func_decl->param.count >= node->func_decl->param.capacity){
+                node->func_decl->param.capacity *= 2;
+                node_t** new_params = (node_t**)arena_alloc_array(parser->ast, sizeof(node->func_decl->param.elems[0]), node->func_decl->param.capacity * sizeof(node_t*), alignof(node_t));
+                if(!new_params) goto cleanup;
+                node->func_decl->param.elems = new_params;
             }
 
-            node->func_decl->params[node->func_decl->param_count++] = param;
+            node->func_decl->param.elems[node->func_decl->param.count++] = param;
 
             // consume ','
-            if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COMMA){
-                advance_token(pars);
+            if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
+                advance_token(parser);
                 continue;
             }
             break;
         }
     }
     
-    advance_token(pars); // consume ')'
+    advance_token(parser); // consume ')'
 
     // optional return type
-    if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COLON){
-        advance_token(pars);
+    if(check_token(parser, CAT_OPERATOR, OPER_COLON)){
+        advance_token(parser);
         
         // expect datatype
-        if(pars->current.category != CATEGORY_DATATYPE){
-            report_t* err = new_report(
-                SEVERITY_ERROR, ERROR_EXPECTED_TYPE, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-            );
-            new_parser_error(pars, err);
-            free_ast(node);
-            return NULL;
+        if(parser->token.current.category != CAT_DATATYPE){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            goto cleanup;
         }
         
-        node->func_decl->return_type = pars->current.type_datatype;
-        advance_token(pars);
+        node->func_decl->return_type = parser->token.current.type;
+        advance_token(parser);
     }
 
     // expect function body (block)
-    node->func_decl->body = parse_block(pars);
-    if(!node->func_decl->body){
-        free_ast(node);
-        return NULL;
-    }
+    node->func_decl->body = parse_block(parser);
+    if(!node->func_decl->body) goto cleanup;
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_struct(parser_t* pars)
+node_t* parse_struct(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_STRUCT);
+    node_t* node = new_node(parser->ast, NODE_STRUCT);
     if(!node) return NULL;
 
-    node->struct_decl = (struct node_struct*)malloc(sizeof(struct node_struct));
-    if(!node->struct_decl){
-        free_ast(node);
-        return NULL;
-    }
+    node->struct_decl = (struct node_struct*)arena_alloc(parser->ast, sizeof(struct node_struct), alignof(struct node_struct));
+    if(!node->struct_decl) goto cleanup;
 
-    node->struct_decl->name = NULL;
-    node->struct_decl->members = NULL;
-    node->struct_decl->member_count = 0;
-    node->struct_decl->member_capacity = 0;
+    node->struct_decl->name = new_string(NULL, NULL);
+    node->struct_decl->member.elems = NULL;
+    node->struct_decl->member.count = 0;
+    node->struct_decl->member.capacity = 0;
 
-    advance_token(pars); // skip 'struct'
+    advance_token(parser); // skip 'struct'
 
     // expect struct name
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        report_t* err = new_report(
-            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
     }
-    node->struct_decl->name = util_strdup(pars->current.literal);
-    advance_token(pars);
+    node->struct_decl->name = new_string(NULL, NULL); // FIX
+    advance_token(parser);
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // parse struct members
-    while(pars->current.category != CATEGORY_PAREN && pars->current.type_paren != PAR_RBRACE){
+    while(!check_token(parser,  CAT_PAREN, PAR_RBRACE)){
         
         // check for EOF
-        if(pars->current.category == CATEGORY_SERVICE && pars->current.type_service == SERV_EOF){
-            report_t* err = new_report(
-                SEVERITY_ERROR, ERROR_EXPECTED_PAREN, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-            );
-            new_parser_error(pars, err);
-            for(size_t i = 0; i < node->struct_decl->member_count; ++i) {
-                free_ast(node->struct_decl->members[i]);
-            }
-            free(node->struct_decl->members);
-            free_ast(node);
-            return NULL;
+        if(check_token(parser, CAT_SERVICE, SERV_EOF)){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            goto cleanup;
         }
         
         // parse member variable declaration
-        astnode_t* member = parse_var_decl(pars);
-        if(!member){
-            // cleanup existing members
-            for(size_t i = 0; i < node->struct_decl->member_count; ++i) {
-                free_ast(node->struct_decl->members[i]);
-            }
-            free(node->struct_decl->members);
-            free_ast(node);
-            return NULL;
-        }
+        node_t* member = parse_var_decl(parser);
+        if(!member) goto cleanup;
 
         // add member
-        if(node->struct_decl->member_count >= node->struct_decl->member_capacity){
-            size_t new_cap = node->struct_decl->member_capacity == 0 ? 4 : node->struct_decl->member_capacity * 2;
-            astnode_t** new_members = realloc(node->struct_decl->members, new_cap * sizeof(astnode_t*));
-            if(!new_members){
-                free_ast(member);
-                for(size_t i = 0; i < node->struct_decl->member_count; ++i) {
-                    free_ast(node->struct_decl->members[i]);
-                }
-                free(node->struct_decl->members);
-                free_ast(node);
-                return NULL;
-            }
-            node->struct_decl->members = new_members;
-            node->struct_decl->member_capacity = new_cap;
+        if(node->struct_decl->member.count >= node->struct_decl->member.capacity){
+            size_t new_cap = node->struct_decl->member.capacity == 0 ? 4 : node->struct_decl->member.capacity * 2;
+            node_t** new_members = (node_t**)arena_alloc_array(parser->ast, sizeof(node->struct_decl->member.elems[0]), new_cap * sizeof(node_t*), alignof(node_t*));
+            if(!new_members) goto cleanup;
+            node->struct_decl->member.elems = new_members;
+            node->struct_decl->member.capacity = new_cap;
         }
-        node->struct_decl->members[node->struct_decl->member_count++] = member;
+        node->struct_decl->member.elems[node->struct_decl->member.count++] = member;
         
         // optional comma separator
-        if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COMMA) {
-            advance_token(pars);
+        if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
+            advance_token(parser);
         }
     }
     
     // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){
-        for(size_t i = 0; i < node->struct_decl->member_count; ++i) {
-            free_ast(node->struct_decl->members[i]);
-        }
-        free(node->struct_decl->members);
-        free_ast(node);
-        return NULL;
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_union(parser_t* pars)
+node_t* parse_enum(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_UNION);
+    node_t* node = new_node(parser->ast, NODE_ENUM);
     if(!node) return NULL;
 
-    node->union_decl = (struct node_union*)malloc(sizeof(struct node_union));
-    if(!node->union_decl){
-        free_ast(node);
-        return NULL;
-    }
+    node->enum_decl = (struct node_enum*)arena_alloc(parser->ast, sizeof(struct node_enum), alignof(struct node_enum));
+    if(!node->enum_decl) goto cleanup;
 
-    node->union_decl->name = NULL;
-    node->union_decl->members = NULL;
-    node->union_decl->member_count = 0;
-    node->union_decl->member_capacity = 0;
+    node->enum_decl->name = new_string(NULL, NULL);
+    node->enum_decl->member.elems = NULL;
+    node->enum_decl->member.count = 0;
+    node->enum_decl->member.capacity = 0;
 
-    // skip 'union'
-    advance_token(pars);
-
-    // expect union name
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        report_t* err = new_report(
-            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
-    }
-    node->union_decl->name = util_strdup(pars->current.literal);
-    advance_token(pars);
-
-    // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
-
-    // parse union members
-    while(pars->current.category != CATEGORY_PAREN || pars->current.type_paren != PAR_RBRACE){
-
-        // check for EOF
-        if(pars->current.category == CATEGORY_SERVICE && pars->current.type_service == SERV_EOF){
-            report_t* err = new_report(
-                SEVERITY_ERROR, ERROR_EXPECTED_PAREN, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-            );
-            new_parser_error(pars, err);
-            for(size_t i = 0; i < node->union_decl->member_count; ++i) {
-                free_ast(node->union_decl->members[i]);
-            }
-            free(node->union_decl->members);
-            free_ast(node);
-            return NULL;
-        }
-
-        astnode_t* member = parse_var_decl(pars);
-        if(!member){
-            // cleanup existing members
-            for(size_t i = 0; i < node->union_decl->member_count; ++i) {
-                free_ast(node->union_decl->members[i]);
-            }
-            free(node->union_decl->members);
-            free_ast(node);
-            return NULL;
-        }
-
-        // add member
-        if(node->union_decl->member_count >= node->union_decl->member_capacity){
-            size_t new_cap = node->union_decl->member_capacity == 0 ? 4 : node->union_decl->member_capacity * 2;
-            astnode_t** new_members = realloc(node->union_decl->members, new_cap * sizeof(astnode_t*));
-            if(!new_members){
-                free_ast(member);
-                for(size_t i = 0; i < node->union_decl->member_count; ++i) {
-                    free_ast(node->union_decl->members[i]);
-                }
-                free(node->union_decl->members);
-                free_ast(node);
-                return NULL;
-            }
-            node->union_decl->members = new_members;
-            node->union_decl->member_capacity = new_cap;
-        }
-        node->union_decl->members[node->union_decl->member_count++] = member;
-
-        // optional comma separator
-        if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COMMA) {
-            advance_token(pars);
-        }
-    }
-
-    // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){
-        for(size_t i = 0; i < node->union_decl->member_count; ++i) {
-            free_ast(node->union_decl->members[i]);
-        }
-        free(node->union_decl->members);
-        free_ast(node);
-        return NULL;
-    }
-
-    return node;
-}
-
-astnode_t* parse_enum(parser_t* pars)
-{
-    astnode_t* node = new_ast(NODE_ENUM);
-    if(!node) return NULL;
-
-    node->enum_decl = (struct node_enum*)malloc(sizeof(struct node_enum));
-    if(!node->enum_decl){
-        free_ast(node);
-        return NULL;
-    }
-
-    node->enum_decl->name = NULL;
-    node->enum_decl->members = NULL;
-    node->enum_decl->member_count = 0;
-    node->enum_decl->member_capacity = 0;
-
-    advance_token(pars); // skip 'enum'
+    advance_token(parser); // skip 'enum'
 
     // expect enum name
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        report_t* err = new_report(
-            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
     }
-    node->enum_decl->name = util_strdup(pars->current.literal);
-    advance_token(pars);
+    node->enum_decl->name = new_string(NULL, NULL); // FIX
+    advance_token(parser);
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // parse enum members
-    while(pars->current.category != CATEGORY_PAREN || pars->current.type_paren != PAR_RBRACE){
+    while(!check_token(parser,  CAT_PAREN, PAR_RBRACE))
+    {
         // check for EOF
-        if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-            report_t* err = new_report(
-                SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-            );
-            new_parser_error(pars, err);
-            // cleanup existing members
-            for(size_t i = 0; i < node->enum_decl->member_count; ++i) {
-                free(node->enum_decl->members[i]);
-            }
-            free(node->enum_decl->members);
-            free_ast(node);
-            return NULL;
+        if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            goto cleanup;
         }
 
         // expect member name
-        char* member_name = util_strdup(pars->current.literal);
-        if(!member_name) {
-            // cleanup existing members
-            for(size_t i = 0; i < node->enum_decl->member_count; ++i) {
-                free(node->enum_decl->members[i]);
-            }
-            free(node->enum_decl->members);
-            free_ast(node);
-            return NULL;
-        }
-        advance_token(pars);
+        char* member_name = NULL; // FIX
+        if(!member_name) goto cleanup;
+        advance_token(parser);
 
         // add member
-        if(node->enum_decl->member_count >= node->enum_decl->member_capacity){
-            size_t new_cap = node->enum_decl->member_capacity == 0 ? 4 : node->enum_decl->member_capacity * 2;
-            char** new_members = realloc(node->enum_decl->members, new_cap * sizeof(char*));
-            if(!new_members){
-                free(member_name);
-                for(size_t i = 0; i < node->enum_decl->member_count; ++i) {
-                    free(node->enum_decl->members[i]);
-                }
-                free(node->enum_decl->members);
-                free_ast(node);
-                return NULL;
-            }
-            node->enum_decl->members = new_members;
-            node->enum_decl->member_capacity = new_cap;
+        if(node->enum_decl->member.count >= node->enum_decl->member.capacity){
+            size_t new_cap = node->enum_decl->member.capacity == 0 ? 4 : node->enum_decl->member.capacity * 2;
+            node_t** new_members = (node_t**)arena_alloc_array(parser->ast, sizeof(node->enum_decl->member.elems[0]), new_cap * sizeof(node_t*), alignof(node_t*));
+            if(!new_members) goto cleanup;
+            node->enum_decl->member.elems = new_members;
+            node->enum_decl->member.capacity = new_cap;
         }
-        node->enum_decl->members[node->enum_decl->member_count++] = member_name;
+        node->enum_decl->name.data = member_name;
+
 
         // optional comma separator
-        if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COMMA) {
-            advance_token(pars);
+        if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
+            advance_token(parser);
         }
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_match(parser_t* pars)
+node_t* parse_match(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_MATCH);
+    node_t* node = new_node(parser->ast, NODE_MATCH);
     if(!node) return NULL;
 
-    node->match_stmt = (struct node_match*)malloc(sizeof(struct node_match));
-    if(!node->match_stmt){
-        free_ast(node);
-        return NULL;
-    }
+    node->match_stmt = (struct node_match*)arena_alloc(parser->ast, sizeof(struct node_match), alignof(struct node_match));
+    if(!node->match_stmt) goto cleanup;
 
     node->match_stmt->target = NULL;
-    node->match_stmt->cases = NULL;
-    node->match_stmt->case_count = 0;
-    node->match_stmt->case_capacity = 0;
+    node->match_stmt->block.elems = NULL;
+    node->match_stmt->block.count = 0;
+    node->match_stmt->block.capacity = 0;
 
-    advance_token(pars); // skip 'match'
+    advance_token(parser); // skip 'match'
 
     // parse target expression
-    node->match_stmt->target = parse_expr(pars);
-    if(!node->match_stmt->target){
-        free_ast(node);
-        return NULL;
-    }
+    node->match_stmt->target = parse_expr(parser);
+    if(!node->match_stmt->target) goto cleanup;
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){
-        free_ast(node->match_stmt->target);
-        free_ast(node);
-        return NULL;
+    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
     }
 
     // parse cases
-    while(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){
-
+    while(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN))
+    {
         // check for EOF
-        if(!consume_token(pars, CATEGORY_KEYWORD, KW_CASE, ERROR_EXPECTED_KEYWORD)){
-            // Only free cases array and target, individual cases were already freed
-            free(node->match_stmt->cases);
-            free_ast(node->match_stmt->target); 
-            free(node->match_stmt);
-            free(node);
-            return NULL;
+        if(!consume_token(parser, CAT_KEYWORD, KW_CASE, ERR_EXPEC_KEYWORD)){
+            goto cleanup;
         }
 
         // create new case node
-        astnode_t* case_node = new_ast(NODE_CASE);
-        if(!case_node){
-            // Only free cases array and target, individual cases were already freed
-            free(node->match_stmt->cases);
-            free_ast(node->match_stmt->target);
-            free(node->match_stmt);
-            free(node);
-            return NULL;
-        }
+        node_t* case_node = new_node(parser->ast, NODE_CASE);
+        if(!case_node) goto cleanup;
 
         // create case struct
-        case_node->match_case = (struct node_case*)malloc(sizeof(struct node_case));
-        if(!case_node->match_case){
-            free_ast(case_node); 
-            free(node->match_stmt->cases);
-            free_ast(node->match_stmt->target);
-            free(node->match_stmt);
-            free(node);
-            return NULL;
-        }
+        case_node->match_case = (struct node_case*)arena_alloc(parser->ast, sizeof(struct node_case), alignof(struct node_case));
+        if(!case_node->match_case) goto cleanup;
 
         // parse case condition 
-        case_node->match_case->condition = parse_expr(pars);
-        if(!case_node->match_case->condition){
-            free(case_node->match_case);
-            free_ast(case_node);
-            free(node->match_stmt->cases);
-            free_ast(node->match_stmt->target);
-            free(node->match_stmt);
-            free(node);
-            return NULL;
-        }
+        case_node->match_case->condition = parse_expr(parser);
+        if(!case_node->match_case->condition) goto cleanup;
 
-        // expect '=>'
-        if(!consume_token(pars, CATEGORY_OPERATOR, OPER_ARROW, ERROR_EXPECTED_OPERATOR)){
-            free_ast(case_node);
-
-            // cleanup existing cases
-            for(size_t i = 0; i < node->match_stmt->case_count; ++i) {
-                free_ast(node->match_stmt->cases[i]);
-            }
-
-            free(node->match_stmt->cases);
-            free_ast(node->match_stmt->target);
-            free_ast(node);
-            return NULL;
+        // expect '->'
+        if(!consume_token(parser, CAT_OPERATOR, OPER_ARROW, ERR_EXPEC_OPER)){
+            goto cleanup;
         }
 
         // parse case body (can be a block or a single statement)
-        case_node->match_case->body = parse_stmt(pars);
-        if(!case_node->match_case->body){
-            free_ast(case_node);
-            // cleanup existing cases
-            for(size_t i = 0; i < node->match_stmt->case_count; ++i) {
-                free_ast(node->match_stmt->cases[i]);
-            }
-            free(node->match_stmt->cases);
-            free_ast(node->match_stmt->target);
-            free_ast(node);
-            return NULL;
-        }
+        case_node->match_case->body = parse_stmt(parser);
+        if(!case_node->match_case->body) goto cleanup;
 
         // add case to match statement
-        if(node->match_stmt->case_count >= node->match_stmt->case_capacity){
-            size_t new_cap = node->match_stmt->case_capacity == 0 ? 4 : node->match_stmt->case_capacity * 2;
-            astnode_t** new_cases = realloc(node->match_stmt->cases, new_cap * sizeof(astnode_t*));
-            if(!new_cases){
-                free_ast(case_node);
-                // cleanup existing cases
-                for(size_t i = 0; i < node->match_stmt->case_count; ++i) {
-                    free_ast(node->match_stmt->cases[i]);
-                }
-                free(node->match_stmt->cases);
-                free_ast(node->match_stmt->target);
-                free_ast(node);
-                return NULL;
-            }
-            node->match_stmt->cases = new_cases;
-            node->match_stmt->case_capacity = new_cap;
+        if(node->match_stmt->block.count >= node->match_stmt->block.capacity){
+            size_t new_cap = node->match_stmt->block.capacity == 0 ? 4 : node->match_stmt->block.capacity * 2;
+            node_t** new_cases = (node_t**)arena_alloc_array(parser->ast, sizeof(node->match_stmt->block.elems[0]), new_cap * sizeof(node_t*), alignof(node_t*));
+            if(!new_cases) goto cleanup;
+            node->match_stmt->block.elems = new_cases;
+            node->match_stmt->block.capacity = new_cap;
         }
-        node->match_stmt->cases[node->match_stmt->case_count++] = case_node;
+        node->match_stmt->block.elems[node->match_stmt->block.count++] = case_node;
     }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_trait(parser_t* pars)
+node_t* parse_trait(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_TRAIT);
+    node_t* node = new_node(parser->ast, NODE_TRAIT);
     if(!node) return NULL;
 
-    node->trait_decl = (struct node_trait*)malloc(sizeof(struct node_trait));
-    if(!node->trait_decl){
-        free_ast(node);
-        return NULL;
-    }
+    node->trait_decl = (struct node_trait*)arena_alloc(parser->ast, sizeof(struct node_trait), alignof(struct node_trait));
+    if(!node->trait_decl) goto cleanup;
 
-    node->trait_decl->name = NULL;
+    node->trait_decl->name = new_string(NULL, NULL);
     node->trait_decl->body = NULL;
 
-    advance_token(pars); // skip 'impl'
+    advance_token(parser); // skip 'trait'
 
     // expect name
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        report_t* err = new_report(
-            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
     }
-    node->trait_decl->name = util_strdup(pars->current.literal);
-    advance_token(pars);
+    node->trait_decl->name = new_string(NULL, NULL); // FIX
+    advance_token(parser);
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // parse body
-    node->trait_decl->body = parse_block(pars);
-    if(!node->trait_decl->body){
-        free_ast(node);
-        return NULL;
-    }
+    node->trait_decl->body = parse_block(parser);
+    if(!node->trait_decl->body) goto cleanup;
 
     // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_try_catch(parser_t* pars)
+node_t* parse_type(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_TRYCATCH);
+    return NULL;
+}
+
+node_t* parse_impl(parser_t* parser)
+{
+    node_t* node = new_node(parser->ast, NODE_IMPL);
+    if(!node) return NULL;
+    
+    node->impl_stmt = (struct node_impl*)arena_alloc(parser->ast, sizeof(struct node_impl), alignof(struct node_impl));
+    if(!node->impl_stmt) goto cleanup;
+    
+    node->impl_stmt->trait_name = new_string(NULL, NULL);
+    node->impl_stmt->struct_name = new_string(NULL, NULL);
+    node->impl_stmt->body = NULL;
+    
+    advance_token(parser); // skip 'impl'
+    
+    // expect name
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
+    }
+    node->impl_stmt->trait_name = new_string(NULL, NULL); // FIX
+
+    advance_token(parser);
+
+    if(check_token(parser, CAT_KEYWORD, KW_FOR)){
+        advance_token(parser); // skip 'for'
+        
+        // expect name
+        if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            goto cleanup;
+        }
+        node->impl_stmt->struct_name = new_string(NULL, NULL); // FIX
+    }
+    advance_token(parser);
+    
+    // expect '{'
+    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
+
+    // parse body
+    node->impl_stmt->body = parse_block(parser);
+    if(!node->impl_stmt->body) goto cleanup;
+
+    // expect '}'
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
+
+    return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
+}
+
+node_t* parse_trycatch(parser_t* parser)
+{
+    node_t* node = new_node(parser->ast, NODE_TRYCATCH);
     if(!node) return NULL;
 
-    node->trycatch_stmt = (struct node_trycatch*)malloc(sizeof(struct node_trycatch));
-    if(!node->trycatch_stmt){
-        free_ast(node);
-        return NULL;
-    }
+    node->trycatch_stmt = (struct node_trycatch*)arena_alloc(parser->ast, sizeof(struct node_trycatch), alignof(struct node_trycatch));
+    if(!node->trycatch_stmt) goto cleanup;
 
     node->trycatch_stmt->try_block = NULL;
     node->trycatch_stmt->catch_block = NULL;
     node->trycatch_stmt->finally_block = NULL;
 
-    advance_token(pars); // skip 'try'
+    advance_token(parser); // skip 'try'
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
-
-    // parse try block
-    node->trycatch_stmt->try_block = parse_block(pars);
-    if(!node->trycatch_stmt->try_block){
-        free_ast(node);
-        return NULL;
+    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
     }
 
+    // parse try block
+    node->trycatch_stmt->try_block = parse_block(parser);
+    if(!node->trycatch_stmt->try_block) goto cleanup;
+
     // expect '}'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){ 
+        goto cleanup;
+    }
 
     // expect 'catch'
-    if(!consume_token(pars, CATEGORY_KEYWORD, KW_CATCH, ERROR_EXPECTED_KEYWORD)){ free_ast(node); return NULL; }
+    if(!consume_token(parser, CAT_KEYWORD, KW_CATCH, ERR_EXPEC_KEYWORD)){
+        goto cleanup;
+    }
 
-    advance_token(pars);
+    advance_token(parser);
 
     // expect '('
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // TODO: parse catch exception variable
 
     // expect ')'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL; }
+    if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // expect '{'
-    if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     // parse catch block
-    node->trycatch_stmt->catch_block = parse_block(pars);
-    if(!node->trycatch_stmt->catch_block){
-        free_ast(node);
-        return NULL;
-    }
+    node->trycatch_stmt->catch_block = parse_block(parser);
+    if(!node->trycatch_stmt->catch_block) goto cleanup;
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-astnode_t* parse_import(parser_t* pars)
+node_t* parse_module(parser_t* parser)
 {
-    astnode_t* node = new_ast(NODE_IMPORT);
+    return NULL;
+}
+
+node_t* parse_import(parser_t* parser)
+{
+    node_t* node = new_node(parser->ast, NODE_IMPORT);
     if(!node) return NULL;
 
-    node->import_stmt = (struct node_import*)malloc(sizeof(struct node_import));
-    if(!node->import_stmt){
-        free_ast(node);
-        return NULL;
-    }
-    node->import_stmt->module_name = NULL;
+    node->import_stmt = (struct node_import*)arena_alloc(parser->ast, sizeof(struct node_import), alignof(struct node_import));
+    if(!node->import_stmt) goto cleanup;
+    
+    node->import_stmt->path = new_string(NULL, NULL);
+    node->import_stmt->module.count = 0;
+    node->import_stmt->module.capacity = 16;
+    node->import_stmt->module.elems = (node_t**)arena_alloc_array(
+        parser->ast,
+        sizeof(node_t**),
+        node->import_stmt->module.capacity,
+        alignof(node_t**)
+    );
 
-    advance_token(pars); // skip 'import'
+    advance_token(parser); // skip 'import'
 
     // expect module name
-    if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-        report_t* err = new_report(
-            SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-        );
-        new_parser_error(pars, err);
-        free_ast(node);
-        return NULL;
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
     }
-    node->import_stmt->module_name = util_strdup(pars->current.literal);
-    advance_token(pars);
+    node->import_stmt->path = new_string(NULL, NULL); // FIX
+    advance_token(parser);
+    
+    // expect '{'
+    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
+
+    // parse import modules
+    for(size_t i = 0; i < 1; ++i){
+        // node->import_stmt->module.elems[i] = ;
+        // if(!node->import_stmt->module.elems[i]) goto cleanup;
+    }
+
+    // expect '}'
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
     return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
 }
 
-// astnode_t* parse_test(struct parser* pars)
-// {
-//     astnode_t* node = new_ast(NODE_TEST);
-//     if(!node) return NULL;
+node_t* parse_test(parser_t* parser)
+{
+    node_t* node = new_node(parser->ast, NODE_TEST);
+    if(!node) return NULL;
 
-//     node->test_stmt = (struct node_test*)malloc(sizeof(struct node_test));
-//     if(!node->test_stmt){
-//         free_ast(node);
-//         return NULL;
-//     }
-//     node->test_stmt->name = NULL;
-//     node->test_stmt->body = NULL;
+    node->test_stmt = (struct node_test*)arena_alloc(parser->ast, sizeof(struct node_test), alignof(struct node_test));
+    if(!node->test_stmt) goto cleanup;
 
-//     advance_token(pars); // skip 'test'
+    node->test_stmt->name = new_string(NULL, NULL);
+    node->test_stmt->body = NULL;
 
-//     // expect name
-//     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-//         struct report* err = new_report(
-//             SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, //             pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-//         );
-//         new_parser_error(pars, err);
-//         free_ast(node);
-//         return NULL;
-//     }
-//     node->test_stmt->name = util_strdup(pars->current.literal);
-//     advance_token(pars);
+    advance_token(parser); // skip 'test'
 
-//     // expect '{'
-//     if(!consume_token(pars, CATEGORY_PAREN, PAR_LBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    // expect name
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
+    }
+    node->test_stmt->name = new_string(NULL, NULL); // FIX
+    advance_token(parser);
 
-//     // parse test block
-//     node->test_stmt->body = parse_block(pars);
-//     if(!node->test_stmt->body){
-//         free_ast(node);
-//         return NULL;
-//     }
+    // expect '{'
+    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
-//     // expect '}'
-//     if(!consume_token(pars, CATEGORY_PAREN, PAR_RBRACE, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    // parse test block
+    node->test_stmt->body = parse_block(parser);
+    if(!node->test_stmt->body) goto cleanup;
 
-//     return node;
-// }
+    // expect '}'
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
-// astnode_t* parse_fork(struct parser* pars)
-// {
-//     astnode_t* node = new_ast(NODE_FORK);
-//     if(!node) return NULL;
+    return node;
+    
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
+}
 
-//     node->fork_stmt = (struct node_fork*)malloc(sizeof(struct node_fork));
-//     if(!node->fork_stmt){
-//         free_ast(node);
-//         return NULL;
-//     }
-//     node->fork_stmt->keyw = KW_FORK;
-//     node->fork_stmt->name = NULL;
-//     node->fork_stmt->body = NULL;
+node_t* parse_fork(parser_t* parser)
+{
+    node_t* node = new_node(parser->ast, NODE_FORK);
+    if(!node) return NULL;
 
-//     advance_token(pars); // skip 'fork'
+    node->fork_stmt = (struct node_fork*)arena_alloc(parser->ast, sizeof(struct node_fork), alignof(struct node_fork));
+    if(!node->fork_stmt) goto cleanup;
+    
+    node->fork_stmt->name = new_string(NULL, NULL);
+    node->fork_stmt->body = NULL;
 
-//     // expect name
-//     if(pars->current.category != CATEGORY_LITERAL && pars->current.type_literal != LIT_IDENT){
-//         struct report* err = new_report(
-//             SEVERITY_ERROR, ERROR_EXPECTED_IDENTIFIER, //             pars->lexer->line, pars->lexer->column, 1, pars->lexer->input
-//         );
-//         new_parser_error(pars, err);
-//         free_ast(node);
-//         return NULL;
-//     }
-//     node->fork_stmt->name = util_strdup(pars->current.literal);
-//     advance_token(pars);
+    advance_token(parser); // skip 'fork'
 
-//     // expect '{'
-//     node->fork_stmt->body = parse_block(pars);
-//     if(!node->fork_stmt->body){
-//         free_ast(node);
-//         return NULL;
-//     }
+    // expect name
+    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        goto cleanup;
+    }
+    node->fork_stmt->name = new_string(NULL, NULL); // FIX
+    advance_token(parser);
 
-//     return node;
-// }
+    // expect '{'
+    node->fork_stmt->body = parse_block(parser);
+    if(!node->fork_stmt->body) goto cleanup;
 
-// astnode_t* parse_solve(struct parser* pars)
-// {
-//     astnode_t* node = new_ast(NODE_SOLVE);
-//     if(!node) return NULL;
+    return node;
 
-//     node->solve_stmt = (struct node_solve*)malloc(sizeof(struct node_solve));
-//     if(!node->solve_stmt){
-//         free_ast(node);
-//         return NULL;
-//     }
-//     node->solve_stmt->params = NULL;
-//     node->solve_stmt->param_count = 0;
-//     node->solve_stmt->param_capacity = 0;
-//     node->solve_stmt->body = NULL;
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
+}
 
-//     advance_token(pars); // skip 'solve'
+node_t* parse_solve(parser_t* parser)
+{
+    node_t* node = new_node(parser->ast, NODE_SOLVE);
+    if(!node) return NULL;
 
-//     // expect '('
-//     if(!consume_token(pars, CATEGORY_PAREN, PAR_LPAREN, ERROR_EXPECTED_PAREN)){ free_ast(node); return NULL;}
+    node->solve_stmt = (struct node_solve*)arena_alloc(parser->ast, sizeof(struct node_solve), alignof(struct node_solve));
+    if(!node->solve_stmt) goto cleanup;
 
-//     // parse parameters
-//     if(!(pars->current.category == CATEGORY_PAREN && pars->current.type_paren == PAR_RPAREN)){
-//         while(1){
-//             astnode_t* param = parse_var_decl(pars);
-//             if(!param){
-//                 // cleanup
-//                 for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
-//                 free(node->solve_stmt->params);
-//                 free_ast(node);
-//                 return NULL;
-//             }
+    node->solve_stmt->param.elems = NULL;
+    node->solve_stmt->param.count = 0;
+    node->solve_stmt->param.capacity = 0;
+    node->solve_stmt->body = NULL;
 
-//             // check capacity
-//             if(node->solve_stmt->param_count >= node->solve_stmt->param_capacity){
-//                 size_t new_cap = node->solve_stmt->param_capacity == 0 ? 4 : node->solve_stmt->param_capacity * 2;
-//                 astnode_t** new_arr = (astnode_t**)realloc(node->solve_stmt->params, new_cap * sizeof(astnode_t*));
-//                 if(!new_arr){
-//                     free_ast(param);
-//                     for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
-//                     free(node->solve_stmt->params);
-//                     free_ast(node);
-//                     return NULL;
-//                 }
-//                 node->solve_stmt->params = new_arr;
-//                 node->solve_stmt->param_capacity = new_cap;
-//             }
-//             node->solve_stmt->params[node->solve_stmt->param_count++] = param;
+    advance_token(parser); // skip 'solve'
 
-//             // consume comma
-//             if(pars->current.category == CATEGORY_OPERATOR && pars->current.type_operator == OPER_COMMA){ advance_token(pars);  continue; }
+    // expect '('
+    if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
-//             break;
-//         }
-//     }
+    // parse parameters
+    if(!check_token(parser, CAT_PAREN, PAR_RPAREN)){
+        while(true)
+        {
+            node_t* param = parse_var_decl(parser);
+            if(!param) goto cleanup;
 
-//     // expect ')'
-//     if(!consume_token(pars, CATEGORY_PAREN, PAR_RPAREN, ERROR_EXPECTED_PAREN)){
-//         for (size_t i = 0; i < node->solve_stmt->param_count; ++i) free_ast(node->solve_stmt->params[i]);
-//         free(node->solve_stmt->params);
-//         free_ast(node);
-//         return NULL;
-//     }
+            // check capacity
+            if(node->solve_stmt->param.count >= node->solve_stmt->param.capacity){
+                size_t new_cap = node->solve_stmt->param.capacity == 0 ? 4 : node->solve_stmt->param.capacity * 2;
+                node_t** new_arr = (node_t**)arena_alloc_array(parser->ast, sizeof(node->solve_stmt->param), new_cap * sizeof(node_t*), alignof(node_t*));
+                if(!new_arr) goto cleanup;
 
-//     // parse body
-//     node->solve_stmt->body = parse_block(pars);
-//     if(!node->solve_stmt->body){
-//         free_ast(node);
-//         return NULL;
-//     }
+                node->solve_stmt->param.elems = new_arr;
+                node->solve_stmt->param.capacity = new_cap;
+            }
+            node->solve_stmt->param.elems[node->solve_stmt->param.count++] = param;
 
-//     return node;
-// }
+            // consume comma
+            if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
+                advance_token(parser);
+                continue;
+            }
 
-// astnode_t* parse_simulate(struct parser* pars)
-// {
-//     astnode_t* node = new_ast(NODE_SIMULATE);
-//     if(!node) return NULL;
+            break;
+        }
+    }
 
-//     node->simulate_stmt = (struct node_simulate*)malloc(sizeof(struct node_simulate));
-//     if(!node->simulate_stmt){
-//         free_ast(node);
-//         return NULL;
-//     }
-//     node->simulate_stmt->keyw = KW_SIMULATE;
-//     node->simulate_stmt->body = NULL;
+    // expect ')'
+    if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        goto cleanup;
+    }
 
-//     advance_token(pars); // skip 'simulate'
+    // parse body
+    node->solve_stmt->body = parse_block(parser);
+    if(!node->solve_stmt->body) goto cleanup;
 
-//     // parse body
-//     node->simulate_stmt->body = parse_block(pars);
-//     if(!node->simulate_stmt->body){
-//         free_ast(node);
-//         return NULL;
-//     }
+    return node;
 
-//     return node;
-// }
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
+}
+
+node_t* parse_simulate(parser_t* parser)
+{
+    node_t* node = new_node(parser->ast, NODE_SIMULATE);
+    if(!node) return NULL;
+
+    node->simulate_stmt = (struct node_simulate*)arena_alloc(parser->ast, sizeof(struct node_simulate), alignof(struct node_simulate));
+    if(!node->simulate_stmt) goto cleanup;
+    node->simulate_stmt->type = KW_SIMULATE;
+    node->simulate_stmt->body = NULL;
+
+    advance_token(parser); // skip 'simulate'
+
+    // parse body
+    node->simulate_stmt->body = parse_block(parser);
+    if(!node->simulate_stmt->body) goto cleanup;
+
+    return node;
+
+cleanup:
+    free_ast(parser->ast);
+    return NULL;
+}
+
+node_t* parse_special(parser_t* parser)
+{
+    int spec_kind = parser->token.current.type;
+
+    node_t* node = new_node(parser->ast, spec_kind);
+    if(!node) return NULL;
+
+    advance_token(parser); // skip special keyword
+
+    switch(spec_kind){
+        case KW_WRITE:
+        case KW_READ:
+            if(!check_token(parser, CAT_OPERATOR, PAR_LPAREN)){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            }
+            
+            if(!(check_token(parser, CAT_LITERAL, LIT_NUMBER) || check_token(parser, CAT_LITERAL, LIT_STRING))){
+                add_report(parser->reports, SEV_ERR, ERR_INVAL_LIT, parser->lexer->loc, strlen(parser->token.current.literal), parser->lexer->input->data);
+            }
+            node->spec_stmt->inout.stream  = new_string(parser->lexer->string_pool, parser->token.current.literal);
+
+            if(!check_token(parser, CAT_OPERATOR, OPER_COMMA)){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            }
+
+            node->spec_stmt->inout.content = parse_expr(parser);
+            
+            if(!check_token(parser, CAT_OPERATOR, PAR_RPAREN)){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            }
+
+            break;
+
+        case KW_NAMEOF:
+        case KW_TYPEOF:            
+            if(!check_token(parser, CAT_OPERATOR, PAR_LPAREN)){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            }
+
+            node->spec_stmt->reflec.content = new_string(parser->lexer->string_pool, parser->token.current.literal);
+
+            if(!check_token(parser, CAT_OPERATOR, PAR_RPAREN)){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            }
+            break;
+
+        default:
+            break;
+    }
+    return node;
+}

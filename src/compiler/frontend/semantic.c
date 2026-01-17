@@ -1,187 +1,149 @@
+#include <stdlib.h>
+
+#include "compiler/core/arena_alloc.h"
+#include "compiler/core/diagnostic.h"
+#include "compiler/frontend/tokenizer.h"
+#include "compiler/frontend/types.h"
 #include "compiler/frontend/semantic.h"
 
-bool check_node(semantic_context_t* ctx, astnode_t* node);
-bool check_function(semantic_context_t* ctx, astnode_t* node);
-bool check_variable(semantic_context_t* ctx, astnode_t* node);
-bool check_block(semantic_context_t* ctx, astnode_t* node);
-bool check_if(semantic_context_t* ctx, astnode_t* node);
-bool check_while(semantic_context_t* ctx, astnode_t* node);
-bool check_for(semantic_context_t* ctx, astnode_t* node);
-bool check_return(semantic_context_t* ctx, astnode_t* node);
-bool check_break(semantic_context_t* ctx, astnode_t* node);
-bool check_continue(semantic_context_t* ctx, astnode_t* node);
-bool check_expression(semantic_context_t* ctx, astnode_t* node);
-bool check_binary_op(semantic_context_t* ctx, astnode_t* node);
-bool check_unary_op(semantic_context_t* ctx, astnode_t* node);
-bool check_func_call(semantic_context_t* ctx, astnode_t* node);
-bool check_var_ref(semantic_context_t* ctx, astnode_t* node);
-bool check_literal(semantic_context_t* ctx, astnode_t* node);
-bool check_array(semantic_context_t* ctx, astnode_t* node);
-bool check_struct(semantic_context_t* ctx, astnode_t* node);
-bool check_union(semantic_context_t* ctx, astnode_t* node);
-bool check_enum(semantic_context_t* ctx, astnode_t* node);
+bool check_node(semantic_t* sem, node_t* node);
+bool check_function(semantic_t* sem, node_t* node);
+bool check_variable(semantic_t* sem, node_t* node);
+bool check_block(semantic_t* sem, node_t* node);
+bool check_if(semantic_t* sem, node_t* node);
+bool check_while(semantic_t* sem, node_t* node);
+bool check_for(semantic_t* sem, node_t* node);
+bool check_return(semantic_t* sem, node_t* node);
+bool check_break(semantic_t* sem, node_t* node);
+bool check_continue(semantic_t* sem, node_t* node);
+bool check_expression(semantic_t* sem, node_t* node);
+bool check_binary_op(semantic_t* sem, node_t* node);
+bool check_unary_op(semantic_t* sem, node_t* node);
+bool check_func_call(semantic_t* sem, node_t* node);
+bool check_var_ref(semantic_t* sem, node_t* node);
+bool check_literal(semantic_t* sem, node_t* node);
+bool check_array(semantic_t* sem, node_t* node);
+bool check_struct(semantic_t* sem, node_t* node);
+bool check_union(semantic_t* sem, node_t* node);
+bool check_enum(semantic_t* sem, node_t* node);
 
-struct type* infer_type(semantic_context_t* ctx, astnode_t* node);
+type_t* infer_type(semantic_t* sem, node_t* node);
 
-bool check_type_compatibility(semantic_context_t* ctx, astnode_t* node, struct type* expected, struct type* actual);
-// struct type* get_binary_op_result_type(semantic_context_t* ctx, enum op_code op, struct type* left, struct type* right);
-// struct type* get_unary_op_result_type(semantic_context_t* ctx, enum op_code op, struct type* operand);
+bool check_type_compatibility(semantic_t* sem, node_t* node, type_t* expected, type_t* actual);
 
-bool all_paths_return(astnode_t* node);
-bool is_unreachable_code(astnode_t* node);
+bool all_paths_return(node_t* node);
+bool is_unreachable_code(node_t* node);
 
-semantic_context_t* new_semantic_context(void)
+semantic_t* new_semantic(arena_t* arena, string_pool_t* string_pool, report_table_t* reports)
 {
-    semantic_context_t* ctx = (semantic_context_t*)malloc(sizeof(semantic_context_t));
-    if(!ctx) return NULL;
+    semantic_t* sem = (semantic_t*)arena_alloc(arena, sizeof(semantic_t), alignof(semantic_t));
+    if(!sem) return NULL;
     
-    ctx->symbols = new_symbol_table();
-    if(!ctx->symbols){
-        free(ctx);
+    sem->symbols = new_symbol_table(arena, string_pool);
+    if(!sem->symbols){
+        free(sem);
         return NULL;
     }
-    ctx->current_function = NULL;
-    ctx->loop_depth = 0;
+    sem->current_function = NULL;
+    sem->loop_depth = 0;
+
+    sem->arena = arena;
+    sem->reports = reports;
     
-    ctx->errors = NULL;
-    ctx->errors_count = 0;
-    
-    return ctx;
+    return sem;
 }
 
-void new_semantic_error(semantic_context_t* ctx, report_t* err)
+bool analyze_ast(semantic_t* sem, node_t* root)
 {
-    if(!ctx || !err){
-        if(err) free_report(err);
-        return;
-    }
-
-    if(!ctx->errors){
-        ctx->errors = (report_t**)malloc(sizeof(report_t*));
-        if(!ctx->errors){
-            free_report(err);
-            return;
-        }
-        ctx->errors[0] = err;
-        ctx->errors_count = 1;
-        return;
-    }
-
-    report_t** new_errors = (report_t**)realloc(ctx->errors, (ctx->errors_count + 1) * sizeof(report_t*));
-    if(!new_errors){
-        free_report(err);
-        return;
-    }
-    
-    ctx->errors = new_errors;
-    ctx->errors[ctx->errors_count] = err;
-    ctx->errors_count++;
+    if(!sem || !root) return false;
+    return check_node(sem, root);
 }
 
-bool analyze_ast(semantic_context_t* ctx, astnode_t* root)
+void free_context(semantic_t* sem)
 {
-    if(!ctx || !root) return false;
-    return check_node(ctx, root);
+    if(!sem) return;    
+    if(sem->symbols) free_symbol_table(sem->symbols);
+    sem->symbols = NULL;
+    free(sem);
+    sem = NULL;
 }
 
-void free_semantic_context(semantic_context_t* ctx)
+bool check_node(semantic_t* sem, node_t* node)
 {
-    if(!ctx) return;
+    if(!sem || !node) return false;
     
-    if(ctx->symbols){
-        free_symbol_table(ctx->symbols);
-    }
-
-    if(ctx->errors){
-        for(size_t i = 0; i < ctx->errors_count; ++i){
-            if(ctx->errors[i]) free_report(ctx->errors[i]);
-        }
-        free(ctx->errors);
-    }
-
-    ctx->symbols = NULL;
-    ctx->errors = NULL;
-    ctx->errors_count = 0;
-
-    free(ctx);
-    ctx = NULL;
-}
-
-bool check_node(semantic_context_t* ctx, astnode_t* node)
-{
-    if(!ctx || !node) return false;
-    
-    switch(node->type){
-        case NODE_VAR:       return check_variable(ctx, node);
-        case NODE_VAR_REF:   return check_var_ref(ctx, node);
-        case NODE_LITERAL:   return check_literal(ctx, node);
-        case NODE_BIN_OP:    return check_binary_op(ctx, node);
-        case NODE_UNARY_OP:  return check_unary_op(ctx, node);
-        case NODE_FUNC_CALL: return check_func_call(ctx, node);
-        case NODE_BLOCK:     return check_block(ctx, node);
-        case NODE_IF:        return check_if(ctx, node);
-        case NODE_WHILE:     return check_while(ctx, node);
-        case NODE_FOR:       return check_for(ctx, node);
-        case NODE_RETURN:    return check_return(ctx, node);
-        case NODE_BREAK:     return check_break(ctx, node);
-        case NODE_CONTINUE:  return check_continue(ctx, node);
-        case NODE_FUNC:      return check_function(ctx, node);
-        case NODE_ARRAY:     return check_array(ctx, node);
-        case NODE_STRUCT:    return check_struct(ctx, node);
-        case NODE_UNION:     return check_union(ctx, node);
-        case NODE_ENUM:      return check_enum(ctx, node);
+    switch(node->kind){
+        case NODE_VAR:       return check_variable(sem, node);
+        case NODE_REF:   return check_var_ref(sem, node);
+        case NODE_LITERAL:   return check_literal(sem, node);
+        case NODE_BINOP:    return check_binary_op(sem, node);
+        case NODE_UNARYOP:  return check_unary_op(sem, node);
+        case NODE_CALL: return check_func_call(sem, node);
+        case NODE_BLOCK:     return check_block(sem, node);
+        case NODE_IF:        return check_if(sem, node);
+        case NODE_WHILE:     return check_while(sem, node);
+        case NODE_FOR:       return check_for(sem, node);
+        case NODE_RETURN:    return check_return(sem, node);
+        case NODE_BREAK:     return check_break(sem, node);
+        case NODE_CONTINUE:  return check_continue(sem, node);
+        case NODE_FUNC:      return check_function(sem, node);
+        case NODE_ARRAY:     return check_array(sem, node);
+        case NODE_STRUCT:    return check_struct(sem, node);
+        case NODE_ENUM:      return check_enum(sem, node);
         default:
-            // semantic_warning(ctx, node, "Unimplemented node type in semantic analysis");
-            // report* report = new_report(
-            //     SEVERITY_WARNING, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_UNIMPLEMENTED_NODE,
-            //     node->line, node->column, node->length, node->input
-            // );
+            // add_report(sem->reports, SEV_WARN, ERR_UNIMPL_NODE, node->loc, DEFAULT_LEN, NULL);
             return true;
     }
 }
 
-bool check_function(semantic_context_t* ctx, astnode_t* node)
+type_t* datatype_to_type(int dtype)
 {
-    if(!ctx || !node || node->type != NODE_FUNC) return false;
+    switch(dtype){
+        case DT_VOID:   return type_void;
+        case DT_ANY:    return type_any;
+        case DT_BOOL:   return type_bool;
+        case DT_INT:    return type_int;
+        case DT_UINT:   return type_uint;
+        case DT_FLOAT:  return type_float;
+        case DT_STR:    return type_str;
+        default:        return type_unknown;
+    }
+}
+
+bool check_function(semantic_t* sem, node_t* node)
+{
+    if(!sem || !node || node->kind != NODE_FUNC) return false;
     
     struct node_func* func = node->func_decl;
-    if(!func || !func->name) return false;
+    if(!func || !func->name.data) return false;
     
     // check if function already exists
-    if(is_scope_symbol_exist(ctx->symbols, func->name)){
-        // semantic_error(ctx, node, "Function '%s' already defined", func->name);
-        // report* report = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_FUNCTION_ALREADY_DECLARED,
-        //     node->line, node->column, node->length, node->input
-        // );
+    if(is_scope_symbol_exist(sem->symbols, func->name.data)){
+        // add_report(sem->reports, SEV_ERR, ERR_FUNC_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     // create function type
-    struct type* return_type = datatype_to_type(func->return_type);
-    struct type* func_type = new_type_function(return_type, NULL, func->param_count);
+    // type_t* return_type = datatype_to_type(func->return_type);
+    type_t* func_type = NULL; // new_type_function(sem->arena, return_type, , func->param_count);
     
     // add function to symbol table
-    symbol_t* func_sym = define_symbol(ctx->symbols, func->name, SYMBOL_FUNC, func_type, node);
+    symbol_t* func_sym = define_symbol(sem->symbols, func->name.data, SYMBOL_FUNC, func_type, node);
     if(!func_sym){
-        // semantic_error(ctx, node, "Failed to define function '%s'", func->name);
-        // report* err = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_ALREADY_DECLARED,
-        //     node->line, node->column, node->length, node->input
-        // );
+        // add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     // create new scope for function body
-    push_scope(ctx->symbols, SCOPE_FUNCTION, node);
-    symbol_t* prev_func = ctx->current_function;
-    ctx->current_function = func_sym;
+    push_scope(sem->symbols, SCOPE_FUNCTION, node);
+    symbol_t* prev_func = sem->current_function;
+    sem->current_function = func_sym;
     
     // add parameters to function scope
-    for(size_t i = 0; i < func->param_count; i++){
-        if(!check_node(ctx, func->params[i])){
-            pop_scope(ctx->symbols);
-            ctx->current_function = prev_func;
+    for(size_t i = 0; i < func->param.count; i++){
+        if(!check_node(sem, func->param.elems[i])){
+            pop_scope(sem->symbols);
+            sem->current_function = prev_func;
             return false;
         }
     }
@@ -189,70 +151,54 @@ bool check_function(semantic_context_t* ctx, astnode_t* node)
     // check function body
     bool success = true;
     if(func->body){
-        success = check_node(ctx, func->body);
+        success = check_node(sem, func->body);
     }
     
     // TODO: Check that all paths return if return type is not void
     
-    pop_scope(ctx->symbols);
-    ctx->current_function = prev_func;
+    pop_scope(sem->symbols);
+    sem->current_function = prev_func;
     return success;
 }
 
-bool check_variable(semantic_context_t* ctx, astnode_t* node)
+bool check_variable(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_VAR) return false;
+    if(!sem || !node || node->kind != NODE_VAR) return false;
     
     struct node_var* var = node->var_decl;
-    if(!var || !var->name) return false;
+    if(!var || !var->name.data) return false;
     
-    if(is_scope_symbol_exist(ctx->symbols, var->name)){
-        // semantic_error(ctx, node, "Variable '%s' must have either a type annotation or initializer", var->name);
-        // report* err = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_ALREADY_DECLARED,
-        //     node->line, node->column, node->length, node->input
-        // );
+    if(is_scope_symbol_exist(sem->symbols, var->name.data)){
+        // add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
-    struct type* var_type = NULL; // determine
+    type_t* var_type = NULL; // determine
     
     if(var->dtype != DT_VOID){
         var_type = datatype_to_type(var->dtype); // explicit type annotation
     }
     else if(var->value){
         // type inference from initializer
-        if(!check_node(ctx, var->value)) return false;
-        var_type = infer_type(ctx, var->value);
+        if(!check_node(sem, var->value)) return false;
+        var_type = infer_type(sem, var->value);
     }
     else {
         // no type and no initializer
-        // semantic_error(ctx, node, "Variable '%s' must have either a type annotation or initializer", var->name);
-        // report* err = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_NO_TYPE_OR_INITIALIZER,
-        //     node->line, node->column, node->length, node->input
-        // )
+        // add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL)
         return false;
     }
     
     if(!var_type || var_type == type_error){
-        // semantic_error(ctx, node, "Cannot determine type for variable '%s'", var->name);
-        // report* err = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_NO_TYPE_OR_INITIALIZER,
-        //     node->line, node->column, node->length, node->input
-        // );
+        // add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     // check type compatibility if both annotation and initializer exist
     if(var->dtype != DT_VOID && var->value){
-        struct type* init_type = infer_type(ctx, var->value);
-        if(!check_type_compatibility(ctx, node, var_type, init_type)){
-            // semantic_error(ctx, node, "Type mismatch: cannot assign %s to %s", type_to_string(init_type), type_to_string(var_type));
-            // report* err = new_report(
-            //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_TYPE_MISMATCH,
-            //     node->line, node->column, node->length, node->input
-            // );
+        type_t* init_type = infer_type(sem, var->value);
+        if(!check_type_compatibility(sem, node, var_type, init_type)){
+            // add_report(sem->reports, SEV_ERR, ERR_VAR_TYPE_MISMATCH, node->loc, DEFAULT_LEN, NULL);
             return false;
         }
     }
@@ -264,159 +210,141 @@ bool check_variable(semantic_context_t* ctx, astnode_t* node)
     }
     
     // add to symbol table
-    symbol_t* sym = define_symbol(ctx->symbols, var->name, kind, var_type, node);
+    symbol_t* sym = define_symbol(sem->symbols, var->name.data, kind, var_type, node);
     if(!sym){
-        // semantic_error(ctx, node, "Failed to define variable '%s'", var->name);
-        // report* err = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_PARSER, SEMANTIC_ERROR_VARIABLE_NO_TYPE_OR_INITIALIZER,
-        //     node->line, node->column, node->length, node->input
-        // );
+        // add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     // mark as initialized if has value
-    if(var->value){
-        sym->flags |= SYM_FLAG_ASSIGNED;
-    }
+    if(var->value) sym->flags |= SYM_FLAG_ASSIGNED;
     
     return true;
 }
 
-bool check_block(semantic_context_t* ctx, astnode_t* node)
+bool check_block(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_BLOCK) return false;
+    if(!sem || !node || node->kind != NODE_BLOCK) return false;
     
-    push_scope(ctx->symbols, SCOPE_BLOCK, node); // create new scope for block
+    push_scope(sem->symbols, SCOPE_BLOCK, node); // create new scope for block
     
     bool success = true;
-    for(size_t i = 0; i < node->block.count; i++){
-        if(!check_node(ctx, node->block.statements[i])){
+    for(size_t i = 0; i < node->block.statement.count; i++){
+        if(!check_node(sem, node->block.statement.elems[i])){
             success = false;
             // TODO: continue checking other statements
         }
     }
     
-    pop_scope(ctx->symbols);
+    pop_scope(sem->symbols);
     return success;
 }
 
-bool check_if(semantic_context_t* ctx, astnode_t* node)
+bool check_if(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_IF) return false;
+    if(!sem || !node || node->kind != NODE_IF) return false;
     
-    if(!check_node(ctx, node->if_stmt->condition)) return false; // check condition
+    if(!check_node(sem, node->if_stmt->condition)) return false; // check condition
     
     // check branches
     bool success = true;
-    if(node->if_stmt->then_block)  success = check_node(ctx, node->if_stmt->then_block)  && success;
-    if(node->if_stmt->else_block)  success = check_node(ctx, node->if_stmt->else_block)  && success;
-    if(node->if_stmt->elif_blocks) success = check_node(ctx, node->if_stmt->elif_blocks) && success;
+    if(node->if_stmt->then_block)  success = check_node(sem, node->if_stmt->then_block)  && success;
+    if(node->if_stmt->else_block)  success = check_node(sem, node->if_stmt->else_block)  && success;
+    if(node->if_stmt->elif_blocks) success = check_node(sem, node->if_stmt->elif_blocks) && success;
     
     return success;
 }
 
-bool check_while(semantic_context_t* ctx, astnode_t* node)
+bool check_while(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_WHILE) return false;
+    if(!sem || !node || node->kind != NODE_WHILE) return false;
     
-    ctx->loop_depth++;
+    sem->loop_depth++;
     
     bool success = true;
-    if(node->while_loop->condition) success = check_node(ctx, node->while_loop->condition) && success;
-    if(node->while_loop->body) success = check_node(ctx, node->while_loop->body) && success;
+    if(node->while_loop->condition) success = check_node(sem, node->while_loop->condition) && success;
+    if(node->while_loop->body)      success = check_node(sem, node->while_loop->body) && success;
     
-    ctx->loop_depth--;
+    sem->loop_depth--;
     return success;
 }
 
-bool check_for(semantic_context_t* ctx, astnode_t* node)
+bool check_for(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_FOR) return false;
+    if(!sem || !node || node->kind != NODE_FOR) return false;
     
-    push_scope(ctx->symbols, SCOPE_BLOCK, node);
-    ctx->loop_depth++;
+    push_scope(sem->symbols, SCOPE_BLOCK, node);
+    sem->loop_depth++;
     
     bool success = true;
-    if(node->for_loop->init) success = check_node(ctx, node->for_loop->init) && success;
-    if(node->for_loop->condition) success = check_node(ctx, node->for_loop->condition) && success;
-    if(node->for_loop->update) success = check_node(ctx, node->for_loop->update) && success;
-    if(node->for_loop->body) success = check_node(ctx, node->for_loop->body) && success;
+    if(node->for_loop->init)      success = check_node(sem, node->for_loop->init) && success;
+    if(node->for_loop->condition) success = check_node(sem, node->for_loop->condition) && success;
+    if(node->for_loop->update)    success = check_node(sem, node->for_loop->update) && success;
+    if(node->for_loop->body)      success = check_node(sem, node->for_loop->body) && success;
     
-    ctx->loop_depth--;
-    pop_scope(ctx->symbols);
+    sem->loop_depth--;
+    pop_scope(sem->symbols);
     return success;
 }
 
-bool check_return(semantic_context_t* ctx, astnode_t* node)
+bool check_return(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_RETURN) return false;
+    if(!sem || !node || node->kind != NODE_RETURN) return false;
     
-    if(!ctx->current_function){
-        // semantic_error(ctx, node, "Return statement outside function");
-        // report* report = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_RETURN_OUTSIDE_FUNCTION,
-        //     node->line, node->column, node->length, node->input
-        // );
+    if(!sem->current_function){
+        // add_report(sem->reports, SEV_ERR, ERR_RET_OUTSIDE_FUNC, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
-    if(node->return_stmt.body){
-        return check_node(ctx, node->return_stmt.body);
+    if(node->ret.body){
+        return check_node(sem, node->ret.body);
     }
     
     return true;
 }
 
-bool check_break(semantic_context_t* ctx, astnode_t* node)
+bool check_break(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node) return false;
+    if(!sem || !node) return false;
     
-    if(ctx->loop_depth == 0){
-        // semantic_error(ctx, node, "Break statement outside loop");
-        // report* report = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_BREAK_OUTSIDE_LOOP,
-        //     node->line, node->column, node->length, node->input
-        // );
+    if(sem->loop_depth == 0){
+        // add_report(sem->reports, SEV_ERR, ERR_BREAK_OUTSIDE_LOOP, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     return true;
 }
 
-bool check_continue(semantic_context_t* ctx, astnode_t* node)
+bool check_continue(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node) return false;
+    if(!sem || !node) return false;
     
-    if(ctx->loop_depth == 0){
-        // semantic_error(ctx, node, "Continue statement outside loop");
-        // report* report = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_CONTINUE_OUTSIDE_LOOP,
-        //     node->line, node->column, node->length, node->input
-        // );
+    if(sem->loop_depth == 0){
+        // add_report(sem->reports, SEV_ERR, ERR_CONTINUE_OUTSIDE_LOOP, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     return true;
 }
 
-bool check_expression(semantic_context_t* ctx, astnode_t* node)
+bool check_expression(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_EXPR) return false;
+    if(!sem || !node || node->kind != NODE_EXPR) return false;
     // TODO: Implement expression checking
     return true;
 }
 
-bool check_binary_op(semantic_context_t* ctx, astnode_t* node)
+bool check_binary_op(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_BIN_OP) return false;
+    if(!sem || !node || node->kind != NODE_BINOP) return false;
     
     // check both operands
-    if(!check_node(ctx, node->bin_op.left)) return false;
-    if(!check_node(ctx, node->bin_op.right)) return false;
+    if(!check_node(sem, node->binop.left)) return false;
+    if(!check_node(sem, node->binop.right)) return false;
     
     // infer types
-    struct type* left_type = infer_type(ctx, node->bin_op.left);
-    struct type* right_type = infer_type(ctx, node->bin_op.right);
+    type_t* left_type = infer_type(sem, node->binop.left);
+    type_t* right_type = infer_type(sem, node->binop.right);
     
     if(!left_type || left_type == type_error || !right_type || right_type == type_error){
         return false;
@@ -427,51 +355,39 @@ bool check_binary_op(semantic_context_t* ctx, astnode_t* node)
     // (void)op;  // TODO: use for operator-specific checks
     
     if(!types_compatible(left_type, right_type)){
-        // semantic_error(ctx, node, "Type mismatch in binary operation: %s and %s", type_to_string(left_type), type_to_string(right_type));
-        // report* report = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_TYPE_MISMATCH,
-        //     node->line, node->column, node->length, node->input
-        // );
+        // add_report(sem->reports, SEV_ERR, ERR_TYPE_MISMATCH, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     return true;
 }
 
-bool check_unary_op(semantic_context_t* ctx, astnode_t* node)
+bool check_unary_op(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_UNARY_OP) return false;
+    if(!sem || !node || node->kind != NODE_UNARYOP) return false;
     
-    return check_node(ctx, node->unary_op.right);
+    return check_node(sem, node->unaryop.right);
 }
 
-bool check_func_call(semantic_context_t* ctx, astnode_t* node)
+bool check_func_call(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_FUNC_CALL) return false;
+    if(!sem || !node || node->kind != NODE_CALL) return false;
     
     // Lookup function
-    symbol_t* func_sym = lookup_symbol(ctx->symbols, node->func_call.name);
+    symbol_t* func_sym = lookup_symbol(sem->symbols, node->call.name.data);
     if(!func_sym){
-        // semantic_error(ctx, node, "Undefined function '%s'", node->func_call.name);
-        // report* report = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_UNDECLARED_FUNCTION,
-        //     node->line, node->column, node->length, node->input
-        // );
+        // add_report(sem->reports, SEV_ERR, ERR_UNDECL_FUNC, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     if(func_sym->kind != SYMBOL_FUNC){
-        // semantic_error(ctx, node, "'%s' is not a function", node->func_call.name);
-        // report* report = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_NOT_A_FUNCTION,
-        //     node->line, node->column, node->length, node->input
-        // );
+        // add_report(sem->reports, SEV_ERR, ERR_NOT_A_FUNC, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     // Check arguments
-    for(size_t i = 0; i < node->func_call.arg_count; i++){
-        if(!check_node(ctx, node->func_call.args[i])) return false;
+    for(size_t i = 0; i < node->call.args.count; i++){
+        if(!check_node(sem, node->call.args.elems[i])) return false;
     }
     
     // TODO: Check argument count and types match parameters
@@ -480,21 +396,17 @@ bool check_func_call(semantic_context_t* ctx, astnode_t* node)
     return true;
 }
 
-bool check_var_ref(semantic_context_t* ctx, astnode_t* node)
+bool check_var_ref(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_VAR_REF) return false;
+    if(!sem || !node || node->kind != NODE_REF) return false;
     
-    const char* name = node->var_ref.name;
+    const char* name = node->ref.name.data;
     if(!name) return false;
     
     // lookup variable
-    symbol_t* sym = lookup_symbol(ctx->symbols, name);
+    symbol_t* sym = lookup_symbol(sem->symbols, name);
     if(!sym){
-        // semantic_error(ctx, node, "Undefined variable '%s'", name);
-        // report* report = new_report(
-        //     SEVERITY_ERROR, ERROR_TYPE_SEMANTIC, SEMANTIC_ERROR_UNDECLARED_VARIABLE,
-        //     node->line, node->column, node->length, node->input
-        // );
+        // add_report(sem->reports, SEV_ERR, ERR_UNDECL_VAR node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
@@ -504,54 +416,49 @@ bool check_var_ref(semantic_context_t* ctx, astnode_t* node)
     return true;
 }
 
-bool check_literal(semantic_context_t* ctx, astnode_t* node)
+bool check_literal(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_LITERAL) return false;
+    if(!sem || !node || node->kind != NODE_LITERAL) return false;
     // Literals are always valid
     return true;
 }
 
-bool check_array(semantic_context_t* ctx, astnode_t* node)
+bool check_array(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_ARRAY) return false;
+    if(!sem || !node || node->kind != NODE_ARRAY) return false;
     
     // Check all elements
     for(size_t i = 0; i < node->array_decl->count; i++){
-        if(!check_node(ctx, node->array_decl->elements[i])) return false;
+        if(!check_node(sem, node->array_decl->elements[i])){
+            return false;
+        }
     }
     
     return true;
 }
 
-bool check_struct(semantic_context_t* ctx, astnode_t* node)
+bool check_struct(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_STRUCT) return false;
+    if(!sem || !node || node->kind != NODE_STRUCT) return false;
     // TODO: Implement struct checking
     return true;
 }
 
-bool check_union(semantic_context_t* ctx, astnode_t* node)
+bool check_enum(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node || node->type != NODE_UNION) return false;
-    // TODO: Implement union checking
-    return true;
-}
-
-bool check_enum(semantic_context_t* ctx, astnode_t* node)
-{
-    if(!ctx || !node || node->type != NODE_ENUM) return false;
+    if(!sem || !node || node->kind != NODE_ENUM) return false;
     // TODO: Implement enum checking
     return true;
 }
 
 
-struct type* infer_type(semantic_context_t* ctx, astnode_t* node)
+type_t* infer_type(semantic_t* sem, node_t* node)
 {
-    if(!ctx || !node) return type_error;
+    if(!sem || !node) return type_error;
     
-    switch(node->type){
+    switch(node->kind){
         case NODE_LITERAL:
-            switch(node->literal.type){
+            switch(node->lit.type){
                 case LIT_NUMBER:
                 case LIT_BIN:
                 case LIT_HEX:
@@ -569,19 +476,13 @@ struct type* infer_type(semantic_context_t* ctx, astnode_t* node)
                     return type_unknown;
             }
             
-        case NODE_VAR_REF: {
-            symbol_t* sym = lookup_symbol(ctx->symbols, node->var_ref.name);
+        case NODE_REF: {
+            symbol_t* sym = lookup_symbol(sem->symbols, node->ref.name.data);
             return sym ? sym->type : type_error;
         }
         
-        // case NODE_BIN_OP:
-        //     return get_binary_op_result_type(ctx, node->bin_op.code, infer_type(ctx, node->bin_op.left), infer_type(ctx, node->bin_op.right));
-        
-        // case NODE_UNARY_OP:
-        //     return get_unary_op_result_type(ctx, node->unary_op.code, infer_type(ctx, node->unary_op.right));
-        
-        case NODE_FUNC_CALL: {
-            symbol_t* func = lookup_symbol(ctx->symbols, node->func_call.name);
+        case NODE_CALL: {
+            symbol_t* func = lookup_symbol(sem->symbols, node->call.name.data);
             if(func && func->type && func->type->kind == TYPE_FUNCTION){
                 return func->type->func.return_type;
             }
@@ -594,44 +495,22 @@ struct type* infer_type(semantic_context_t* ctx, astnode_t* node)
 }
 
 
-bool check_type_compatibility(semantic_context_t* ctx, astnode_t* node, struct type* expected, struct type* actual)
+bool check_type_compatibility(semantic_t* sem, node_t* node, type_t* expected, type_t* actual)
 {
-    (void)ctx;
+    (void)sem;
     (void)node;
     return types_compatible(expected, actual);
 }
 
-// struct type* get_binary_op_result_type(semantic_context_t* ctx, enum op_code op, struct type* left, struct type* right)
-// {
-//     (void)ctx;
-//     (void)op;
-    
-//     if(!left || !right) return type_error;
-    
-//     // For now, simple rule: result is left type if compatible
-//     if(types_compatible(left, right)){
-//         return left;
-//     }
-    
-//     return type_error;
-// }
 
-// struct type* get_unary_op_result_type(semantic_context_t* ctx, enum op_code op, struct type* operand)
-// {
-//     (void)ctx;
-//     (void)op;
-//     return operand;  // For now, result type = operand type
-// }
-
-
-bool all_paths_return(astnode_t* node)
+bool all_paths_return(node_t* node)
 {
     // TODO: Implement control flow analysis
     (void)node;
     return true;
 }
 
-bool is_unreachable_code(astnode_t* node)
+bool is_unreachable_code(node_t* node)
 {
     // TODO: Implement unreachable code detection
     (void)node;

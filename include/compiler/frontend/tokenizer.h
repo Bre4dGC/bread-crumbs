@@ -1,17 +1,17 @@
 #pragma once
 #include <stddef.h>
 
-enum category_service{
+enum category_service {
 	SERV_ILLEGAL, SERV_COMMENT, SERV_EOF
 };
 
-enum category_operator{
+enum category_operator {
     // basic arithmetic operators
     OPER_PLUS,      // +
     OPER_MINUS,     // -
-    OPER_ASTERISK,  // * (multiplication)
-    OPER_SLASH,     // / (division)
-    OPER_PERCENT,   // % (modulo)
+    OPER_ASTERISK,  // *
+    OPER_SLASH,     // /
+    OPER_PERCENT,   // %
 
     // assignment operators
     OPER_ASSIGN,    // =
@@ -49,20 +49,28 @@ enum category_operator{
 };
 
 enum category_keyword {
+    // base
     KW_IF,       KW_ELIF,     KW_ELSE,
     KW_FOR,      KW_DO,       KW_WHILE,
-    KW_FUNC,     KW_RETURN,   KW_BREAK,
-    KW_CONTINUE, KW_DEFAULT,  KW_MATCH,
-    KW_CASE,     KW_STRUCT,   KW_ENUM,
-    KW_UNION,    KW_IMPL,     KW_IMPORT,
-    KW_TYPE,     KW_TRAIT,    KW_TRY,
-    KW_CATCH,    KW_ASYNC,    KW_AWAIT,
+    KW_FUNC,     KW_STRUCT,   KW_ENUM,
+    KW_MATCH,    KW_CASE,     KW_DEFAULT,
+    KW_RETURN,   KW_BREAK,    KW_CONTINUE,
+
+    // advanced
+    KW_TRAIT,    KW_IMPL,     KW_SELF,
+    KW_IMPORT,   KW_MODULE,   KW_TYPE,
+    KW_TRY,      KW_CATCH,    KW_FINALLY,
+    KW_ASYNC,    KW_AWAIT,    KW_YIELD,
     KW_TEST,     KW_ASSERT,   KW_VERIFY,
     KW_WHERE,    KW_SOLVE,    KW_SNAPSHOT,
     KW_ROLLBACK, KW_COMMIT,   KW_FORK,
     KW_BRANCH,   KW_MERGE,    KW_REVERT,
     KW_PUSH,     KW_PULL,     KW_CLONE,
     KW_SIMULATE, KW_SCENARIOS,KW_CHOOSE,
+
+    // special
+    KW_WRITE,    KW_READ,
+    KW_NAMEOF,   KW_TYPEOF,
 };
 
 enum category_paren {
@@ -72,25 +80,26 @@ enum category_paren {
 };
 
 enum category_delimiter {
-    DELIM_QUOTE, DELIM_SQUOTE
+    DELIM_DQUOTE, DELIM_SQUOTE
 };
 
 enum category_datatype {
-    /* basic types */
-    DT_VOID, DT_BOOL, DT_STR,
-    DT_INT,  DT_UINT, DT_FLOAT,
-
-    /* exact types */
-    DT_INT8,    DT_INT16,  DT_INT32,  DT_INT64,
-    DT_UINT8,   DT_UINT16, DT_UINT32, DT_UINT64,
-    DT_FLOAT32, DT_FLOAT64,
+    DT_INT,   DT_UINT,
+    DT_SHORT, DT_USHORT,
+    DT_LONG,  DT_ULONG,
+    DT_CHAR,  DT_BYTE,
+    DT_FLOAT, DT_DECIMAL,
+    DT_STR,   DT_BOOL,
+    DT_VOID,  DT_ANY,
 };
 
 enum category_literal {
+    LIT_NULL,
     LIT_IDENT,  LIT_NUMBER,
     LIT_CHAR,   LIT_STRING,
-    LIT_FLOAT,  LIT_HEX,    LIT_BIN,
-    LIT_TRUE,   LIT_FALSE,  LIT_NULL,
+    LIT_TRUE,   LIT_FALSE,
+    LIT_FLOAT,  LIT_INFINITY,
+    LIT_HEX,    LIT_BIN,     LIT_OCT,
 };
 
 enum category_modifier {
@@ -98,38 +107,19 @@ enum category_modifier {
 };
 
 enum category_tag {
-    CATEGORY_SERVICE,   CATEGORY_OPERATOR,
-    CATEGORY_KEYWORD,   CATEGORY_PAREN,
-    CATEGORY_DELIMITER, CATEGORY_DATATYPE,
-    CATEGORY_LITERAL,   CATEGORY_MODIFIER,
+    CAT_SERVICE,   CAT_OPERATOR,
+    CAT_KEYWORD,   CAT_PAREN,
+    CAT_DELIMITER, CAT_DATATYPE,
+    CAT_LITERAL,   CAT_MODIFIER,
 };
 
 typedef struct {
-    char* literal;
+	const char* literal;
     int type;
     enum category_tag category;
-} keyword_t;
-
-typedef struct {
-    enum category_tag category;
-	union {
-        enum category_service type_service;
-        enum category_operator type_operator;
-        enum category_keyword type_keyword;
-        enum category_paren type_paren;
-        enum category_delimiter type_delim;
-        enum category_datatype type_datatype;
-        enum category_literal type_literal;
-        enum category_modifier type_modifier;
-	};
-	char* literal;
 } token_t;
 
-extern const keyword_t operators[];
-extern const keyword_t keywords[];
-
-extern const size_t operators_count;
-extern const size_t keywords_count;
-
+void init_tokens(void);
 token_t new_token(const enum category_tag category, const int type, const char* literal);
-void free_token(token_t* token);
+token_t* find_token(const char* potential);
+void free_tokens(void);

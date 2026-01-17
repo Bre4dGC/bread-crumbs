@@ -1,95 +1,101 @@
 #include <stdlib.h>
 #include <stdalign.h>
 
-#include "compiler/core/diagnostic.h"
-#include "compiler/frontend/tokenizer.h"
 #include "compiler/frontend/types.h"
 
 type_t* type_unknown = NULL;
 type_t* type_error = NULL;
 type_t* type_void = NULL;
+type_t* type_any = NULL;
 type_t* type_bool = NULL;
 type_t* type_int = NULL;
 type_t* type_uint = NULL;
+type_t* type_short = NULL;
+type_t* type_ushort = NULL;
+type_t* type_long = NULL;
+type_t* type_ulong = NULL;
 type_t* type_float = NULL;
+type_t* type_decimal = NULL;
 type_t* type_str = NULL;
 type_t* type_char = NULL;
 
-type_t* new_type(const enum type_kind kind, const size_t size, const size_t align)
+type_t* new_type(arena_t* arena, const enum type_kind kind, const size_t size, const size_t align)
 {
-    type_t* type = (type_t*)malloc(sizeof(type_t));
+    type_t* type = (type_t*)arena_alloc(arena, sizeof(type_t), alignof(type_t));
     if(!type) return NULL;
-
     type->kind = kind;
     type->size = size;
     type->align = align;
-
     return type;
 }
 
-void init_types(void)
+void init_types(arena_t* arena)
 {
-    type_unknown = new_type(TYPE_UNKNOWN, 0, 1);
-    type_error =   new_type(TYPE_ERROR,   0, 1);
-    type_void =    new_type(TYPE_VOID,    0, 1);
-    type_bool =    new_type(TYPE_BOOL,  sizeof(bool),  alignof(bool));
-    type_int =     new_type(TYPE_INT,   sizeof(int),   alignof(int));
-    type_uint =    new_type(TYPE_UINT,  sizeof(unsigned int), alignof(unsigned int));
-    type_float =   new_type(TYPE_FLOAT, sizeof(float), alignof(float));
-    type_str =     new_type(TYPE_STR,   sizeof(char*), alignof(char*));
-    type_char =    new_type(TYPE_CHAR,  sizeof(char),  alignof(char));
+    type_unknown = new_type(arena, TYPE_UNKNOWN, 0, 1);
+    type_error =   new_type(arena, TYPE_ERROR,   0, 1);
+    type_void =    new_type(arena, TYPE_VOID,    0, 1);
+    type_any =     new_type(arena, TYPE_ANY,   sizeof(void*), alignof(void*));
+    type_bool =    new_type(arena, TYPE_BOOL,  sizeof(bool),  alignof(bool));
+    type_int =     new_type(arena, TYPE_INT,   sizeof(int),   alignof(int));
+    type_uint =    new_type(arena, TYPE_UINT,  sizeof(unsigned int), alignof(unsigned int));
+    type_short =   new_type(arena, TYPE_INT,   sizeof(short), alignof(short));
+    type_ushort =  new_type(arena, TYPE_UINT,  sizeof(unsigned short), alignof(unsigned short));
+    type_long =    new_type(arena, TYPE_INT,   sizeof(long),  alignof(long));
+    type_ulong =   new_type(arena, TYPE_UINT,  sizeof(unsigned long), alignof(unsigned long));
+    type_float =   new_type(arena, TYPE_FLOAT, sizeof(float), alignof(float));
+    type_decimal = new_type(arena, TYPE_FLOAT, sizeof(long),  alignof(long));
+    type_str =     new_type(arena, TYPE_STR,   sizeof(char*), alignof(char*));
+    type_char =    new_type(arena, TYPE_CHAR,  sizeof(char),  alignof(char));
 }
 
-type_t* new_type_array(type_t* elem_type, const size_t length)
+type_t* new_type_array(arena_t* arena, type_t* elem_type, const size_t length)
 {
-    type_t* array = new_type(TYPE_ARRAY, 0, 1);
-    if(!array) return NULL;
+    type_t* type = new_type(arena, TYPE_ARRAY, 0, 1);
+    if(!type) return NULL;
 
-    array->array.elem_type = elem_type;
-    array->array.length = length;
+    type->array.elem_type = elem_type;
+    type->array.length = length;
     
     if(length > 0 && elem_type){
-        array->size = elem_type->size * length;
-        array->align = elem_type->align;
+        type->size = elem_type->size * length;
+        type->align = elem_type->align;
     }
     else {
-        array->size = sizeof(void*);
-        array->align = sizeof(void*);
+        type->size = sizeof(void*);
+        type->align = sizeof(void*);
     }
     
-    return array;
+    return type;
 }
 
-type_t* new_type_function(type_t* return_type, type_t** param_types, const size_t param_count)
+type_t* new_type_function(arena_t* arena, type_t* return_type, type_t** param_types, const size_t param_count)
 {
-    type_t* function = new_type(TYPE_FUNCTION, 0, 1);
-    if(!function) return NULL;
+    type_t* type = new_type(arena, TYPE_FUNCTION, 0, 1);
+    if(!type) return NULL;
 
-    function->func.return_type = return_type;
-    function->func.param_types = param_types;
-    function->func.param_count = param_count;
+    type->func.return_type = return_type;
+    type->func.param_types = param_types;
+    type->func.param_count = param_count;
 
     if(return_type){
-        function->size = return_type->size;
-        function->align = return_type->align;
+        type->size = return_type->size;
+        type->align = return_type->align;
     }
     else {
-        function->size = sizeof(void*);
-        function->align = sizeof(void*);
+        type->size = sizeof(void*);
+        type->align = sizeof(void*);
     }
     
-    return function;
+    return type;
 }
 
-type_t* new_type_compound(struct symbol* scope, const size_t member_count)
+type_t* new_type_compound(arena_t* arena, struct symbol* scope, const size_t member_count)
 {
-    type_t* compound = new_type(TYPE_STRUCT, 0, 1);
-    if(!compound) return NULL;
-
-    compound->compound.scope = scope;
-    compound->compound.member_count = member_count;
-
-    return compound;
+    type_t* type = new_type(arena, TYPE_STRUCT, 0, 1);
+    if(!type) return NULL;
+    type->compound.scope = scope;
+    type->compound.member_count = member_count;
+    return type;
 }
 
 bool types_equal(const type_t* a, const type_t* b)
@@ -123,7 +129,28 @@ bool types_compatible(const type_t* a, const type_t* b)
     if(!a || !b) return false;
 
     if(types_equal(a, b)) return true;
-    
+
+    // "any" and all types are compatible
+    if(a->kind == TYPE_ANY){
+        switch(b->kind){
+            case TYPE_VOID:
+            case TYPE_BOOL:
+            case TYPE_INT:
+            case TYPE_UINT:
+            case TYPE_FLOAT:
+            case TYPE_STR:
+            case TYPE_CHAR:
+            case TYPE_ARRAY:
+            case TYPE_FUNCTION:
+            case TYPE_STRUCT:
+            case TYPE_UNION:
+            case TYPE_ENUM:
+                return true;
+            default:
+                return false;        
+        }
+    }
+
     // int and uint are compatible
     if((a->kind == TYPE_INT && b->kind == TYPE_UINT) || (a->kind == TYPE_UINT && b->kind == TYPE_INT)){
         return true;
@@ -140,7 +167,7 @@ bool types_compatible(const type_t* a, const type_t* b)
 bool is_numeric_type(const type_t* type)
 {
     if(!type) return false;
-    return type->kind == TYPE_INT || type->kind == TYPE_UINT || type->kind == TYPE_FLOAT;
+    return (type->kind == TYPE_INT || type->kind == TYPE_UINT || type->kind == TYPE_FLOAT);
 }
 
 bool is_integer_type(const type_t* type)
@@ -153,19 +180,6 @@ bool is_signed_type(const type_t* type)
 {
     if(!type) return false; 
     return type->kind == TYPE_INT || type->kind == TYPE_FLOAT;
-}
-
-type_t* datatype_to_type(enum category_datatype dt)
-{
-    switch(dt){
-        case DT_VOID:  return type_void;
-        case DT_BOOL:  return type_bool;
-        case DT_INT:   return type_int;
-        case DT_UINT:  return type_uint;
-        case DT_FLOAT: return type_float;
-        case DT_STR:   return type_str;
-        default:       return type_error;
-    }
 }
 
 void free_type(type_t* type)
@@ -197,10 +211,10 @@ void free_type(type_t* type)
             }
             break;
 
-        case TYPE_STRUCT: case TYPE_UNION:
+        case TYPE_STRUCT:
+        case TYPE_UNION:
             if(type->compound.scope){
-                free_scope(type->compound.scope);
-                type->compound.scope = NULL;
+                // free_scope(type->compound.scope);
             }
             break;
 
@@ -210,54 +224,4 @@ void free_type(type_t* type)
     type->kind = TYPE_UNKNOWN;
     type->size = 0;
     type->align = 1;
-}
-
-void free_types(void)
-{
-    if(type_unknown){
-        free_type(type_unknown);
-        free(type_unknown);
-        type_unknown = NULL;
-    }
-    
-    if(type_error){
-        free_type(type_error);
-        free(type_error);
-        type_error = NULL;
-    }
-    if(type_void){
-        free_type(type_void);
-        free(type_void);
-        type_void = NULL;
-    }
-    if(type_bool){
-        free_type(type_bool);
-        free(type_bool);
-        type_bool = NULL;
-    }
-    if(type_int){
-        free_type(type_int);
-        free(type_int);
-        type_int = NULL;
-    }
-    if(type_uint){
-        free_type(type_uint);
-        free(type_uint);
-        type_uint = NULL;
-    }
-    if(type_float){
-        free_type(type_float);
-        free(type_float);
-        type_float = NULL;
-    }
-    if(type_str){
-        free_type(type_str);
-        free(type_str);
-        type_str = NULL;
-    }
-    if(type_char){
-        free_type(type_char);
-        free(type_char);
-        type_char = NULL;
-    }
 }

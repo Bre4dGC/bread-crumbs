@@ -47,3 +47,8 @@ import package.raylib
 import package.box2d
 import package.sqlite
 import package.zlib
+
+module example
+{
+
+}

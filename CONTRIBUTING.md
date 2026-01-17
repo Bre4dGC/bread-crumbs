@@ -94,7 +94,7 @@ datatype function_name(datatype *parameter_name)
 ```c
 int handle_number(struct token *tok)
 {
-    if (tok->category == CATEGORY_LITERAL && tok->type_literal == LIT_NUMBER) {
+    if(tok->category == CATEGORY_LITERAL && tok->type_literal == LIT_NUMBER){
         return tok->value;
     }
     return 0;
