@@ -1,26 +1,23 @@
 #pragma once
 #include <stddef.h>
 
-#include "compiler/frontend/tokenizer.h"
-#include "compiler/core/diagnostic.h"
+#include "core/diagnostic.h"
+#include "core/strings.h"
+#include "compiler/frontend/lexer/tokens.h"
 
 typedef struct {
-    char* input;
-    size_t input_len;
-    
+    string_t* input;
+
     char ch;
-
     size_t pos;
-    size_t nextpos;
-    size_t line;
-    size_t column;
+    location_t loc;
 
-    int paren_balance;
+    size_t balance;
+    size_t boln;
 
-    report_t** errors;
-    size_t errors_count;
+    string_pool_t* string_pool;
+    report_table_t* reports;
 } lexer_t;
 
-lexer_t* new_lexer(const char* input);
-void free_lexer(lexer_t* lex);
-token_t next_token(lexer_t* lex);
+lexer_t* new_lexer(arena_t* arena, string_pool_t* string_pool, report_table_t* reports, string_t* input);
+token_t next_token(lexer_t* lexer);

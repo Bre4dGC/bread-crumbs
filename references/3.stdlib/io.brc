@@ -1,0 +1,21 @@
+#[ Input/Output library basic usage
+
+        === Streams ===
+stdin        -- Standard input stream.
+stdout       -- Standard output stream.
+stderr       -- Standard error stream.
+
+        === Methods ===
+.print(data : str)
+.println(data : str)
+.eprint(data : str)
+.scan(var_name : str)
+
+]#
+
+import std.inout
+
+io.print("Hello from io.print!")
+io.println("Hello from io.println!")
+io.eprint("This is an error message.")
+io.scan(var_name)

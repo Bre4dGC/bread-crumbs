@@ -1,0 +1,15 @@
+#[ Traits and implementations
+
+trait <name> {
+    <properties>
+
+    <methods>
+}
+
+impl <trait name> : <struct name> {
+    <implementation>
+}
+
+]#
+
+trait 

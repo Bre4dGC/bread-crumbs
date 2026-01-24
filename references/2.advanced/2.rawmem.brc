@@ -1,0 +1,31 @@
+#[ Raw pointers basic usage
+
+<modif> <name> [: type] = <expression>
+
+        === Functions ===
+alloc(size : int) : *any                 -- Allocates memory for the specified type and returns a raw pointer.
+realloc(ptr : *any, size : int) : *any   -- Reallocates memory for the specified type and returns a raw pointer.
+capac(ptr : *any) : int                  -- Returns the capacity of the memory allocated for the specified raw pointer.
+free(ptr : *any)                         -- Frees the memory allocated for the specified raw pointer.
+
+]#
+
+var value   : int  = 42
+var pointer : *int = null
+
+@pointer = @value  # Get the address of 'value' and assign to 'pointer'
+
+println("Value: ", value)       # Output: Value: 42
+println("Pointer: ", @pointer)  # Output: Pointer: 0x7ffeedc3a4b0
+println("Derefer: ", pointer)   # Output: Dereferenced: 42
+
+var dynamic : *int = alloc(int * 5) # Allocate memory for 5 integers
+
+for(var i = 0..capac(dynamic)) {
+    dynamic[i] = i * 10
+    println("dynamic[", i, "] = ", dynamic[i])
+}
+
+dynamic = realloc(dynamic, int * 10) # Resize to hold 10 integers
+
+free(dynamic) # Free allocated memory

@@ -1,0 +1,13 @@
+#[ Diverge basic usage
+
+diverge(strategy) {
+    path Name1 { }
+    path Name2 { }
+}
+
+]#
+
+var result = diverge(strategy) {
+    path Name1 { }
+    path Name2 { }
+}

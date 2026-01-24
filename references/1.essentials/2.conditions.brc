@@ -1,0 +1,33 @@
+## Base conditions usage
+
+if(<condition>) {
+    ...
+}
+elif(<condition>) {
+    ...
+}
+else {
+    ...
+}
+
+if(<condition>) <value_if_true> elif(<condition>) else <value_if_false>
+
+##
+
+var condition         : bool = true
+var another_condition : bool = false
+
+if(condition) {
+    print("message from the if statement")
+}
+elif(another_condition) {
+    print("message from the elif statement")
+}
+else {
+    print("message from the else statement")
+}
+
+#Output: message from the if statement
+
+#   === Ternary Operator ===
+var result : str = if(condition) "condition is true" else "condition is false"

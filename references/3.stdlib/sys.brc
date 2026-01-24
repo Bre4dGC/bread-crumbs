@@ -1,0 +1,6 @@
+#[ System library basic usage
+
+        === Static methods ===
+exit(code : int)    -- Exit the program with the given exit code.
+
+]#

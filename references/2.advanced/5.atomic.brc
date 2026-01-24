@@ -1,0 +1,11 @@
+#[ Atomic basic usage
+Data integrity guarantee
+
+atomic {...}
+atomic capture(x, y)
+
+]#
+
+atomic {
+
+}

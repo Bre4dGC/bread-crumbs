@@ -1,0 +1,24 @@
+##  Multi-line comment
+some text
+more text
+##
+
+#Single-line comment
+
+#[  Documentation comment
+
+It can span multiple lines.
+Used for generating markdown documentation in IDE.
+
+]#
+
+#   === Top-level statement ===
+print("Hello, World!")
+
+#   === Default statement ===
+func main()
+{
+    print("Hello, World!")
+}
+
+#print("Hello, World!") -- error
