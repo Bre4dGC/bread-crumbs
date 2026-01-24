@@ -144,7 +144,7 @@ token_t next_token(lexer_t* lexer)
             else if(isdigit(lexer->ch)){
                 token = handle_number(lexer);
             }
-            else{
+            else {
                 size_t length = 0;
                 while(lexer->ch != '\0' && !isalnum(lexer->ch) && !isspace(lexer->ch)){
                     read_ch(lexer);
@@ -251,7 +251,7 @@ token_t handle_paren(lexer_t *lexer)
         if(lexer->balance == 0){
             add_report(lexer->reports, SEV_ERR, ERR_UNMAT_PAREN, lexer->loc, DEFAULT_LEN, lexer->input->data);
         }
-        else{
+        else {
             lexer->balance--;
         }
     }

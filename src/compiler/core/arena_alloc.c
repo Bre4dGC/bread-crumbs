@@ -29,7 +29,7 @@ void free_arena(arena_t* arena)
 
 bool arena_expand(arena_t* arena, size_t new_capacity)
 {
-    if(!arena || new_capacity <= arena->capacity) return 0;
+    if(!arena || new_capacity <= arena->capacity) return false;
     
     unsigned char* new_data = (unsigned char*)realloc(arena->data, new_capacity);
     if(!new_data) return false;
@@ -80,8 +80,20 @@ void* arena_alloc_array(arena_t* arena, size_t elem_size, size_t count, size_t a
 
 void* arena_realloc(arena_t* arena, void* ptr, size_t old_size, size_t new_size, size_t align)
 {
+    if(!arena || !ptr || new_size == 0 || align == 0) return NULL;
 
-    return NULL;
+    size_t aligned_offset = (arena->offset + align - 1) & ~(align - 1);
+    if(ptr != arena->data + aligned_offset - old_size) return NULL;
+
+    if(aligned_offset - old_size + new_size > arena->capacity){
+        size_t new_capacity = arena->capacity * 2;
+        if(new_capacity < aligned_offset - old_size + new_size){
+            new_capacity = aligned_offset - old_size + new_size;
+        }
+        if(!arena_expand(arena, new_capacity)) return NULL;
+    }
+    arena->offset = aligned_offset - old_size + new_size;
+    return ptr;
 }
 
 named_arena_t* new_named_arena(const char* name, enum arena_lifetime lifetime, size_t size)

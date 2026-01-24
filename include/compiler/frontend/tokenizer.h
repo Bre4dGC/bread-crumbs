@@ -69,7 +69,6 @@ enum category_keyword {
     KW_SIMULATE, KW_SCENARIOS,KW_CHOOSE,
 
     // special
-    KW_WRITE,    KW_READ,
     KW_NAMEOF,   KW_TYPEOF,
 };
 

@@ -4,6 +4,7 @@
 
 #include "compiler/core/arena_alloc.h"
 #include "compiler/core/string_pool.h"
+#include "compiler/core/diagnostic.h"
 
 typedef struct node node_t;
 
@@ -112,6 +113,10 @@ struct node_struct {
     nodes_t member;
 };
 
+struct node_enum_member {
+    string_t name;
+};
+
 struct node_enum {
     string_t name;
     nodes_t member;
@@ -171,22 +176,14 @@ struct node_solve {
 
 struct node_spec {
     int type;
-    union {
-        struct {
-            string_t stream;
-            node_t* content;
-        } inout;
-
-        struct {
-            string_t content;
-        } reflec;
-    };
+    string_t content;
 };
 
 enum node_kind {
     NODE_LITERAL, NODE_BINOP,   NODE_EXPR,
     NODE_BLOCK,   NODE_UNARYOP, NODE_VAR,
     NODE_CALL,    NODE_ASSIGN,  NODE_REF,
+    NODE_ENUM_MEMBER,
 
     NODE_IF,      NODE_WHILE,   NODE_FOR,
     NODE_FUNC,    NODE_MATCH,   NODE_CASE,
@@ -198,12 +195,14 @@ enum node_kind {
     NODE_TEST,    NODE_FORK,    NODE_SIMULATE,
     NODE_SOLVE,
 
-    NODE_WRITE,   NODE_READ,
     NODE_NAMEOF,  NODE_TYPEOF,
 };
 
 struct node {
     enum node_kind kind;
+    location_t loc;
+    size_t length;
+
     union {
         struct node_binop       binop;
         struct node_unaryop     unaryop;
@@ -213,6 +212,7 @@ struct node {
         struct node_func_call   call;
         struct node_return_stmt ret;
         struct node_literal     lit;
+        struct node_enum_member enum_member;
 
         struct node_var*    var_decl;
         struct node_array*  array_decl;
@@ -227,9 +227,9 @@ struct node {
         struct node_trait*  trait_decl;
         struct node_impl*   impl_stmt;
         struct node_trycatch* trycatch_stmt;
-        struct node_type* type_decl;
-        struct node_import* import_stmt;
-        struct node_module* module_stmt;
+        struct node_type*   type_decl;
+        struct node_import* import_decl;
+        struct node_module* module_decl;
         struct node_test*   test_stmt;
         struct node_fork*   fork_stmt;
         struct node_simulate* simulate_stmt;

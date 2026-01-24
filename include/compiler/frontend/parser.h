@@ -16,7 +16,8 @@ typedef struct {
 
     arena_t* ast;
     report_table_t* reports;
+    string_pool_t* string_pool;
 } parser_t;
 
-parser_t* new_parser(arena_t* arena, arena_t* ast, report_table_t* reports, lexer_t* lexer);
+parser_t* new_parser(arena_t* arena, arena_t* ast, report_table_t* reports, string_pool_t* string_pool, lexer_t* lexer);
 ast_t* parse_program(parser_t* parser);

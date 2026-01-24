@@ -77,7 +77,6 @@ void init_tokens(void)
         {"null",    LIT_NULL,   C_LT}, {"infinity", LIT_INFINITY, C_LT},
 
         /* specials */
-        {"write",   KW_WRITE,   C_KW}, {"read",     KW_READ,      C_KW},
         {"nameof",  KW_NAMEOF,  C_KW}, {"typeof",   KW_TYPEOF,    C_KW}, 
     };
     

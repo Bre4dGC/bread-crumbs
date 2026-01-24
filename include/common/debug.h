@@ -53,7 +53,7 @@ static inline const char* token_to_str(const token_t token)
     return NULL;
 }
 
-static inline void print_ast(node_t* node, int indent)
+static inline void print_node(node_t* node, int indent)
 {
     if(!node) return;
 
@@ -74,32 +74,35 @@ static inline void print_ast(node_t* node, int indent)
             break;            
         case NODE_BINOP: 
             printf("BinOp: %s\n", node->binop.lit);
-            print_ast(node->binop.left, indent + 1);
-            print_ast(node->binop.right, indent + 1);
+            print_node(node->binop.left, indent + 1);
+            print_node(node->binop.right, indent + 1);
             break;            
         case NODE_VAR:
             printf("Var: %s\n", node->var_decl->name.data);
-            print_ast(node->var_decl->value, indent + 1);
+            print_node(node->var_decl->value, indent + 1);
             break;            
         case NODE_BLOCK:
             printf("Block:\n");
             for(size_t i = 0; i < node->block.statement.count; i++){
-                print_ast(node->block.statement.elems[i], indent + 1);
+                print_node(node->block.statement.elems[i], indent + 1);
             }
             break;
         case NODE_UNARYOP:
             printf("UnaryOp: %s\n", node->unaryop.lit);
-            print_ast(node->unaryop.right, indent + 1);
+            print_node(node->unaryop.right, indent + 1);
             break;
         case NODE_CALL:
             printf("Call: %s\n", node->call.name.data);
             for(size_t i = 0; i < node->call.args.count; i++){
-                print_ast(node->call.args.elems[i], indent + 1);
+                print_node(node->call.args.elems[i], indent + 1);
             }
+            break;
+        case NODE_ENUM_MEMBER:
+            printf("Enum Member: %s\n", node->enum_member.name.data);
             break;
         case NODE_RETURN:
             printf("Return:\n");
-            print_ast(node->ret.body, indent + 1);
+            print_node(node->ret.body, indent + 1);
             break;
         case NODE_BREAK:
             printf("Break:\n");
@@ -110,43 +113,43 @@ static inline void print_ast(node_t* node, int indent)
         case NODE_ARRAY:
             printf("Array:\n");
             for(size_t i = 0; i < node->array_decl->count; i++){
-                print_ast(node->array_decl->elements[i], indent + 1);
+                print_node(node->array_decl->elements[i], indent + 1);
             }
             break;
         case NODE_IF:
             printf("If Statement:\n");
-            print_ast(node->if_stmt->condition, indent + 1);
-            print_ast(node->if_stmt->then_block, indent + 1);
+            print_node(node->if_stmt->condition, indent + 1);
+            print_node(node->if_stmt->then_block, indent + 1);
             if(node->if_stmt->elif_blocks){
-                print_ast(node->if_stmt->elif_blocks, indent + 1);
+                print_node(node->if_stmt->elif_blocks, indent + 1);
             }
             if(node->if_stmt->else_block){
-                print_ast(node->if_stmt->else_block, indent + 1);
+                print_node(node->if_stmt->else_block, indent + 1);
             }
             break;
         case NODE_WHILE:
             printf("While Loop:\n");
-            print_ast(node->while_loop->condition, indent + 1);
-            print_ast(node->while_loop->body, indent + 1);
+            print_node(node->while_loop->condition, indent + 1);
+            print_node(node->while_loop->body, indent + 1);
             break;
         case NODE_FOR:
             printf("For Loop:\n");
-            print_ast(node->for_loop->init, indent + 1);
-            print_ast(node->for_loop->condition, indent + 1);
-            print_ast(node->for_loop->update, indent + 1);
-            print_ast(node->for_loop->body, indent + 1);
+            print_node(node->for_loop->init, indent + 1);
+            print_node(node->for_loop->condition, indent + 1);
+            print_node(node->for_loop->update, indent + 1);
+            print_node(node->for_loop->body, indent + 1);
             break;
         case NODE_FUNC:
             printf("Function: %s\n", node->func_decl->name.data);
             for(size_t i = 0; i < node->func_decl->param.count; i++){
-                print_ast(node->func_decl->param.elems[i], indent + 1);
+                print_node(node->func_decl->param.elems[i], indent + 1);
             }
-            print_ast(node->func_decl->body, indent + 1);
+            print_node(node->func_decl->body, indent + 1);
             break;
         case NODE_STRUCT:
             printf("Struct: %s\n", node->struct_decl->name.data ? node->struct_decl->name.data : "(anonymous)");
             for(size_t i = 0; i < node->struct_decl->member.count; i++){
-                print_ast(node->struct_decl->member.elems[i], indent + 1);
+                print_node(node->struct_decl->member.elems[i], indent + 1);
             }
             break;
         case NODE_ENUM:
@@ -157,78 +160,71 @@ static inline void print_ast(node_t* node, int indent)
             break;
         case NODE_MATCH:
             printf("Match Statement:\n");
-            print_ast(node->match_stmt->target, indent + 1);
+            print_node(node->match_stmt->target, indent + 1);
             for(size_t i = 0; i < node->match_stmt->block.count; i++){
-                print_ast(node->match_stmt->block.elems[i], indent + 1);
+                print_node(node->match_stmt->block.elems[i], indent + 1);
             }
             break;
         case NODE_CASE:
             printf("Case:\n");
-            print_ast(node->match_case->condition, indent + 1);
-            print_ast(node->match_case->body, indent + 1);
+            print_node(node->match_case->condition, indent + 1);
+            print_node(node->match_case->body, indent + 1);
             break;
         case NODE_TRAIT:
             printf("Trait: %s\n", node->trait_decl->name.data);
-            print_ast(node->trait_decl->body, indent + 1);
+            print_node(node->trait_decl->body, indent + 1);
             break;
         case NODE_IMPL:
             printf("Impl: %s\n", node->impl_stmt->trait_name.data);
-            print_ast(node->trait_decl->body, indent + 1);
+            print_node(node->trait_decl->body, indent + 1);
             break;
         case NODE_TRYCATCH:
             printf("Try-Catch:\n");
-            print_ast(node->trycatch_stmt->try_block, indent + 1);
+            print_node(node->trycatch_stmt->try_block, indent + 1);
             if(node->trycatch_stmt->catch_block){
-                print_ast(node->trycatch_stmt->catch_block, indent + 1);
+                print_node(node->trycatch_stmt->catch_block, indent + 1);
             }
             if(node->trycatch_stmt->finally_block){
-                print_ast(node->trycatch_stmt->finally_block, indent + 1);
+                print_node(node->trycatch_stmt->finally_block, indent + 1);
             }
             break;
         case NODE_TYPE:
             printf("Type: %s\n", node->type_decl->name.data);
-            print_ast(node->type_decl->body, indent + 1);
+            print_node(node->type_decl->body, indent + 1);
             break;
         case NODE_IMPORT:
-            printf("Import: %s\n", node->import_stmt->path.data);
-            for(size_t i = 0; i < node->import_stmt->module.count; ++i){
-                printf("Module: %s\n", node->import_stmt->module.elems[i]->module_stmt->name.data);
+            printf("Import: %s\n", node->import_decl->path.data);
+            for(size_t i = 0; i < node->import_decl->module.count; ++i){
+                printf("Module: %s\n", node->import_decl->module.elems[i]->module_decl->name.data);
             }
             break;
         case NODE_MODULE:
-            printf("Module: %s\n", node->module_stmt->name.data);
-            print_ast(node->module_stmt->body, indent + 1);
+            printf("Module: %s\n", node->module_decl->name.data);
+            print_node(node->module_decl->body, indent + 1);
             break;
         case NODE_TEST:
             printf("Test: %s\n", node->test_stmt->name.data);
-            print_ast(node->test_stmt->body, indent + 1);
+            print_node(node->test_stmt->body, indent + 1);
             break;
         case NODE_FORK:
             printf("Fork: %s\n", node->fork_stmt->name.data ? node->fork_stmt->name.data : "(anonymous)");
-            print_ast(node->fork_stmt->body, indent + 1);
+            print_node(node->fork_stmt->body, indent + 1);
             break;
         case NODE_SOLVE:
             printf("Solve:\n");
             for(size_t i = 0; i < node->solve_stmt->param.count; i++){
-                print_ast(node->solve_stmt->param.elems[i], indent + 1);
+                print_node(node->solve_stmt->param.elems[i], indent + 1);
             }
-            print_ast(node->solve_stmt->body, indent + 1);
+            print_node(node->solve_stmt->body, indent + 1);
             break;
         case NODE_SIMULATE:
             printf("Simulate:\n");
-            print_ast(node->simulate_stmt->body, indent + 1);
-            break;
-        case NODE_WRITE:
-        case NODE_READ:
-            printf("IO:");
-            printf("\tStream: %s\n", node->spec_stmt->inout.stream.data);
-            printf("\tContent:\n");
-            print_ast(node->spec_stmt->inout.content, indent + 2);
+            print_node(node->simulate_stmt->body, indent + 1);
             break;
         case NODE_NAMEOF:
         case NODE_TYPEOF:
             printf("Reflection:\n");
-            printf("\tContent: %s\n", node->spec_stmt->reflec.content.data);
+            printf("\tContent: %s\n", node->spec_stmt->content.data);
             break;
     }
 }
