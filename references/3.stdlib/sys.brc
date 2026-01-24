@@ -1,0 +1,8 @@
+#[ System library functions
+
+
+        === Functions ===
+.exit(code : int)    -- Exit the program with the given exit code.
+.
+
+]#

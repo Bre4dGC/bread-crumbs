@@ -1,0 +1,22 @@
+#[ Base input/output usage
+
+        === Build-in ===
+<action>(<stream>, <data>)
+
+write(sys.stdout, "Hello, World!\n")
+read(sys.stdin, var_name)
+
+        === Streams ===
+sys.stdin        -- Standard input stream.
+sys.stdout       -- Standard output stream.
+sys.stderr       -- Standard error stream.
+
+        === Standard Library ===
+import std.inout
+
+io.print("Hello from io.print!")
+io.println("Hello from io.println!")
+io.eprint("This is an error message.")
+io.scan(var_name)
+
+]#

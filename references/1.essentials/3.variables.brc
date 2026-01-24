@@ -1,6 +1,6 @@
 #[ Variable declarations
 
-<mod> <name> [: <type>] = <value>
+<mod> <name> [: <type>] = <expression>
 
         === Modifiers ===
 var         -- Variable that can be reassigned.

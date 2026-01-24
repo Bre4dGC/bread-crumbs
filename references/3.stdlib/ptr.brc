@@ -18,7 +18,7 @@
 
 import std.pointer
 
-var a : int = 42
+var a     : int = 42
 var ptr_a : ptr<int> = ptr.ref(a)
 print($"Address of a: {ptr_a.addr}")    #address of a: 0x7ffeedcba098
 print($"Value at pointer: {ptr_a}")     #value at pointer: 42

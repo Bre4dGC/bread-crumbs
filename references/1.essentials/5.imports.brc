@@ -52,3 +52,6 @@ module example
 {
 
 }
+
+#   === Importing user-defined modules ===
+import my_module

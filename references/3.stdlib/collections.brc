@@ -3,13 +3,14 @@
 <mod> <name> [: <collection><<generic>>] = {<data>}
 
         === Collection types ===
-list<t>     -- A list is an ordered collection of elements of type t.
-stack<t>    -- A stack is a collection of elements of type t that follows the Last In First Out (LIFO) principle.
-queue<t>    -- A queue is a collection of elements of type t that follows the First In First Out (FIFO) principle.
-map<t,v>    -- A map is a collection of key-value pairs, where keys are of type t and values are of type v.
-set<t>      -- A set is a collection of unique elements of type t.
-graph<t>    -- A graph is a collection of nodes of type t, where each node may be connected to other nodes.
-tree<t>     -- A tree is a hierarchical collection of nodes of type t, where each node has a parent-child relationship with other nodes.
+list<t>     -- a dynamic array of elements of type t
+stack<t>    -- a last-in-first-out (LIFO) collection of elements of type t
+queue<t>    -- a first-in-first-out (FIFO) collection of elements of type t
+map<t,v>    -- a collection of key-value pairs, where keys are of type t and values are of type v
+hash<t,v>   -- a hash table mapping keys of type t to values of type v
+set<t>      -- a collection of unique elements of type t
+graph<t>    -- a collection of nodes and edges, where nodes are of type t
+tree<t>     -- a hierarchical collection of elements of type t
 
         === Methods ===
 .add(element : type)                -- add element to the collection
@@ -29,15 +30,17 @@ import std.collection
 var my_list   : list<int>     = {1, 2, 3, 4, 5}
 var my_stack  : stack<str>    = {"first", "second", "third"}
 var my_queue  : queue<float>  = {1.1, 2.2, 3.3}
-var my_map    : map<str, int> = { "one": 1, "two": 2, "three": 3 }
+var my_map    : map<str, int> = {"one": 1, "two": 2, "three": 3 }
+var my_hash   : hash<str, str>= {"name": "Alice", "city": "Wonderland" }
 var my_set    : set<int>      = {1, 2, 3, 4, 5}
-var my_graph  : graph<str>    = { "A": ["B", "C"], "B": ["A", "D"], "C": ["A"], "D": ["B"] }
+var my_graph  : graph<str>    = {"A": ["B", "C"], "B": ["A", "D"], "C": ["A"], "D": ["B"] }
 var my_tree   : tree<int>     = {1: [2, 3], 2: [4, 5], 3: [], 4: [], 5: []}
 
 print("List length: " + my_list.len)                 # Output: List length: 5
 print("Stack top: " + my_stack.back)                 # Output: Stack top: third
 print("Queue front: " + my_queue.front)              # Output: Queue front: 1.1
 print("Map value for 'two': " + my_map["two"])       # Output: Map value for 'two': 2
+print("Hash value for 'name': " + my_hash["name"])   # Output: Hash value for 'name': Alice
 print("Set contains 3: " + my_set.contains(3))       # Output: Set contains 3: true
 print("Graph connections for 'A': " + my_graph["A"]) # Output: Graph connections for 'A': ["B", "C"]
 print("Tree children of node 2: " + my_tree[2])      # Output: Tree children of node 2: [4, 5]

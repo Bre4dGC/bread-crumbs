@@ -17,6 +17,7 @@ memory.reserve(size : int) : memory -- reserve memory block
 .used      : int    -- currently used memory size
 .available : int    -- available memory size
 .data      : type[] -- array of stored elements
+
 ]#
 
 import std.memory

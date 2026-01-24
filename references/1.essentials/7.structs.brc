@@ -1,0 +1,48 @@
+#[ Compound types base usage
+
+
+{
+    ...
+}
+
+        === Examples ===
+type Direction = enum {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+}
+
+]#
+
+type Direction = enum {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+}
+
+type Person = struct {
+    var name   : str
+    var age    : int
+    var height : float
+}
+
+func Person.display()
+{
+    print($"name: {self.name}, age: {self.age}, height: {self.height}")
+}
+
+func main()
+{
+    var person : Person = {"Bread", 16, 170}
+    person.display() # name: Bread, age: 16, height: 170
+    
+    const person_direction : Direction = Direction.UP
+    match person_direction {
+        Direction.UP    => print("Going up!")
+        Direction.DOWN  => print("Going down!")
+        Direction.LEFT  => print("Going left!")
+        Direction.RIGHT => print("Going right!")
+    }
+}

@@ -22,6 +22,11 @@ func get_string() : str
     return "Hello, World!"
 }
 
+func get_tuple() : (int, float)
+{
+    return (42, 2.71)
+}
+
 func get_array() : int[5]
 {
     return int[5]{1, 2, 3, 4, 5}
@@ -33,4 +38,5 @@ func main()
     var x   : float  = get_float()
     var y   : int    = get_string()
     var arr : int[5] = get_array()
+    var tup : (int, float) = get_tuple()
 }
