@@ -247,8 +247,8 @@ node_t* parse_literal_expr(parser_t* parser)
     node_t* node = new_node(parser->ast, NODE_LITERAL);
     if(!node) return NULL;
 
-    node->lit.value = new_string(parser->string_pool, parser->token.current.literal);// parser->token.current.literal ? FIX
-    node->lit.type = parser->token.current.type;
+    node->lit->value = new_string(parser->string_pool, parser->token.current.literal);// parser->token.current.literal ? FIX
+    node->lit->type = parser->token.current.type;
     
     advance_token(parser);
     return node;
@@ -306,16 +306,16 @@ bool add_block_stmt(parser_t* parser, node_t* node, node_t* stmt)
 {
     if(node->kind != NODE_BLOCK) return false;
     
-    if(node->block.statement.count >= node->block.statement.capacity){
-        size_t new_capacity = node->block.statement.capacity == 0 ? 4 : node->block.statement.capacity * 2;
-        node_t** new_statements = (node_t**)arena_alloc_array(parser->ast, sizeof(node->block.statement.elems), new_capacity * sizeof(node_t*), alignof(node_t*));
+    if(node->block->statement.count >= node->block->statement.capacity){
+        size_t new_capacity = node->block->statement.capacity == 0 ? 4 : node->block->statement.capacity * 2;
+        node_t** new_statements = (node_t**)arena_alloc_array(parser->ast, sizeof(node->block->statement.elems), new_capacity * sizeof(node_t*), alignof(node_t*));
         if(!new_statements) return false;
         
-        node->block.statement.elems = new_statements;
-        node->block.statement.capacity = new_capacity;
+        node->block->statement.elems = new_statements;
+        node->block->statement.capacity = new_capacity;
     }
     
-    node->block.statement.elems[node->block.statement.count++] = stmt;
+    node->block->statement.elems[node->block->statement.count++] = stmt;
     return true;
 }
 
@@ -374,8 +374,8 @@ node_t* parse_func_call(parser_t* parser)
     if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
         return NULL;
     }
-    node->call.name = new_string(parser->string_pool, parser->token.current.literal);
-    if(!node->call.name.data) return NULL;
+    node->call->name = new_string(parser->string_pool, parser->token.current.literal);
+    if(!node->call->name.data) return NULL;
     advance_token(parser);
 
     size_t capacity = 0;
@@ -385,15 +385,15 @@ node_t* parse_func_call(parser_t* parser)
             node_t* arg = parse_expr(parser);
             if(!arg) return NULL;
 
-            if(node->call.args.count >= capacity){
+            if(node->call->args.count >= capacity){
                 size_t new_capacity = capacity == 0 ? 4 : capacity * 2;
-                node_t** new_args = (node_t**)arena_alloc_array(parser->ast, sizeof(node->call.args), new_capacity * sizeof(node_t*), alignof(node_t*));
+                node_t** new_args = (node_t**)arena_alloc_array(parser->ast, sizeof(node->call->args), new_capacity * sizeof(node_t*), alignof(node_t*));
                 if(!new_args) return NULL;
-                node->call.args.elems = new_args;
+                node->call->args.elems = new_args;
                 capacity = new_capacity;
             }
 
-            node->call.args.elems[node->call.args.count++] = arg;
+            node->call->args.elems[node->call->args.count++] = arg;
 
             if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
                 advance_token(parser); // skip ','
@@ -467,8 +467,8 @@ node_t* parse_var_ref(parser_t* parser)
         return NULL;
     }
 
-    node->ref.name = new_string(parser->string_pool, parser->token.current.literal);
-    if(!node->ref.name.data) return NULL;
+    node->var_ref->name = new_string(parser->string_pool, parser->token.current.literal);
+    if(!node->var_ref->name.data) return NULL;
 
     advance_token(parser);
 
@@ -493,8 +493,8 @@ node_t* parse_jump_stmt(parser_t* parser)
             break;
         case KW_RETURN:
             node->kind = NODE_RETURN;
-            node->ret.body = parse_expr(parser);
-            if(!node->ret.body) return NULL;
+            node->ret->body = parse_expr(parser);
+            if(!node->ret->body) return NULL;
             break;
     }
 
@@ -514,8 +514,8 @@ node_t* parse_primary(parser_t* parser)
             else {
                 node_t* node = new_node(parser->ast, NODE_LITERAL);
                 if(!node) return NULL;
-                node->lit.value = new_string(parser->string_pool, parser->token.current.literal);
-                node->lit.type = parser->token.current.type;
+                node->lit->value = new_string(parser->string_pool, parser->token.current.literal);
+                node->lit->type = parser->token.current.type;
                 advance_token(parser);
                 return node;
             }
@@ -634,8 +634,8 @@ node_t* parse_postfix(parser_t* parser)
                 return NULL;
             }
             
-            postfix->unaryop.right = expr;
-            postfix->unaryop.is_postfix = true;
+            postfix->unaryop->right = expr;
+            postfix->unaryop->is_postfix = true;
             
             advance_token(parser);
             expr = postfix;
@@ -673,11 +673,11 @@ node_t* parse_bin_op(parser_t* parser, int min_precedence)
         node_t* node = new_node(parser->ast, NODE_BINOP);
         if(!node) return NULL;
 
-        node->binop.left = left;
-        node->binop.right = right;
-        node->binop.operator = op;
+        node->binop->left = left;
+        node->binop->right = right;
+        node->binop->operator = op;
     #ifdef DEBUG
-        node->binop.lit = parser->token.current.literal;
+        node->binop->lit = parser->token.current.literal;
     #endif
 
         left = node;
@@ -702,21 +702,21 @@ node_t* parse_unary_op(parser_t* parser)
         return NULL;
     }
 
-    node->unaryop.operator = op_type;
-    node->unaryop.is_postfix = false;
+    node->unaryop->operator = op_type;
+    node->unaryop->is_postfix = false;
 #ifdef DEBUG
-    node->unaryop.lit = parser->token.current.literal;
+    node->unaryop->lit = parser->token.current.literal;
 #endif
     advance_token(parser);
 
     if(op_type == OPER_INCREM || op_type == OPER_DECREM){
-        node->unaryop.right = parse_postfix(parser);
+        node->unaryop->right = parse_postfix(parser);
     }
     else {
-        node->unaryop.right = parse_primary(parser);
+        node->unaryop->right = parse_primary(parser);
     }
     
-    if(!node->unaryop.right) return NULL;
+    if(!node->unaryop->right) return NULL;
 
     return node;
 }

@@ -32,7 +32,8 @@ void add_report(
     const size_t length,
     const char* input)
 {
-    if(!rt || !input) return;
+    if(!rt) return;
+    const char* safe_input = input ? input : "";
 
     if(!arena_has_space(rt->arena, sizeof(report_t), alignof(report_t))){
         if(!arena_expand(rt->arena, rt->arena->capacity * 2)){
@@ -48,7 +49,7 @@ void add_report(
         .code = code,
         .loc = loc,
         .length = length,
-        .input = new_string(&rt->string_pool, input),
+        .input = new_string(&rt->string_pool, safe_input),
         .filepath = new_string(&rt->string_pool, "unknown")
     };
     rt->count += 1;
@@ -126,12 +127,16 @@ const char* report_msg(const enum report_code code)
         case ERR_UNDEC_VAR:     return "Undeclared variable";
         case ERR_UNDEC_FUNC:    return "Undeclared function";
         case ERR_VAR_ALREADY_DECL:  return "Variable already declared";
+        case ERR_FUNC_ALREADY_DECL: return "Function already declared";
+        case ERR_FAIL_TO_DECL_VAR:  return "Failed to declare variable";
+        case ERR_FAIL_TO_DECL_FUNC: return "Failed to declare function";
         case ERR_INVAL_OPER:        return "Invalid operation";
         case ERR_INVAL_FUNC_CALL:   return "Invalid function call";
         case ERR_INVAL_ARG_COUNT:   return "Invalid argument count";
         case ERR_INVAL_ARG_TYPE:    return "Invalid argument type";
         case ERR_INVAL_RET_TYPE:    return "Invalid return type";
         case ERR_NOT_A_FUNC:        return "Not a function";
+        case ERR_RET_OUTSIDE_FUNC:  return "Return outside function";
         case ERR_BREAK_OUTSIDE_LOOP:    return "Break outside loop";
         case ERR_UNIMPL_NODE:           return "Unimplemented node";
         case ERR_CONTINUE_OUTSIDE_LOOP: return "Continue outside loop";

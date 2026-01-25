@@ -91,6 +91,12 @@ struct node_for {
     node_t* body;
 };
 
+struct node_func_param {
+    string_t name;
+    bool is_variadic;
+    int dtype;
+};
+
 struct node_func {
     string_t name;
     nodes_t param;
@@ -115,6 +121,7 @@ struct node_struct {
 
 struct node_enum_member {
     string_t name;
+    node_t* value;
 };
 
 struct node_enum {
@@ -183,7 +190,8 @@ enum node_kind {
     NODE_LITERAL, NODE_BINOP,   NODE_EXPR,
     NODE_BLOCK,   NODE_UNARYOP, NODE_VAR,
     NODE_CALL,    NODE_ASSIGN,  NODE_REF,
-    NODE_ENUM_MEMBER,
+
+    NODE_ENUM_MEMBER, NODE_FUNC_PARAM,
 
     NODE_IF,      NODE_WHILE,   NODE_FOR,
     NODE_FUNC,    NODE_MATCH,   NODE_CASE,
@@ -204,37 +212,37 @@ struct node {
     size_t length;
 
     union {
-        struct node_binop       binop;
-        struct node_unaryop     unaryop;
-        struct node_var_assign  assign;
-        struct node_var_ref     ref;
-        struct node_block       block;
-        struct node_func_call   call;
-        struct node_return_stmt ret;
-        struct node_literal     lit;
-        struct node_enum_member enum_member;
-
-        struct node_var*    var_decl;
-        struct node_array*  array_decl;
-        struct node_if*     if_stmt;
-        struct node_while*  while_loop;
-        struct node_for*    for_loop;
-        struct node_func*   func_decl;
-        struct node_case*   match_case;
-        struct node_match*  match_stmt;
-        struct node_struct* struct_decl;
-        struct node_enum*   enum_decl;
-        struct node_trait*  trait_decl;
-        struct node_impl*   impl_stmt;
-        struct node_trycatch* trycatch_stmt;
-        struct node_type*   type_decl;
-        struct node_import* import_decl;
-        struct node_module* module_decl;
-        struct node_test*   test_stmt;
-        struct node_fork*   fork_stmt;
-        struct node_simulate* simulate_stmt;
-        struct node_solve*  solve_stmt;
-        struct node_spec*   spec_stmt;
+        struct node_literal*     lit;
+        struct node_binop*       binop;
+        struct node_unaryop*     unaryop;
+        struct node_var_assign*  var_assign;
+        struct node_var_ref*     var_ref;
+        struct node_block*       block;
+        struct node_func_call*   call;
+        struct node_return_stmt* ret;
+        struct node_var*         var_decl;
+        struct node_array*       array_decl;
+        struct node_if*          if_stmt;
+        struct node_while*       while_loop;
+        struct node_for*         for_loop;
+        struct node_func_param*  func_param;
+        struct node_func*        func_decl;
+        struct node_match*       match_stmt;
+        struct node_case*        match_case;
+        struct node_struct*      struct_decl;
+        struct node_enum_member* enum_member;
+        struct node_enum*        enum_decl;
+        struct node_trait*       trait_decl;
+        struct node_impl*        impl_stmt;
+        struct node_trycatch*    trycatch_stmt;
+        struct node_type*        type_decl;
+        struct node_module*      module_decl;
+        struct node_import*      import_decl;
+        struct node_test*        test_stmt;
+        struct node_fork*        fork_stmt;
+        struct node_simulate*    simulate_stmt;
+        struct node_solve*       solve_stmt;
+        struct node_spec*        spec_stmt;
     };
 };
 

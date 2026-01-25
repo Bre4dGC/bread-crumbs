@@ -9,6 +9,7 @@
 bool check_node(semantic_t* sem, node_t* node);
 bool check_function(semantic_t* sem, node_t* node);
 bool check_variable(semantic_t* sem, node_t* node);
+bool check_param(semantic_t* sem, node_t* node);
 bool check_block(semantic_t* sem, node_t* node);
 bool check_if(semantic_t* sem, node_t* node);
 bool check_while(semantic_t* sem, node_t* node);
@@ -24,7 +25,6 @@ bool check_var_ref(semantic_t* sem, node_t* node);
 bool check_literal(semantic_t* sem, node_t* node);
 bool check_array(semantic_t* sem, node_t* node);
 bool check_struct(semantic_t* sem, node_t* node);
-bool check_union(semantic_t* sem, node_t* node);
 bool check_enum(semantic_t* sem, node_t* node);
 
 type_t* infer_type(semantic_t* sem, node_t* node);
@@ -39,13 +39,18 @@ semantic_t* new_semantic(arena_t* arena, string_pool_t* string_pool, report_tabl
     semantic_t* sem = (semantic_t*)arena_alloc(arena, sizeof(semantic_t), alignof(semantic_t));
     if(!sem) return NULL;
     
+    // Types are global singletons; ensure they are initialized.
+    if(type_int == NULL){
+        init_types(arena);
+    }
+
     sem->symbols = new_symbol_table(arena, string_pool);
     if(!sem->symbols){
-        free(sem);
         return NULL;
     }
     sem->current_function = NULL;
     sem->loop_depth = 0;
+    sem->phase = PHASE_DECLARE;
 
     sem->arena = arena;
     sem->reports = reports;
@@ -56,16 +61,38 @@ semantic_t* new_semantic(arena_t* arena, string_pool_t* string_pool, report_tabl
 bool analyze_ast(semantic_t* sem, node_t* root)
 {
     if(!sem || !root) return false;
+
+    // Pass 1: declare top-level symbols (functions/types).
+    sem->phase = PHASE_DECLARE;
+    if(root->kind == NODE_BLOCK){
+        for(size_t i = 0; i < root->block->statement.count; i++){
+            if(!check_node(sem, root->block->statement.elems[i])){
+                // keep going to find more issues
+            }
+        }
+    }
+    else {
+        (void)check_node(sem, root);
+    }
+
+    // Pass 2: full semantic checks.
+    sem->phase = PHASE_CHECK;
+    if(root->kind == NODE_BLOCK){
+        bool ok = true;
+        for(size_t i = 0; i < root->block->statement.count; i++){
+            ok = check_node(sem, root->block->statement.elems[i]) && ok;
+        }
+        return ok;
+    }
+
     return check_node(sem, root);
 }
 
-void free_context(semantic_t* sem)
+void free_semantic(semantic_t* sem)
 {
     if(!sem) return;    
     if(sem->symbols) free_symbol_table(sem->symbols);
     sem->symbols = NULL;
-    free(sem);
-    sem = NULL;
 }
 
 bool check_node(semantic_t* sem, node_t* node)
@@ -73,25 +100,25 @@ bool check_node(semantic_t* sem, node_t* node)
     if(!sem || !node) return false;
     
     switch(node->kind){
-        case NODE_VAR:       return check_variable(sem, node);
-        case NODE_REF:   return check_var_ref(sem, node);
-        case NODE_LITERAL:   return check_literal(sem, node);
+        case NODE_VAR:      return check_variable(sem, node);
+        case NODE_REF:      return check_var_ref(sem, node);
+        case NODE_LITERAL:  return check_literal(sem, node);
         case NODE_BINOP:    return check_binary_op(sem, node);
         case NODE_UNARYOP:  return check_unary_op(sem, node);
-        case NODE_CALL: return check_func_call(sem, node);
-        case NODE_BLOCK:     return check_block(sem, node);
-        case NODE_IF:        return check_if(sem, node);
-        case NODE_WHILE:     return check_while(sem, node);
-        case NODE_FOR:       return check_for(sem, node);
-        case NODE_RETURN:    return check_return(sem, node);
-        case NODE_BREAK:     return check_break(sem, node);
-        case NODE_CONTINUE:  return check_continue(sem, node);
-        case NODE_FUNC:      return check_function(sem, node);
-        case NODE_ARRAY:     return check_array(sem, node);
-        case NODE_STRUCT:    return check_struct(sem, node);
-        case NODE_ENUM:      return check_enum(sem, node);
+        case NODE_CALL:     return check_func_call(sem, node);
+        case NODE_BLOCK:    return check_block(sem, node);
+        case NODE_IF:       return check_if(sem, node);
+        case NODE_WHILE:    return check_while(sem, node);
+        case NODE_FOR:      return check_for(sem, node);
+        case NODE_RETURN:   return check_return(sem, node);
+        case NODE_BREAK:    return check_break(sem, node);
+        case NODE_CONTINUE: return check_continue(sem, node);
+        case NODE_FUNC:     return check_function(sem, node);
+        case NODE_ARRAY:    return check_array(sem, node);
+        case NODE_STRUCT:   return check_struct(sem, node);
+        case NODE_ENUM:     return check_enum(sem, node);
         default:
-            // add_report(sem->reports, SEV_WARN, ERR_UNIMPL_NODE, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->reports, SEV_WARN, ERR_UNIMPL_NODE, node->loc, DEFAULT_LEN, NULL);
             return true;
     }
 }
@@ -116,22 +143,51 @@ bool check_function(semantic_t* sem, node_t* node)
     
     struct node_func* func = node->func_decl;
     if(!func || !func->name.data) return false;
-    
-    // check if function already exists
-    if(is_scope_symbol_exist(sem->symbols, func->name.data)){
-        // add_report(sem->reports, SEV_ERR, ERR_FUNC_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
-        return false;
+
+    // Declare phase: register the function symbol (no body checking yet).
+    if(sem->phase == PHASE_DECLARE){
+        if(is_scope_symbol_exist(sem->symbols, func->name.data)){
+            add_report(sem->reports, SEV_ERR, ERR_FUNC_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+            return false;
+        }
+
+        // Build a function type from signature (best-effort).
+        type_t* return_type = datatype_to_type(func->return_type);
+        size_t param_count = func->param.count;
+        type_t** param_types = NULL;
+        if(param_count > 0){
+            param_types = (type_t**)arena_alloc_array(sem->arena, sizeof(type_t*), param_count, alignof(type_t*));
+            if(!param_types) return false;
+            for(size_t i = 0; i < param_count; i++){
+                node_t* p = func->param.elems[i];
+                if(p && p->kind == NODE_VAR && p->var_decl){
+                    int dt = p->var_decl->dtype;
+                    param_types[i] = (dt == DT_VOID) ? type_any : datatype_to_type(dt);
+                }
+                else {
+                    param_types[i] = type_any;
+                }
+            }
+        }
+        type_t* func_type = new_type_function(sem->arena, return_type, param_types, param_count);
+
+        symbol_t* func_sym = define_symbol(sem->symbols, func->name.data, SYMBOL_FUNC, func_type, node);
+        if(!func_sym){
+            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_FUNC, node->loc, DEFAULT_LEN, NULL);
+            return false;
+        }
+
+        return true;
     }
-    
-    // create function type
-    // type_t* return_type = datatype_to_type(func->return_type);
-    type_t* func_type = NULL; // new_type_function(sem->arena, return_type, , func->param_count);
-    
-    // add function to symbol table
-    symbol_t* func_sym = define_symbol(sem->symbols, func->name.data, SYMBOL_FUNC, func_type, node);
+
+    // Check phase: body + parameter scope.
+    symbol_t* func_sym = lookup_symbol(sem->symbols, func->name.data);
     if(!func_sym){
-        // add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
-        return false;
+        // If it wasn't declared (e.g. analysis started mid-tree), declare it now.
+        type_t* return_type = datatype_to_type(func->return_type);
+        type_t* func_type = new_type_function(sem->arena, return_type, NULL, 0);
+        func_sym = define_symbol(sem->symbols, func->name.data, SYMBOL_FUNC, func_type, node);
+        if(!func_sym) return false;
     }
     
     // create new scope for function body
@@ -141,7 +197,7 @@ bool check_function(semantic_t* sem, node_t* node)
     
     // add parameters to function scope
     for(size_t i = 0; i < func->param.count; i++){
-        if(!check_node(sem, func->param.elems[i])){
+        if(!check_param(sem, func->param.elems[i])){
             pop_scope(sem->symbols);
             sem->current_function = prev_func;
             return false;
@@ -161,6 +217,29 @@ bool check_function(semantic_t* sem, node_t* node)
     return success;
 }
 
+bool check_param(semantic_t* sem, node_t* node)
+{
+    if(!sem || !node || node->kind != NODE_VAR || !node->var_decl) return false;
+
+    struct node_var* var = node->var_decl;
+    if(!var->name.data) return false;
+
+    if(is_scope_symbol_exist(sem->symbols, var->name.data)){
+        add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+        return false;
+    }
+
+    // Parameters must have a type; if omitted, treat as `any` for now.
+    type_t* param_type = (var->dtype == DT_VOID) ? type_any : datatype_to_type(var->dtype);
+    symbol_t* sym = define_symbol(sem->symbols, var->name.data, SYMBOL_PARAM, param_type, node);
+    if(!sym){
+        add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc, DEFAULT_LEN, NULL);
+        return false;
+    }
+    sym->flags |= SYM_FLAG_ASSIGNED;
+    return true;
+}
+
 bool check_variable(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_VAR) return false;
@@ -169,7 +248,7 @@ bool check_variable(semantic_t* sem, node_t* node)
     if(!var || !var->name.data) return false;
     
     if(is_scope_symbol_exist(sem->symbols, var->name.data)){
-        // add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
@@ -185,12 +264,12 @@ bool check_variable(semantic_t* sem, node_t* node)
     }
     else {
         // no type and no initializer
-        // add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL)
+        add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     if(!var_type || var_type == type_error){
-        // add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
@@ -198,7 +277,7 @@ bool check_variable(semantic_t* sem, node_t* node)
     if(var->dtype != DT_VOID && var->value){
         type_t* init_type = infer_type(sem, var->value);
         if(!check_type_compatibility(sem, node, var_type, init_type)){
-            // add_report(sem->reports, SEV_ERR, ERR_VAR_TYPE_MISMATCH, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->reports, SEV_ERR, ERR_TYPE_MISMATCH, node->loc, DEFAULT_LEN, NULL);
             return false;
         }
     }
@@ -212,7 +291,7 @@ bool check_variable(semantic_t* sem, node_t* node)
     // add to symbol table
     symbol_t* sym = define_symbol(sem->symbols, var->name.data, kind, var_type, node);
     if(!sym){
-        // add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
@@ -229,8 +308,8 @@ bool check_block(semantic_t* sem, node_t* node)
     push_scope(sem->symbols, SCOPE_BLOCK, node); // create new scope for block
     
     bool success = true;
-    for(size_t i = 0; i < node->block.statement.count; i++){
-        if(!check_node(sem, node->block.statement.elems[i])){
+    for(size_t i = 0; i < node->block->statement.count; i++){
+        if(!check_node(sem, node->block->statement.elems[i])){
             success = false;
             // TODO: continue checking other statements
         }
@@ -292,12 +371,12 @@ bool check_return(semantic_t* sem, node_t* node)
     if(!sem || !node || node->kind != NODE_RETURN) return false;
     
     if(!sem->current_function){
-        // add_report(sem->reports, SEV_ERR, ERR_RET_OUTSIDE_FUNC, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_RET_OUTSIDE_FUNC, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
-    if(node->ret.body){
-        return check_node(sem, node->ret.body);
+    if(node->ret->body){
+        return check_node(sem, node->ret->body);
     }
     
     return true;
@@ -308,7 +387,7 @@ bool check_break(semantic_t* sem, node_t* node)
     if(!sem || !node) return false;
     
     if(sem->loop_depth == 0){
-        // add_report(sem->reports, SEV_ERR, ERR_BREAK_OUTSIDE_LOOP, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_BREAK_OUTSIDE_LOOP, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
@@ -320,7 +399,7 @@ bool check_continue(semantic_t* sem, node_t* node)
     if(!sem || !node) return false;
     
     if(sem->loop_depth == 0){
-        // add_report(sem->reports, SEV_ERR, ERR_CONTINUE_OUTSIDE_LOOP, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_CONTINUE_OUTSIDE_LOOP, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
@@ -339,12 +418,12 @@ bool check_binary_op(semantic_t* sem, node_t* node)
     if(!sem || !node || node->kind != NODE_BINOP) return false;
     
     // check both operands
-    if(!check_node(sem, node->binop.left)) return false;
-    if(!check_node(sem, node->binop.right)) return false;
+    if(!check_node(sem, node->binop->left)) return false;
+    if(!check_node(sem, node->binop->right)) return false;
     
     // infer types
-    type_t* left_type = infer_type(sem, node->binop.left);
-    type_t* right_type = infer_type(sem, node->binop.right);
+    type_t* left_type = infer_type(sem, node->binop->left);
+    type_t* right_type = infer_type(sem, node->binop->right);
     
     if(!left_type || left_type == type_error || !right_type || right_type == type_error){
         return false;
@@ -355,7 +434,7 @@ bool check_binary_op(semantic_t* sem, node_t* node)
     // (void)op;  // TODO: use for operator-specific checks
     
     if(!types_compatible(left_type, right_type)){
-        // add_report(sem->reports, SEV_ERR, ERR_TYPE_MISMATCH, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_TYPE_MISMATCH, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
@@ -366,7 +445,7 @@ bool check_unary_op(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_UNARYOP) return false;
     
-    return check_node(sem, node->unaryop.right);
+    return check_node(sem, node->unaryop->right);
 }
 
 bool check_func_call(semantic_t* sem, node_t* node)
@@ -374,20 +453,20 @@ bool check_func_call(semantic_t* sem, node_t* node)
     if(!sem || !node || node->kind != NODE_CALL) return false;
     
     // Lookup function
-    symbol_t* func_sym = lookup_symbol(sem->symbols, node->call.name.data);
+    symbol_t* func_sym = lookup_symbol(sem->symbols, node->call->name.data);
     if(!func_sym){
-        // add_report(sem->reports, SEV_ERR, ERR_UNDECL_FUNC, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_UNDEC_FUNC, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     if(func_sym->kind != SYMBOL_FUNC){
-        // add_report(sem->reports, SEV_ERR, ERR_NOT_A_FUNC, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_NOT_A_FUNC, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
     // Check arguments
-    for(size_t i = 0; i < node->call.args.count; i++){
-        if(!check_node(sem, node->call.args.elems[i])) return false;
+    for(size_t i = 0; i < node->call->args.count; i++){
+        if(!check_node(sem, node->call->args.elems[i])) return false;
     }
     
     // TODO: Check argument count and types match parameters
@@ -400,13 +479,13 @@ bool check_var_ref(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_REF) return false;
     
-    const char* name = node->ref.name.data;
+    const char* name = node->var_ref->name.data;
     if(!name) return false;
     
     // lookup variable
     symbol_t* sym = lookup_symbol(sem->symbols, name);
     if(!sym){
-        // add_report(sem->reports, SEV_ERR, ERR_UNDECL_VAR node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->reports, SEV_ERR, ERR_UNDEC_VAR, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
     
@@ -458,7 +537,7 @@ type_t* infer_type(semantic_t* sem, node_t* node)
     
     switch(node->kind){
         case NODE_LITERAL:
-            switch(node->lit.type){
+            switch(node->lit->type){
                 case LIT_NUMBER:
                 case LIT_BIN:
                 case LIT_HEX:
@@ -477,20 +556,19 @@ type_t* infer_type(semantic_t* sem, node_t* node)
             }
             
         case NODE_REF: {
-            symbol_t* sym = lookup_symbol(sem->symbols, node->ref.name.data);
+            symbol_t* sym = lookup_symbol(sem->symbols, node->var_ref->name.data);
             return sym ? sym->type : type_error;
         }
         
         case NODE_CALL: {
-            symbol_t* func = lookup_symbol(sem->symbols, node->call.name.data);
+            symbol_t* func = lookup_symbol(sem->symbols, node->call->name.data);
             if(func && func->type && func->type->kind == TYPE_FUNCTION){
                 return func->type->func.return_type;
             }
             return type_error;
         }
         
-        default:
-            return type_unknown;
+        default: return type_unknown;
     }
 }
 

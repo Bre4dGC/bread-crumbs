@@ -65,7 +65,9 @@ void* ht_lookup(hash_table_t* table, const char* key)
     
     while(table != NULL){
         if(table->key.data && table->key.hash == str.hash){
-            return table->value;
+            if(strcmp(table->key.data, str.data) == 0){
+                return table->value;
+            }
         }
         table = table->next;
     }

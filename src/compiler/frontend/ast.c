@@ -11,43 +11,58 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
     switch (kind)
     {
         case NODE_BINOP:
-            node->binop.left = NULL;
-            node->binop.right = NULL;
-            node->binop.operator = 0;
+            node->binop = (struct node_binop*)arena_alloc(arena, sizeof(struct node_binop), alignof(struct node_binop));
+            if(!node->binop) return NULL;
+            node->binop->left = NULL;
+            node->binop->right = NULL;
+            node->binop->operator = 0;
             break;
         case NODE_UNARYOP:
-            node->unaryop.right = NULL;
-            node->unaryop.operator = 0;
-            node->unaryop.is_postfix = false;
+            node->unaryop = (struct node_unaryop*)arena_alloc(arena, sizeof(struct node_unaryop), alignof(struct node_unaryop));
+            if(!node->unaryop) return NULL;
+            node->unaryop->right = NULL;
+            node->unaryop->operator = 0;
+            node->unaryop->is_postfix = false;
             break;
         case NODE_VAR:
             node->var_decl = (struct node_var*)arena_alloc(arena, sizeof(struct node_var), alignof(struct node_var));
             if(!node->var_decl) return NULL;
             node->var_decl->modif = MOD_VAR;
-            node->var_decl->dtype = DT_INT;
+            node->var_decl->dtype = DT_VOID;
             node->var_decl->value = NULL;
             node->var_decl->name = (string_t){0};
             break;
         case NODE_ASSIGN:
-            node->assign.value = NULL;
+            node->var_assign = (struct node_var_assign*)arena_alloc(arena, sizeof(struct node_var_assign), alignof(struct node_var_assign));
+            if(!node->var_assign) return NULL;
+            node->var_assign->name = (string_t){0};
+            node->var_assign->value = NULL;
             break;
         case NODE_REF:
             break;
         case NODE_BLOCK:
-            node->block.statement.elems = NULL;
-            node->block.statement.count = 0;
-            node->block.statement.capacity = 0;
+            node->block = (struct node_block*)arena_alloc(arena, sizeof(struct node_block), alignof(struct node_block));
+            if(!node->block) return NULL;
+            node->block->statement.elems = NULL;
+            node->block->statement.count = 0;
+            node->block->statement.capacity = 0;
             break;
         case NODE_CALL:
-            node->call.args.elems = NULL;
-            node->call.args.count = 0;
-            node->call.args.capacity = 0;
+            node->call = (struct node_func_call*)arena_alloc(arena, sizeof(struct node_func_call), alignof(struct node_func_call));
+            if(!node->call) return NULL;
+            node->call->args.elems = NULL;
+            node->call->args.count = 0;
+            node->call->args.capacity = 0;
             break;
         case NODE_RETURN:
-            node->ret.body = NULL;
+            node->ret = (struct node_return_stmt*)arena_alloc(arena, sizeof(struct node_return_stmt), alignof(struct node_return_stmt));
+            if(!node->ret) return NULL;
+            node->ret->body = NULL;
             break;
         case NODE_LITERAL:
-            node->lit.type = LIT_NULL;
+            node->lit = (struct node_literal*)arena_alloc(arena, sizeof(struct node_literal), alignof(struct node_literal));
+            if(!node->lit) return NULL;
+            node->lit->type = LIT_NULL;
             break;
         case NODE_FOR:
             node->for_loop = (struct node_for*)arena_alloc(arena, sizeof(struct node_for), alignof(struct node_for));
@@ -77,9 +92,16 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             node->func_decl->param.elems = NULL;
             node->func_decl->param.count = 0;
             node->func_decl->param.capacity = 0;
-            node->func_decl->return_type = 0;
+            node->func_decl->return_type = DT_VOID;
             node->func_decl->body = NULL;
             node->func_decl->name = (string_t){0};
+            break;
+        case NODE_ARRAY:
+            node->array_decl = (struct node_array*)arena_alloc(arena, sizeof(struct node_array), alignof(struct node_array));
+            if(!node->array_decl) return NULL;
+            node->array_decl->elements = NULL;
+            node->array_decl->count = 0;
+            node->array_decl->capacity = 0;
             break;
         case NODE_MATCH:
             node->match_stmt = (struct node_match*)arena_alloc(arena, sizeof(struct node_match), alignof(struct node_match));
@@ -186,13 +208,11 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             break;
         default: break;
     }
-
     return node;
 }
 
 void free_ast(arena_t *root)
 {
-    if (!root)
-        return;
+    if (!root) return;
     free_arena(root);
 }

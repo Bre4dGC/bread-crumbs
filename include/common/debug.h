@@ -67,15 +67,15 @@ static inline void print_node(node_t* node, int indent)
             printf("Expression / Assignment (Unhandled display for now)");
             break;
         case NODE_LITERAL:
-            printf("Literal: %s\n", node->lit.value.data);
+            printf("Literal: %s\n", node->lit->value.data);
             break;            
         case NODE_REF:
-            printf("Ref: %s\n", node->ref.name.data);
+            printf("Ref: %s\n", node->var_ref->name.data);
             break;            
         case NODE_BINOP: 
-            printf("BinOp: %s\n", node->binop.lit);
-            print_node(node->binop.left, indent + 1);
-            print_node(node->binop.right, indent + 1);
+            printf("BinOp: %s\n", node->binop->lit);
+            print_node(node->binop->left, indent + 1);
+            print_node(node->binop->right, indent + 1);
             break;            
         case NODE_VAR:
             printf("Var: %s\n", node->var_decl->name.data);
@@ -83,26 +83,26 @@ static inline void print_node(node_t* node, int indent)
             break;            
         case NODE_BLOCK:
             printf("Block:\n");
-            for(size_t i = 0; i < node->block.statement.count; i++){
-                print_node(node->block.statement.elems[i], indent + 1);
+            for(size_t i = 0; i < node->block->statement.count; i++){
+                print_node(node->block->statement.elems[i], indent + 1);
             }
             break;
         case NODE_UNARYOP:
-            printf("UnaryOp: %s\n", node->unaryop.lit);
-            print_node(node->unaryop.right, indent + 1);
+            printf("UnaryOp: %s\n", node->unaryop->lit);
+            print_node(node->unaryop->right, indent + 1);
             break;
         case NODE_CALL:
-            printf("Call: %s\n", node->call.name.data);
-            for(size_t i = 0; i < node->call.args.count; i++){
-                print_node(node->call.args.elems[i], indent + 1);
+            printf("Call: %s\n", node->call->name.data);
+            for(size_t i = 0; i < node->call->args.count; i++){
+                print_node(node->call->args.elems[i], indent + 1);
             }
             break;
         case NODE_ENUM_MEMBER:
-            printf("Enum Member: %s\n", node->enum_member.name.data);
+            printf("Enum Member: %s\n", node->enum_member->name.data);
             break;
         case NODE_RETURN:
             printf("Return:\n");
-            print_node(node->ret.body, indent + 1);
+            print_node(node->ret->body, indent + 1);
             break;
         case NODE_BREAK:
             printf("Break:\n");
@@ -139,6 +139,9 @@ static inline void print_node(node_t* node, int indent)
             print_node(node->for_loop->update, indent + 1);
             print_node(node->for_loop->body, indent + 1);
             break;
+        case NODE_FUNC_PARAM:
+            printf("Function Parameter: %s\n", node->func_param->name.data);
+            break;
         case NODE_FUNC:
             printf("Function: %s\n", node->func_decl->name.data);
             for(size_t i = 0; i < node->func_decl->param.count; i++){
@@ -155,7 +158,7 @@ static inline void print_node(node_t* node, int indent)
         case NODE_ENUM:
             printf("Enum: %s\n", node->enum_decl->name.data ? node->enum_decl->name.data : "(anonymous)");
             for(size_t i = 0; i < node->enum_decl->member.count; i++){
-                printf("  %s\n", node->enum_decl->member.elems[i]->lit.value.data);
+                printf("  %s\n", node->enum_decl->member.elems[i]->lit->value.data);
             }
             break;
         case NODE_MATCH:
