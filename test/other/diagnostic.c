@@ -4,7 +4,7 @@
 #include "common/benchmark.h"
 
 int main(void)
-{    
+{
     bench_start();
 
     bench_stop();

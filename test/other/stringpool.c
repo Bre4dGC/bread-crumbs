@@ -9,7 +9,7 @@ int main(void)
     bench_start();
 
     string_pool_t pool = new_string_pool(ARENA_DEFAULT_SIZE);
-    
+
     string_t string = new_string(&pool, "Hello, World!");
     if(!string.data){
         printf("Failed to intern string.\n");
@@ -33,6 +33,6 @@ int main(void)
 
     bench_stop();
     bench_print("Test string pool");
-    
+
     return 0;
 }

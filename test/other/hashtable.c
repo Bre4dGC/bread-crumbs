@@ -9,12 +9,12 @@ int main(void)
     bench_start();
 
     hash_table_t* table = new_hashtable();
-    
+
     int i_val = 42;
     const char* i_key = "int_key";
     ht_insert(table, i_key, &i_val);
     printf("Inserted key %s with value %d\n", i_key, i_val);
-    
+
     char s_val[] = "str";
     const char* s_key = "str_key";
     ht_insert(table, s_key, s_val);

@@ -8,7 +8,7 @@ int main(void)
     bench_start();
 
     arena_t* arena = new_arena(ARENA_DEFAULT_SIZE);
-    
+
     double* value = arena_alloc(arena, sizeof(double), alignof(double));
     if(!value){
         printf("Something wrong with value");
@@ -29,7 +29,7 @@ int main(void)
 
     *value = 3.1415;
     printf("Value: %f\n", *value);
-    
+
     if(numbers && value && string){
         for(int i = 0; i < 10; i++){
             numbers[i] = i;
@@ -39,9 +39,9 @@ int main(void)
 
     strcpy(string, "hello world");
     printf("\nstring: %s\n", string);
-    
+
     free_arena(arena);
-    
+
     bench_stop();
     bench_print("Test arena");
     return 0;
