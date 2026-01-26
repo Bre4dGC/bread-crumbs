@@ -1,10 +1,10 @@
 # Bread Crumbs
 
-<div align="center"> 
+<div align="center">
     <img src="logo.png" alt="Bread Crumbs Logo" width="300"/>
 </div>
 
-Bread Crumbs is a modern programming language designed for 
+Bread Crumbs is a modern programming language designed for
 
 ## Features
 

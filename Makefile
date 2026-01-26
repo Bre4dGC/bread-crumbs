@@ -117,7 +117,7 @@ install:
 	sudo cp $(MAIN) /usr/local/bin/
 
 clean:
-	rm -rf $(DIR_BIN) $(DIR_OBJ) $(DIR_TEST_OUTPUT)
+	rm -rf $(DIR_BIN) $(DIR_OBJ) $(DIR_TESTS_OUTPUT)
 ###########################################################
 
 ################## COMPILE TO EXECUTABLE ##################
@@ -127,8 +127,8 @@ $(DIR_BIN):
 $(DIR_OBJ):
 	mkdir -p $(DIR_OBJ)
 
-$(DIR_TEST_OUTPUT):
-	mkdir -p $(DIR_TEST_OUTPUT)
+$(DIR_TESTS_OUTPUT):
+	mkdir -p $(DIR_TESTS_OUTPUT)
 
 $(DIR_OBJ)/%.o: %.c | $(DIR_OBJ)
 	mkdir -p $(dir $@)
@@ -138,23 +138,30 @@ $(EXEC_MAIN): $(OBJS_MAIN) | $(DIR_BIN)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(EXEC_TEST_LEXER): $(OBJS_TEST_LEXER) | $(DIR_TEST_OUTPUT)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(EXEC_TEST_PARSER): $(OBJS_TEST_PARSER) | $(DIR_TEST_OUTPUT)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(EXEC_TEST_SEMANTIC): $(OBJS_TEST_SEMANTIC) | $(DIR_TEST_OUTPUT)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(EXEC_TEST_ARENA): $(OBJS_TEST_ARENA) | $(DIR_TEST_OUTPUT)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(EXEC_TEST_STRINGPOOL): $(OBJS_TEST_STRINGPOOL) | $(DIR_TEST_OUTPUT)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(EXEC_TEST_HASHTABLE): $(OBJS_TEST_HASHTABLE) | $(DIR_TEST_OUTPUT)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(EXEC_TEST_DIAGNOSTIC): $(OBJS_TEST_DIAGNOSTIC) | $(DIR_TEST_OUTPUT)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 ###########################################################

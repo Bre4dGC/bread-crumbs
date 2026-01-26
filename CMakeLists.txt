@@ -27,7 +27,7 @@ set(FRONTEND_SRC
 set(BACKEND_SRC
     src/compiler/backend/codegen.c
 )
-    
+
 set(MIDDLE_SRC
     src/compiler/middle/ir.c
     src/compiler/middle/optimizer.c

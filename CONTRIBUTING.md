@@ -32,7 +32,7 @@ Before contributing, please read our README to understand the project's goals an
    git commit -m "Add tensor support for solve feature"
 ```
 5. **Push to Your Fork**:
-   
+
 ```bash
    git push origin feature/your-feature-name
 ```
@@ -65,20 +65,20 @@ To ensure consistency, follow these guidelines for C code in the Bread Crumbs co
 - Indentation: Use 4 spaces (no tabs).
 - Naming: Use snake_case for variables, functions, and identifiers.
 - Function Pointers:
- 
+
 ```c
 datatype* variable_name;
 ```
 
 - Structures, Unions, and Enums:
- 
+
 ```c
 keyword name {
     // Fields or members
 }
 ```
 - Function Declarations:
- 
+
 ```c
 datatype function_name(datatype *parameter_name)
 {
@@ -90,7 +90,7 @@ datatype function_name(datatype *parameter_name)
 ```
 
 - **Avoid typedef for statements**: Use keyword (e.g., struct, enum) directlyExamplele**:
- 
+
 ```c
 int handle_number(struct token *tok)
 {
@@ -104,7 +104,7 @@ For Bread Crumbs code (.brc files):
 - Use 4 spaces indentation.
 - Use snake_case for function and variable names.
 - Example:
- 
+
 ```brc
 func add_numbers(var x: int32, var y: int32) -> int32 {
     return x + y
@@ -114,7 +114,7 @@ test check_add {
     assert add_numbers(3, 4) == 7
 }
 ```
-  
+
 ## Testing
 
 All code contributions must include tests to ensure stability. Use the test and assert constructs in Bread Crumbs:
