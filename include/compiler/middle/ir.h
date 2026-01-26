@@ -1,4 +1,3 @@
-// Intermediate Representation for a stack-based virtual machine
 #pragma once
 #include <stddef.h>
 #include <stdint.h>
@@ -49,7 +48,7 @@ typedef struct {
     size_t sp;
     size_t stack_capacity;
 
-    size_t ip;    
+    size_t ip;
 } virtual_machine_t;
 
 

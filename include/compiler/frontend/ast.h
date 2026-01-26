@@ -161,26 +161,6 @@ struct node_import {
     nodes_t module;
 };
 
-struct node_test {
-    string_t name;
-    node_t* body;
-};
-
-struct node_fork {
-    string_t name;
-    node_t* body;
-};
-
-struct node_simulate {
-    int type;
-    node_t* body;
-};
-
-struct node_solve {
-    nodes_t param;
-    node_t* body;
-};
-
 struct node_spec {
     int type;
     string_t content;
@@ -200,8 +180,6 @@ enum node_kind {
 
     NODE_TYPE,    NODE_IMPORT,  NODE_MODULE,
     NODE_TRAIT,   NODE_IMPL,    NODE_TRYCATCH,
-    NODE_TEST,    NODE_FORK,    NODE_SIMULATE,
-    NODE_SOLVE,
 
     NODE_NAMEOF,  NODE_TYPEOF,
 };
@@ -238,10 +216,6 @@ struct node {
         struct node_type*        type_decl;
         struct node_module*      module_decl;
         struct node_import*      import_decl;
-        struct node_test*        test_stmt;
-        struct node_fork*        fork_stmt;
-        struct node_simulate*    simulate_stmt;
-        struct node_solve*       solve_stmt;
         struct node_spec*        spec_stmt;
     };
 };

@@ -12,10 +12,16 @@ enum arena_lifetime {
     ARENA_PHASE,
 };
 
-typedef struct {
+typedef struct arena_block {
     unsigned char* data;
     size_t offset;
     size_t capacity;
+    struct arena_block* next;
+} arena_block_t;
+
+typedef struct {
+    arena_block_t* head;
+    arena_block_t* current;
 } arena_t;
 
 typedef struct {

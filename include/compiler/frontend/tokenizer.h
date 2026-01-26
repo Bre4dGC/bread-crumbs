@@ -61,12 +61,6 @@ enum category_keyword {
     KW_IMPORT,   KW_MODULE,   KW_TYPE,
     KW_TRY,      KW_CATCH,    KW_FINALLY,
     KW_ASYNC,    KW_AWAIT,    KW_YIELD,
-    KW_TEST,     KW_ASSERT,   KW_VERIFY,
-    KW_WHERE,    KW_SOLVE,    KW_SNAPSHOT,
-    KW_ROLLBACK, KW_COMMIT,   KW_FORK,
-    KW_BRANCH,   KW_MERGE,    KW_REVERT,
-    KW_PUSH,     KW_PULL,     KW_CLONE,
-    KW_SIMULATE, KW_SCENARIOS,KW_CHOOSE,
 
     // special
     KW_NAMEOF,   KW_TYPEOF,

@@ -22,11 +22,11 @@ static inline const char* token_to_str(const token_t token)
             break;
         case CAT_LITERAL:
             switch(token.type){
-                case LIT_IDENT: 
+                case LIT_IDENT:
                     return "IDENT";
                 case LIT_STRING:
                     return "STRING";
-                case LIT_CHAR:  
+                case LIT_CHAR:
                     return "CHAR";
                 case LIT_TRUE:
                 case LIT_FALSE:
@@ -38,7 +38,7 @@ static inline const char* token_to_str(const token_t token)
                 case LIT_OCT:
                 case LIT_INFINITY:
                     return "NUMBER";
-                default: 
+                default:
                     return "LITERAL";
             }
             break;
@@ -60,27 +60,27 @@ static inline void print_node(node_t* node, int indent)
     for(int i = 0; i < indent; i++){
         printf("  ");
     }
-    
+
     switch(node->kind){
-        case NODE_EXPR: 
+        case NODE_EXPR:
         case NODE_ASSIGN:
             printf("Expression / Assignment (Unhandled display for now)");
             break;
         case NODE_LITERAL:
             printf("Literal: %s\n", node->lit->value.data);
-            break;            
+            break;
         case NODE_REF:
             printf("Ref: %s\n", node->var_ref->name.data);
-            break;            
-        case NODE_BINOP: 
+            break;
+        case NODE_BINOP:
             printf("BinOp: %s\n", node->binop->lit);
             print_node(node->binop->left, indent + 1);
             print_node(node->binop->right, indent + 1);
-            break;            
+            break;
         case NODE_VAR:
             printf("Var: %s\n", node->var_decl->name.data);
             print_node(node->var_decl->value, indent + 1);
-            break;            
+            break;
         case NODE_BLOCK:
             printf("Block:\n");
             for(size_t i = 0; i < node->block->statement.count; i++){
@@ -205,25 +205,6 @@ static inline void print_node(node_t* node, int indent)
             printf("Module: %s\n", node->module_decl->name.data);
             print_node(node->module_decl->body, indent + 1);
             break;
-        case NODE_TEST:
-            printf("Test: %s\n", node->test_stmt->name.data);
-            print_node(node->test_stmt->body, indent + 1);
-            break;
-        case NODE_FORK:
-            printf("Fork: %s\n", node->fork_stmt->name.data ? node->fork_stmt->name.data : "(anonymous)");
-            print_node(node->fork_stmt->body, indent + 1);
-            break;
-        case NODE_SOLVE:
-            printf("Solve:\n");
-            for(size_t i = 0; i < node->solve_stmt->param.count; i++){
-                print_node(node->solve_stmt->param.elems[i], indent + 1);
-            }
-            print_node(node->solve_stmt->body, indent + 1);
-            break;
-        case NODE_SIMULATE:
-            printf("Simulate:\n");
-            print_node(node->simulate_stmt->body, indent + 1);
-            break;
         case NODE_NAMEOF:
         case NODE_TYPEOF:
             printf("Reflection:\n");
@@ -235,7 +216,7 @@ static inline void print_node(node_t* node, int indent)
 static inline const char* type_to_string(const type_t* type)
 {
     if(!type) return "<null>";
-    
+
     switch(type->kind){
         case TYPE_UNKNOWN: return "<unknown>";
         case TYPE_ERROR:   return "<error>";
@@ -276,10 +257,10 @@ static inline const char* symbol_kind_name(enum symbol_kind kind)
 static inline void print_scope(const scope_t* scope, int indent)
 {
     if(!scope) return;
-    
+
     const char* scope_name[] = {"global", "function", "block", "struct"};
     printf("%*sScope: %s (%zu symbols)\n", indent, "", scope_name[scope->kind], scope->count);
-    
+
     for(size_t i = 0; i < scope->count; i++){
         symbol_t* sym = ht_lookup(scope->symbols, (void*)(uintptr_t)i);
         while(sym){
@@ -292,7 +273,7 @@ static inline void print_scope(const scope_t* scope, int indent)
 static inline void print_symbol_table(const symbol_table_t* st)
 {
     if(!st) return;
-    
+
     printf("=== Symbol Table ===\n");
     // for(size_t i = 0; i < st->scope_count; i++) print_scope(st->scopes[i], i * 2);
 }

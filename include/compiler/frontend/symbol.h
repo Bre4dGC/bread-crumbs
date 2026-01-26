@@ -32,11 +32,11 @@ enum symbol_flags {
     SYM_FLAG_GLOBAL   = 1 << 2,  // global scope
     SYM_FLAG_EXTERN   = 1 << 3,  // external linkage
     SYM_FLAG_STATIC   = 1 << 4,  // static storage
-    SYM_FLAG_MUTABLE  = 1 << 5,  // 
+    SYM_FLAG_MUTABLE  = 1 << 5,  // mutable variable
     SYM_FLAG_PRIVATE  = 1 << 8,  // private visibility
     SYM_FLAG_PUBLIC   = 1 << 9,  // public visibility
 };
-    
+
 enum scope_kind {
     SCOPE_GLOBAL,
     SCOPE_MODULE,
@@ -71,13 +71,13 @@ struct symbol {
 
     enum symbol_kind kind;
     enum symbol_flags flags;
-    
+
     struct type* type;
     struct type* declared_type;
 
     node_t* decl_node;
     node_t* init_node;
-    
+
     symbol_t* next_in_scope;
     symbol_t* shadowed_symbol;
     symbol_t* overload_next;

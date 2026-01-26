@@ -24,7 +24,7 @@ typedef struct {
 
 typedef struct {
     arena_manager_t arena_manager;
-    
+
     string_pool_t permanent_strings;
     string_pool_t temp_strings;
 

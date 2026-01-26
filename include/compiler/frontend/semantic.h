@@ -9,7 +9,7 @@
 
 enum semantic_phase {
     PHASE_DECLARE, // register symbols
-    PHASE_RESOLVE, // resolve types and references  
+    PHASE_RESOLVE, // resolve types and references
     PHASE_CHECK    // type checking and validation
 };
 

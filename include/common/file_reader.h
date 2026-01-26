@@ -11,67 +11,43 @@
 
 string_t read_file(string_pool_t* sp, const char* filepath)
 {
-    if(!filepath){
-        fprintf(stderr, "[Error] NULL filepath\n");
-        goto error;
-    }
+    if(!filepath) return (string_t){0};
 
     FILE* file = fopen(filepath, "rb");
-    if(!file){
-        fprintf(stderr, "[Error] Cannot open file '%s': %s\n", filepath, strerror(errno));
-        goto error;
-    }
+    if(!file) return (string_t){0};
 
-    // get size
-    if(fseek(file, 0, SEEK_END) != 0){
-        fprintf(stderr, "[Error] Cannot seek file '%s': %s\n", filepath, strerror(errno));
+    // get file size
+    fseek(file, 0, SEEK_END);
+    long filesize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    if(filesize < 0){
         fclose(file);
-        goto error;
+        return (string_t){0};
     }
 
-    long file_size = ftell(file);
-    if(file_size < 0){
-        fprintf(stderr, "[Error] Cannot get file size '%s': %s\n", filepath, strerror(errno));
-        fclose(file);
-        goto error;
-    }
-
-    if(fseek(file, 0, SEEK_SET) != 0){
-        fprintf(stderr, "[Error] Cannot rewind file '%s': %s\n", filepath, strerror(errno));
-        fclose(file);
-        goto error;
-    }
-
-    char* buffer = (char*)malloc(file_size + 1);
+    // allocate buffer
+    char* buffer = (char*)malloc(filesize + 1);
     if(!buffer){
-        fprintf(stderr, "[Error] Cannot allocate %ld bytes for file '%s'\n", file_size + 1, filepath);
         fclose(file);
-        goto error;
+        return (string_t){0};
     }
 
-    // entire file into buffer
-    size_t bytes_read = fread(buffer, 1, file_size, file);
-    if(bytes_read != (size_t)file_size){
-        if(feof(file)){
-            fprintf(stderr, "[Error] Unexpected EOF reading '%s'\n", filepath);
-        }
-        else {
-            fprintf(stderr, "[Error] Cannot read file '%s': %s\n", filepath, strerror(errno));
-        }
+    // read file content
+    size_t read_size = fread(buffer, 1, filesize, file);
+    if(read_size != (size_t)filesize){
         free(buffer);
         fclose(file);
-        goto error;
+        return (string_t){0};
     }
+    buffer[filesize] = '\0'; // null-terminate
 
-    buffer[file_size] = '\0';
     fclose(file);
 
-    length = file_size;
+    string_t result = new_string(sp, buffer);
+    free(buffer);
 
-    return buffer;
-
-error:
-    return (string_t){0};
+    return result;
 }
 
 int is_correct_extension(const char* filepath)

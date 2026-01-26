@@ -24,7 +24,7 @@ enum report_code {
     ERR_UNCLO_STR,
     ERR_UNMAT_PAREN,
     ERR_INVAL_ESCSEQ,
-    
+
     // PARSER
     ERR_UNEXP_TOKEN,
     ERR_INVAL_EXPR,
@@ -37,7 +37,7 @@ enum report_code {
     ERR_EXPEC_KEYWORD,
     ERR_EXPEC_DELIM,
     ERR_EXPEC_PARAM,
-    
+
     // SEMANTIC
     ERR_TYPE_MISMATCH,
     ERR_UNDEC_VAR,
@@ -67,7 +67,7 @@ typedef struct {
 typedef struct {
     enum report_severity severity;
     enum report_code code;
-    
+
     location_t loc;
     size_t length;
 

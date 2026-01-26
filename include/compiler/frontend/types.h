@@ -9,7 +9,7 @@ enum type_kind {
     // service types
     TYPE_UNKNOWN,
     TYPE_ERROR,
-    
+
     // primitive types
     TYPE_VOID,
     TYPE_ANY,
@@ -19,7 +19,7 @@ enum type_kind {
     TYPE_FLOAT,
     TYPE_STR,
     TYPE_CHAR,
-    
+
     // composite types
     TYPE_ARRAY,
     TYPE_FUNCTION,
@@ -38,13 +38,13 @@ typedef struct type {
             struct type* elem_type;
             size_t length;
         } array;
-        
+
         struct {
             struct type* return_type;
             struct type** param_types;
             size_t param_count;
         } func;
-        
+
         // struct/union/enum
         struct {
             struct symbol* scope; // members are symbols in this scope
@@ -71,7 +71,6 @@ extern type_t* type_char;
 
 void init_types(arena_t* arena);
 void free_type(type_t* type);
-void free_types(void);
 
 type_t* new_type_array(arena_t* arena, type_t* elem_type, const size_t length);
 type_t* new_type_function(arena_t* arena, type_t* return_type, type_t** param_types, const size_t param_count);
