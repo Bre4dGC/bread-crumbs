@@ -151,9 +151,9 @@ token_t next_token(lexer_t* lexer)
                     length++;
                 }
                 token = new_token(CAT_SERVICE, SERV_ILLEGAL, ch_str);
-                
+
                 add_report(lexer->reports, SEV_ERR, ERR_ILLEG_CHAR, (location_t){lexer->loc.line, lexer->loc.column - length}, length, lexer->input->data);
-                
+
                 read_ch(lexer);
             }
             break;
@@ -215,7 +215,7 @@ token_t handle_ident(lexer_t* lexer)
     }
 
     const token_t *kw = find_token(ident.data);
-    
+
     if(kw) return new_token(kw->category, kw->type, kw->literal);
     else   return new_token(CAT_LITERAL, LIT_IDENT, ident.data);
 }
@@ -233,7 +233,7 @@ token_t handle_number(lexer_t *lexer)
         }
     }
     else lit = LIT_NUMBER;
-    
+
     string_t num_str = read_number(lexer, lit);
     if(!num_str.data) return new_token(CAT_SERVICE, SERV_ILLEGAL, "BAD_NUMBER");
 
@@ -304,9 +304,9 @@ void handle_comment(lexer_t* lexer)
 {
     if(!lexer) return;
     switch(peek_ch(lexer)){
-        case '#': while(lexer->ch != '#' && peek_ch(lexer) != '#') read_ch(lexer); break;
+        case '#': read_ch(lexer); read_ch(lexer); while(lexer->ch != '\n' && lexer->ch != '\0') read_ch(lexer); break;
         case '[': while(lexer->ch != ']' && peek_ch(lexer) != '#') read_ch(lexer); break;
-        default:  while(lexer->ch != '#') read_ch(lexer);
+        default:  while(lexer->ch != '\n') read_ch(lexer);
     }
 }
 
@@ -414,7 +414,7 @@ string_t read_number(lexer_t* lexer, enum category_literal lit)
                 read_ch(lexer);
                 length++;
             }
-            
+
             add_report(lexer->reports, SEV_ERR, ERR_INVAL_LIT, (location_t){lexer->loc.line, lexer->loc.column - length}, length, lexer->input->data);
 
             if(buffer != stack_buffer) free(buffer);
@@ -508,7 +508,7 @@ string_t read_string(lexer_t *lexer, char quote_char)
         if(buffer != stack_buffer) free(buffer);
         return (string_t){0};
     }
-    
+
     if(buffer != stack_buffer) free(buffer);
     return stored;
 }

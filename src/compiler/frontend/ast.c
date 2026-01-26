@@ -39,6 +39,9 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             node->var_assign->value = NULL;
             break;
         case NODE_REF:
+            node->var_ref = (struct node_var_ref*)arena_alloc(arena, sizeof(struct node_var_ref), alignof(struct node_var_ref));
+            if(!node->var_ref) return NULL;
+            node->var_ref->name = (string_t){0};
             break;
         case NODE_BLOCK:
             node->block = (struct node_block*)arena_alloc(arena, sizeof(struct node_block), alignof(struct node_block));
@@ -172,32 +175,6 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             if(!node->module_decl) return NULL;
             node->module_decl->body = NULL;
             node->module_decl->name = (string_t){0};
-            break;
-        case NODE_TEST:
-            node->test_stmt = (struct node_test*)arena_alloc(arena, sizeof(struct node_test), alignof(struct node_test));
-            if(!node->test_stmt) return NULL;
-            node->test_stmt->body = NULL;
-            node->test_stmt->name = (string_t){0};
-            break;
-        case NODE_FORK:
-            node->fork_stmt = (struct node_fork*)arena_alloc(arena, sizeof(struct node_fork), alignof(struct node_fork));
-            if(!node->fork_stmt) return NULL;
-            node->fork_stmt->body = NULL;
-            node->fork_stmt->name = (string_t){0};
-            break;
-        case NODE_SOLVE:
-            node->solve_stmt = (struct node_solve*)arena_alloc(arena, sizeof(struct node_solve), alignof(struct node_solve));
-            if(!node->solve_stmt) return NULL;
-            node->solve_stmt->param.elems = NULL;
-            node->solve_stmt->param.count = 0;
-            node->solve_stmt->param.capacity = 0;
-            node->solve_stmt->body = NULL;
-            break;
-        case NODE_SIMULATE:
-            node->simulate_stmt = (struct node_simulate*)arena_alloc(arena, sizeof(struct node_simulate), alignof(struct node_simulate));
-            if(!node->simulate_stmt) return NULL;
-            node->simulate_stmt->type = 0;
-            node->simulate_stmt->body = NULL;
             break;
         case NODE_NAMEOF:
         case NODE_TYPEOF:

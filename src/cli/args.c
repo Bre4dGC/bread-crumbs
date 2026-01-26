@@ -12,7 +12,7 @@ cli_option_set_t* new_args(void)
 void free_args(cli_option_set_t* opt_set)
 {
     if(!opt_set) return;
-    
+
     if(opt_set->items){
         for(size_t i = 0; i < opt_set->count; ++i){
             if(opt_set->items[i].name)          free(opt_set->items[i].name);

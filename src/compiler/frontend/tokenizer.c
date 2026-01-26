@@ -22,7 +22,7 @@ void init_tokens(void)
     if(tokens_table != NULL) return;
 
     static token_t tokens[] = {
-        // operators
+        /* operators */
         {"++", OPER_INCREM, C_OP}, {"--", OPER_DECREM, C_OP},
         {"==", OPER_EQ,     C_OP}, {"!=", OPER_NEQ,    C_OP},
         {"+=", OPER_ADD,    C_OP}, {"-=", OPER_SUB,    C_OP},
@@ -48,17 +48,7 @@ void init_tokens(void)
         {"finally", KW_FINALLY, C_KW},
         {"async",   KW_ASYNC,   C_KW}, {"await",    KW_AWAIT,     C_KW},
         {"yield",   KW_YIELD,   C_KW},
-        {"test",    KW_TEST,    C_KW}, {"assert",   KW_ASSERT,    C_KW},
-        {"verify",  KW_VERIFY,  C_KW},
-        {"solve",   KW_SOLVE,   C_KW}, {"where",    KW_WHERE,     C_KW},    
-        {"snapshot",KW_SNAPSHOT,C_KW}, {"rollback", KW_ROLLBACK,  C_KW},
-        {"commit",  KW_COMMIT,  C_KW}, {"fork",     KW_FORK,      C_KW},
-        {"merge",   KW_MERGE,   C_KW}, {"revert",   KW_REVERT,    C_KW},
-        {"push",    KW_PUSH,    C_KW}, {"pull",     KW_PULL,      C_KW},
-        {"clone",   KW_CLONE,   C_KW}, {"simulate", KW_SIMULATE,  C_KW},
-        {"choose",  KW_CHOOSE,  C_KW}, {"scenarios",KW_SCENARIOS, C_KW},  
-        {"branch",  KW_BRANCH,  C_KW},  
-    
+
         /* data types */
         {"int",     DT_INT,     C_DT}, {"uint",    DT_UINT,       C_DT},
         {"short",   DT_SHORT,   C_DT}, {"ushort",  DT_USHORT,     C_DT},
@@ -67,21 +57,21 @@ void init_tokens(void)
         {"float",   DT_FLOAT,   C_DT}, {"decimal", DT_DECIMAL,    C_DT},
         {"str",     DT_STR,     C_DT},
         {"bool",    DT_BOOL,    C_DT}, {"any",     DT_ANY,        C_DT},
-    
+
         /* modifiers */
         {"var",     MOD_VAR,    C_MD}, {"const",   MOD_CONST,     C_MD},
         {"final",   MOD_FINAL,  C_MD}, {"static",  MOD_STATIC,    C_MD},
-    
+
         /* literals */
         {"true",    LIT_TRUE,   C_LT}, {"false",    LIT_FALSE,    C_LT},
         {"null",    LIT_NULL,   C_LT}, {"infinity", LIT_INFINITY, C_LT},
 
         /* specials */
-        {"nameof",  KW_NAMEOF,  C_KW}, {"typeof",   KW_TYPEOF,    C_KW}, 
+        {"nameof",  KW_NAMEOF,  C_KW}, {"typeof",   KW_TYPEOF,    C_KW},
     };
-    
+
     const size_t tokens_count = sizeof(tokens) / sizeof(tokens[0]);
-    
+
     tokens_table = new_hashtable();
 
     for(size_t i = 0; i < tokens_count; ++i){

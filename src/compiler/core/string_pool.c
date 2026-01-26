@@ -46,7 +46,7 @@ string_t new_nstring(string_pool_t* pool, const char* str, const size_t length)
     pool->elements[pool->count].hash = ht_hash(stored_str);
 
     pool->count++;
-    
+
     return pool->elements[pool->count - 1];
 }
 

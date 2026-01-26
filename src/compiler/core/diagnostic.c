@@ -12,15 +12,15 @@ report_table_t* new_report_table(arena_t* arena)
 {
     report_table_t* table = (report_table_t*)arena_alloc(arena, sizeof(report_table_t), alignof(report_table_t));
     if(!table) return NULL;
-    
-    table->arena = new_arena(DEFAULT_REPORT_POOL_SIZE);
+
+    table->arena = new_arena(DEFAULT_REPORT_POOL_SIZE * sizeof(report_t));
     if(!table->arena){
         return NULL;
     }
-    
+
     table->string_pool = new_string_pool(DEFAULT_REPORT_POOL_SIZE);
     table->count = 0;
-    
+
     return table;
 }
 
@@ -36,14 +36,18 @@ void add_report(
     const char* safe_input = input ? input : "";
 
     if(!arena_has_space(rt->arena, sizeof(report_t), alignof(report_t))){
-        if(!arena_expand(rt->arena, rt->arena->capacity * 2)){
+        size_t cur = rt->arena->current ? rt->arena->current->capacity : 0;
+        size_t need = sizeof(report_t) + (alignof(report_t) - 1);
+        size_t new_cap = cur ? (cur * 2) : need;
+        if(new_cap < need) new_cap = need;
+        if(!arena_expand(rt->arena, new_cap)){
             return;
         }
     }
 
     report_t* store_report = arena_alloc(rt->arena, sizeof(report_t), alignof(report_t));
     if(!store_report) return;
-    
+
     *store_report = (report_t){
         .severity = sev,
         .code = code,
@@ -74,7 +78,7 @@ void print_report(const report_t* report)
 
     printf(" \033[36m%s\033[0m", report_msg(report->code));
 
-    printf("\n%s\033[0m %s at %zu:%zu\n",   report->severity == SEV_ERR  ? "\033[31m[ERR]"   :
+    printf("\n%s\033[0m %s at %zu:%zu\n",   report->severity == SEV_ERR  ? "\033[31m[ERROR]"   :
                                             report->severity == SEV_WARN ? "\033[33m[WARNING]" :
                                             report->severity == SEV_NOTE ? "\033[34m[NOTE]"    :
                                                                            "\033[31m[UNKNOWN]",
@@ -84,13 +88,17 @@ void print_report(const report_t* report)
 void print_report_table(const report_table_t* table)
 {
     if(!table) return;
-    
-    const unsigned char* data = table->arena->data;
-    size_t offset = 0;
-    for(size_t i = 0; i < table->count; i++){
-        report_t* report = (report_t*)(data + offset);
-        print_report(report);
-        offset += sizeof(report_t);
+
+    size_t printed = 0;
+    for(arena_block_t* b = table->arena->head; b && printed < table->count; b = b->next){
+        const unsigned char* data = b->data;
+        size_t offset = 0;
+        while(offset + sizeof(report_t) <= b->offset && printed < table->count){
+            report_t* report = (report_t*)(data + offset);
+            print_report(report);
+            offset += sizeof(report_t);
+            printed++;
+        }
     }
 }
 

@@ -29,15 +29,15 @@ hash_table_t* new_hashtable(void)
 void ht_insert(hash_table_t* table, const char* key, void* value)
 {
     if(!table || !key) return;
-    
+
     const string_t str = {key, strlen(key), ht_hash(key)};
-    
+
     if(table->key.data == NULL){
         table->key = str;
         table->value = value;
         return;
     }
-    
+
     while(table != NULL){
         if(table->key.data && table->key.hash == str.hash){
             if(strcmp(table->key.data, str.data) == 0){
@@ -48,7 +48,7 @@ void ht_insert(hash_table_t* table, const char* key, void* value)
         if(table->next == NULL) break;
         table = table->next;
     }
-    
+
     hash_table_t* new_entry = (hash_table_t*)malloc(sizeof(hash_table_t));
     if(!new_entry) return;
     new_entry->key = str;
@@ -62,7 +62,7 @@ void* ht_lookup(hash_table_t* table, const char* key)
     if(!table || !key) return NULL;
 
     const string_t str = {key, strlen(key), ht_hash(key)};
-    
+
     while(table != NULL){
         if(table->key.data && table->key.hash == str.hash){
             if(strcmp(table->key.data, str.data) == 0){
@@ -79,7 +79,7 @@ void ht_delete(hash_table_t* table, const char* key)
     if(!table || !key) return;
 
     const string_t str = {key, strlen(key), ht_hash(key)};
-    
+
     if(table->key.data && table->key.hash == str.hash){
         if(table->next){
             hash_table_t* next = table->next;
@@ -94,7 +94,7 @@ void ht_delete(hash_table_t* table, const char* key)
         }
         return;
     }
-    
+
     hash_table_t* entry = table;
     hash_table_t* next = entry->next;
 

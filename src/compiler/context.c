@@ -9,7 +9,7 @@ compiler_memory_t* new_compiler_memory(void)
 {
     compiler_memory_t* mem = (compiler_memory_t*)malloc(sizeof(compiler_memory_t));
     if(!mem) return NULL;
-    
+
     return mem;
 }
 

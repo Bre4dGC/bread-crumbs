@@ -7,18 +7,18 @@
 static inline int64_t read_i64(virtual_machine_t *vm)
 {
     int64_t v = 0;
-    
+
     return v;
 }
 
 static inline void push_val(virtual_machine_t *vm, int64_t v)
 {
-    
+
 }
 
 static inline int64_t pop_val(virtual_machine_t *vm)
 {
-    
+
     return 0;
 }
 

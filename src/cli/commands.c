@@ -24,7 +24,7 @@ command_t* new_command(
 void free_command(command_t* cmd)
 {
     if(!cmd) return;
-    
+
     if(cmd->name)        free(cmd->name);
     if(cmd->description) free(cmd->description);
     if(cmd->usage)       free(cmd->usage);

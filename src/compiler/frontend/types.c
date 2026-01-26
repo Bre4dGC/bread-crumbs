@@ -55,7 +55,7 @@ type_t* new_type_array(arena_t* arena, type_t* elem_type, const size_t length)
 
     type->array.elem_type = elem_type;
     type->array.length = length;
-    
+
     if(length > 0 && elem_type){
         type->size = elem_type->size * length;
         type->align = elem_type->align;
@@ -64,7 +64,7 @@ type_t* new_type_array(arena_t* arena, type_t* elem_type, const size_t length)
         type->size = sizeof(void*);
         type->align = sizeof(void*);
     }
-    
+
     return type;
 }
 
@@ -85,7 +85,7 @@ type_t* new_type_function(arena_t* arena, type_t* return_type, type_t** param_ty
         type->size = sizeof(void*);
         type->align = sizeof(void*);
     }
-    
+
     return type;
 }
 
@@ -117,7 +117,7 @@ bool types_equal(const type_t* a, const type_t* b)
             }
             return true;
 
-        case TYPE_STRUCT: case TYPE_UNION: 
+        case TYPE_STRUCT: case TYPE_UNION:
             return a->compound.member_count == b->compound.member_count;
 
         default: return true;
@@ -147,7 +147,7 @@ bool types_compatible(const type_t* a, const type_t* b)
             case TYPE_ENUM:
                 return true;
             default:
-                return false;        
+                return false;
         }
     }
 
@@ -155,12 +155,12 @@ bool types_compatible(const type_t* a, const type_t* b)
     if((a->kind == TYPE_INT && b->kind == TYPE_UINT) || (a->kind == TYPE_UINT && b->kind == TYPE_INT)){
         return true;
     }
-    
+
     // unknown type is compatible with any type
     if(a->kind == TYPE_UNKNOWN || b->kind == TYPE_UNKNOWN){
         return true;
     }
-    
+
     return false;
 }
 
@@ -178,14 +178,14 @@ bool is_integer_type(const type_t* type)
 
 bool is_signed_type(const type_t* type)
 {
-    if(!type) return false; 
+    if(!type) return false;
     return type->kind == TYPE_INT || type->kind == TYPE_FLOAT;
 }
 
 void free_type(type_t* type)
 {
     if(!type) return;
-    
+
     switch(type->kind){
         case TYPE_ARRAY:
             if(type->array.elem_type){
