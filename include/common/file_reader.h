@@ -16,7 +16,6 @@ string_t read_file(string_pool_t* sp, const char* filepath)
     FILE* file = fopen(filepath, "rb");
     if(!file) return (string_t){0};
 
-    // get file size
     fseek(file, 0, SEEK_END);
     long filesize = ftell(file);
     fseek(file, 0, SEEK_SET);
@@ -26,14 +25,12 @@ string_t read_file(string_pool_t* sp, const char* filepath)
         return (string_t){0};
     }
 
-    // allocate buffer
     char* buffer = (char*)malloc(filesize + 1);
     if(!buffer){
         fclose(file);
         return (string_t){0};
     }
 
-    // read file content
     size_t read_size = fread(buffer, 1, filesize, file);
     if(read_size != (size_t)filesize){
         free(buffer);

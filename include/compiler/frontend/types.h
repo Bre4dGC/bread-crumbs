@@ -16,16 +16,20 @@ enum type_kind {
     TYPE_BOOL,
     TYPE_INT,
     TYPE_UINT,
+    TYPE_SHORT,
+    TYPE_USHORT,
+    TYPE_LONG,
+    TYPE_ULONG,
     TYPE_FLOAT,
+    TYPE_DECIMAL,
     TYPE_STR,
     TYPE_CHAR,
 
     // composite types
     TYPE_ARRAY,
-    TYPE_FUNCTION,
+    TYPE_FUNC,
     TYPE_STRUCT,
     TYPE_ENUM,
-    TYPE_UNION,
 };
 
 typedef struct type {
@@ -45,7 +49,7 @@ typedef struct type {
             size_t param_count;
         } func;
 
-        // struct/union/enum
+        // struct/enum
         struct {
             struct symbol* scope; // members are symbols in this scope
             size_t member_count;

@@ -1,4 +1,3 @@
-// cli/core.h
 #pragma once
 
 #include "cli/commands.h"

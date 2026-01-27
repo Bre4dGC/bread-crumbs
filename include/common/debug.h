@@ -139,7 +139,7 @@ static inline void print_node(node_t* node, int indent)
             print_node(node->for_loop->update, indent + 1);
             print_node(node->for_loop->body, indent + 1);
             break;
-        case NODE_FUNC_PARAM:
+        case NODE_VAR_PARAM:
             printf("Function Parameter: %s\n", node->func_param->name.data);
             break;
         case NODE_FUNC:
@@ -196,9 +196,9 @@ static inline void print_node(node_t* node, int indent)
             print_node(node->type_decl->body, indent + 1);
             break;
         case NODE_IMPORT:
-            printf("Import: %s\n", node->import_decl->path.data);
-            for(size_t i = 0; i < node->import_decl->module.count; ++i){
-                printf("Module: %s\n", node->import_decl->module.elems[i]->module_decl->name.data);
+            printf("Import:\n");
+            for(size_t i = 0; i < node->import_decl->count; ++i){
+                printf("Module: %s\n", node->import_decl->modules[i].data);
             }
             break;
         case NODE_MODULE:
@@ -224,14 +224,18 @@ static inline const char* type_to_string(const type_t* type)
         case TYPE_BOOL:    return "bool";
         case TYPE_INT:     return "int";
         case TYPE_UINT:    return "uint";
+        case TYPE_SHORT:   return "short";
+        case TYPE_USHORT:  return "ushort";
+        case TYPE_LONG:    return "long";
+        case TYPE_ULONG:   return "ulong";
         case TYPE_FLOAT:   return "float";
+        case TYPE_DECIMAL: return "decimal";
         case TYPE_STR:     return "str";
         case TYPE_CHAR:    return "char";
         case TYPE_ARRAY:   return "array";
-        case TYPE_FUNCTION:return "function";
+        case TYPE_FUNC:    return "function";
         case TYPE_STRUCT:  return "struct";
         case TYPE_ENUM:    return "enum";
-        case TYPE_UNION:   return "union";
         default:           return "<invalid>";
     }
 }

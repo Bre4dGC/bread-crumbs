@@ -41,15 +41,14 @@ enum op_code {
 
 typedef struct {
     uint8_t* code;
-    size_t code_size;
-    size_t capacity;
+    size_t length;
+} ir_t;
 
-    int64_t* stack;
-    size_t sp;
-    size_t stack_capacity;
-
-    size_t ip;
-} virtual_machine_t;
-
-
-void vm_execute(virtual_machine_t* vm);
+ir_t* new_ir(void);
+void free_ir(ir_t* ir);
+void ir_add_op(ir_t* ir, enum op_code op, int64_t value);
+void ir_add_jump(ir_t* ir, int64_t target);
+void ir_add_call(ir_t* ir, int64_t func_id);
+void ir_add_return(ir_t* ir);
+void ir_add_jump_if(ir_t* ir, int64_t target);
+void ir_add_jump_ifnot(ir_t* ir, int64_t target);

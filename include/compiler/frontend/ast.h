@@ -91,7 +91,7 @@ struct node_for {
     node_t* body;
 };
 
-struct node_func_param {
+struct node_var_param {
     string_t name;
     bool is_variadic;
     int dtype;
@@ -157,8 +157,9 @@ struct node_module {
 };
 
 struct node_import {
-    string_t path;
-    nodes_t module;
+    string_t* modules;
+    size_t count;
+    size_t capacity;
 };
 
 struct node_spec {
@@ -171,7 +172,7 @@ enum node_kind {
     NODE_BLOCK,   NODE_UNARYOP, NODE_VAR,
     NODE_CALL,    NODE_ASSIGN,  NODE_REF,
 
-    NODE_ENUM_MEMBER, NODE_FUNC_PARAM,
+    NODE_ENUM_MEMBER, NODE_VAR_PARAM,
 
     NODE_IF,      NODE_WHILE,   NODE_FOR,
     NODE_FUNC,    NODE_MATCH,   NODE_CASE,
@@ -203,7 +204,7 @@ struct node {
         struct node_if*          if_stmt;
         struct node_while*       while_loop;
         struct node_for*         for_loop;
-        struct node_func_param*  func_param;
+        struct node_var_param*  func_param;
         struct node_func*        func_decl;
         struct node_match*       match_stmt;
         struct node_case*        match_case;
