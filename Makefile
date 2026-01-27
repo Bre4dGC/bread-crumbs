@@ -13,7 +13,7 @@ DIR_BIN = bin
 DIR_OBJ = obj
 DIR_SRC = src
 
-DIR_TESTS = test
+DIR_TESTS 		   = test
 DIR_TESTS_OUTPUT   = test/output
 DIR_TESTS_COMPILER = test/compiler
 DIR_TESTS_OTHER    = test/other
@@ -23,19 +23,22 @@ DIR_COMP_CORE 	  = $(wildcard src/compiler/core/*.c)
 DIR_COMP_FRONTEND = $(wildcard src/compiler/frontend/*.c)
 DIR_COMP_MIDDLE   = $(wildcard src/compiler/middle/*.c)
 DIR_COMP_BACKEND  = $(wildcard src/compiler/backend/*.c)
+DIR_RUNTIME 	  = $(wildcard src/compiler/runtime/*.c)
 
 DIR_CLI     = $(wildcard src/cli/*.c)
-DIR_RUNTIME = $(wildcard src/runtime/*.c)
 ###########################################################
 
 ####################### EXECUTABLE ########################
+# Main executable
 EXEC_MAIN = $(DIR_BIN)/crum
 
+# Compiler tests
 EXEC_TEST_LEXER    = $(DIR_TESTS_OUTPUT)/lexing
 EXEC_TEST_PARSER   = $(DIR_TESTS_OUTPUT)/parsing
 EXEC_TEST_SEMANTIC = $(DIR_TESTS_OUTPUT)/analisis
 EXEC_TEST_CODEGEN  = $(DIR_TESTS_OUTPUT)/codegen
 
+# Other tests
 EXEC_TEST_ARENA   	 = $(DIR_TESTS_OUTPUT)/arena
 EXEC_TEST_STRINGPOOL = $(DIR_TESTS_OUTPUT)/stringpool
 EXEC_TEST_HASHTABLE  = $(DIR_TESTS_OUTPUT)/hashtable
@@ -44,11 +47,11 @@ EXEC_TEST_DIAGNOSTIC = $(DIR_TESTS_OUTPUT)/diagnostic
 
 ###################### SOURCE FILES #######################
 SRC_MAIN =  $(DIR_SRC)/main.c 							\
+			$(DIR_CLI)		 							\
             $(DIR_COMP_CORE)   			 				\
             $(DIR_COMP_FRONTEND)			 			\
 			$(DIR_COMP_MIDDLE)							\
 			$(DIR_COMP_BACKEND)							\
-			$(DIR_CLI)		 							\
 			$(DIR_RUNTIME)
 
 SRC_TEST_LEXER = 	$(DIR_TESTS)/compiler/lexing.c 		\

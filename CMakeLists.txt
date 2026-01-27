@@ -34,10 +34,10 @@ set(MIDDLE_SRC
 )
 
 set(RUNTIME_SRC
-    src/runtime/ffi.c
-    src/runtime/memory.c
-    src/runtime/profiler.c
-    src/runtime/gc.c
+    src/compiler/runtime/ffi.c
+    src/compiler/runtime/memory.c
+    src/compiler/runtime/profiler.c
+    src/compiler/runtime/gc.c
 )
 
 add_library(core_lib STATIC ${CORE_SRC})
