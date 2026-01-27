@@ -5,6 +5,7 @@
         === Functions ===
 alloc(size : int) : *type                 -- Allocates memory for the specified type and returns a raw pointer.
 realloc(ptr : *type, size : int) : *type  -- Reallocates memory for the specified type and returns a raw pointer.
+capac(ptr : *type) : int                  -- Returns the capacity of the memory allocated for the specified raw pointer.
 free(ptr : *type)                         -- Frees the memory allocated for the specified raw pointer.
 
 ]#

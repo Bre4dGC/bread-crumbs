@@ -1,26 +1,23 @@
 #[ Compound types base usage
 
+type <name> = <compound_type> {
+    <member1> = <value1>
+    <member2> = <value2>
+    ...
+}
 
+<name>.<member1>
+<name>.<member2>
+...
+
+func <compound_name>.<method_name>()
 {
     ...
 }
 
-        === Examples ===
-type Direction = enum {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT
-}
+<compound_name>.<method_name>()
 
 ]#
-
-type Direction = enum {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT
-}
 
 type Person = struct {
     var name   : str
@@ -37,12 +34,6 @@ func main()
 {
     var person : Person = {"Bread", 16, 170}
     person.display() # name: Bread, age: 16, height: 170
-    
+
     const person_direction : Direction = Direction.UP
-    match person_direction {
-        Direction.UP    => print("Going up!")
-        Direction.DOWN  => print("Going down!")
-        Direction.LEFT  => print("Going left!")
-        Direction.RIGHT => print("Going right!")
-    }
 }
