@@ -2,6 +2,7 @@
 #include "compiler/core/diagnostic.h"
 #include "compiler/core/string_pool.h"
 #include "compiler/frontend/lexer.h"
+#include "common/file_reader.h"
 #include "common/benchmark.h"
 
 int main(void)
@@ -11,9 +12,12 @@ int main(void)
     arena_t* arena = new_arena(ARENA_DEFAULT_SIZE);
     string_pool_t string_pool = new_string_pool(ARENA_DEFAULT_SIZE);
     report_table_t* reports = new_report_table(arena);
-
-    const char* code = "++ -- == != += -= *= /= %= && || <= >= .. -> if else elif for do while func return break continue default match case struct enum import module type trait impl try catch finally async await yield test assert verify solve where snapshot rollback commit fork merge revert push pull clone simulate choose scenarios branch int uint short ushort long ulong char byte float decimal str bool any var const final static true false null infinity nameof typeof";
-    string_t input = new_string(&string_pool, code);
+    
+    string_t input = read_file(&string_pool, "test/cases/tokens.brc");
+    if(!input.data){
+        fprintf(stderr, "Failed to read input file\n");
+        return 1;
+    }
 
     lexer_t* lexer = new_lexer(arena, &string_pool, reports, &input);
     if(!lexer){

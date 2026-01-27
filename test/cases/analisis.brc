@@ -1,7 +1,7 @@
 func main()
 {
-    #Type mismatch error
+    # Type mismatch error
     var x : int = "This is a string"
-    print(y) #Undeclared variable error
-    var z : int = 10 / 0 #Division by zero error
+    print(y) # Undeclared variable error
+    var z : int = 10 / 0 # Division by zero error
 }
