@@ -10,7 +10,9 @@
 #include "compiler/frontend/tokenizer.h"
 #include "compiler/frontend/ast.h"
 #include "compiler/frontend/parser.h"
+#ifdef DEBUG
 #include "common/debug.h"
+#endif
 
 node_t* parse_expr(parser_t* parser);
 node_t* parse_operator_expr(parser_t* parser);
@@ -99,6 +101,29 @@ bool is_eof(const token_t token)
     return token.category == CAT_SERVICE && token.type == SERV_EOF;
 }
 
+inline void set_node_location(node_t* node, parser_t* parser)
+{
+    if(!node || !parser) return;
+    node->loc = parser->lexer->loc;
+}
+
+inline void set_node_length(node_t* node, parser_t* parser, size_t start_pos)
+{
+    if(!node || !parser) return;
+    size_t end_pos = parser->lexer->pos;
+    if(end_pos > start_pos){
+        node->length = end_pos - start_pos;
+    }
+    else {
+        node->length = 1;
+    }
+}
+
+inline size_t get_lexer_position(parser_t* parser)
+{
+    return parser ? parser->lexer->pos : 0;
+}
+
 void advance_token(parser_t* parser)
 {
     if(!parser || is_eof(parser->token.next)) return;
@@ -143,9 +168,11 @@ ast_t* parse_program(parser_t* parser)
 
         node_t* stmt = parse_stmt(parser);
         if(!stmt){
-            if((parser->token.current.category == prev_token.category &&
-                parser->token.current.type == prev_token.type) &&
-               !is_eof(parser->token.current) && !is_eof(parser->token.next)){
+            if((parser->token.current.category == prev_token.category
+            &&  parser->token.current.type == prev_token.type)
+            && !is_eof(parser->token.current)
+            && !is_eof(parser->token.next))
+            {
                 advance_token(parser);
             }
             continue;
@@ -211,7 +238,7 @@ node_t* parse_paren_expr(parser_t* parser)
         case PAR_LBRACE:   return parse_block(parser);
         case PAR_LBRACKET: return parse_array(parser);
         case PAR_LPAREN:
-            advance_token(parser);
+            advance_token(parser); // skip '('
 
             node_t* node = parse_expr(parser);
             if(!node) return NULL;
@@ -226,20 +253,11 @@ node_t* parse_paren_expr(parser_t* parser)
 
 node_t* parse_literal_expr(parser_t* parser)
 {
-    if(parser->token.current.type == LIT_IDENT){
-        if(parser->token.next.category == CAT_OPERATOR && parser->token.next.type == OPER_ASSIGN){
-            return parse_var_decl(parser);
-        }
-        if(parser->token.next.category == CAT_PAREN && parser->token.next.type == PAR_LPAREN){
-            return parse_func_call(parser);
-        }
-        return parse_var_ref(parser);
-    }
-
     node_t* node = new_node(parser->ast, NODE_LITERAL);
     if(!node) return NULL;
 
-    node->lit->value = new_string(parser->string_pool, parser->token.current.literal);// parser->token.current.literal ? FIX
+    node->lit->value = new_string(parser->string_pool, parser->token.current.literal);
+    if(!node->lit->value.data) return NULL;
     node->lit->type = parser->token.current.type;
 
     advance_token(parser);
@@ -313,8 +331,10 @@ bool add_block_stmt(parser_t* parser, node_t* node, node_t* stmt)
 
 node_t* parse_block(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_BLOCK);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip '{'
 
@@ -323,7 +343,7 @@ node_t* parse_block(parser_t* parser)
     {
         // check for EOF
         if(is_eof(parser->token.current) || is_eof(parser->token.next)){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
             return NULL;
         }
 
@@ -355,34 +375,41 @@ node_t* parse_block(parser_t* parser)
         return NULL;
     }
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_func_call(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_CALL);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
-    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+    // extract function name before consuming token
+    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
         return NULL;
     }
     node->call->name = new_string(parser->string_pool, parser->token.current.literal);
     if(!node->call->name.data) return NULL;
     advance_token(parser);
 
-    size_t capacity = 0;
+    // parse arguments if '(' is present
     if(check_token(parser, CAT_PAREN, PAR_LPAREN)){
         advance_token(parser); // skip '('
-        while (!check_token(parser,  CAT_PAREN, PAR_RPAREN)){
+        
+        // parse arguments until ')'
+        while (!check_token(parser, CAT_PAREN, PAR_RPAREN)){
             node_t* arg = parse_expr(parser);
             if(!arg) return NULL;
 
-            if(node->call->args.count >= capacity){
-                size_t new_capacity = capacity == 0 ? 4 : capacity * 2;
-                node_t** new_args = (node_t**)arena_alloc_array(parser->ast, sizeof(node->call->args), new_capacity * sizeof(node_t*), alignof(node_t*));
+            // grow array if needed
+            if(node->call->args.count >= node->call->args.capacity){
+                size_t new_capacity = node->call->args.capacity == 0 ? 4 : node->call->args.capacity * 2;
+                node_t** new_args = (node_t**)arena_alloc_array(parser->ast, sizeof(node->call->args.elems[0]), new_capacity * sizeof(node_t*), alignof(node_t*));
                 if(!new_args) return NULL;
                 node->call->args.elems = new_args;
-                capacity = new_capacity;
+                node->call->args.capacity = new_capacity;
             }
 
             node->call->args.elems[node->call->args.count++] = arg;
@@ -395,41 +422,44 @@ node_t* parse_func_call(parser_t* parser)
             }
         }
 
-        if(!check_token(parser,  CAT_PAREN, PAR_RPAREN)){
+        // expect closing ')'
+        if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
             return NULL;
         }
-        advance_token(parser); // skip ')'
     }
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_var_decl(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_VAR);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
-    // optional modifier
-    if(parser->token.current.category == CAT_MODIFIER){
-        node->var_decl->modif = parser->token.current.type;
-        advance_token(parser);
+    // expect modifier
+    if(parser->token.current.category != CAT_MODIFIER){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_KEYWORD, node->loc, node->length, parser->lexer->input->data);
     }
+    node->var_decl->modif = parser->token.current.type;
+    advance_token(parser);
 
     // expect identifier
-    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
         add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
         return NULL;
     }
     node->var_decl->name = new_string(parser->string_pool, parser->token.current.literal);
     if(!node->var_decl->name.data) return NULL;
-
     advance_token(parser);
 
     // optional type annotation
     if(check_token(parser, CAT_OPERATOR, OPER_COLON)){
         advance_token(parser);
         if(parser->token.current.category !=  CAT_DATATYPE){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, node->loc, node->length, parser->lexer->input->data);
             return NULL;
         }
         node->var_decl->dtype = parser->token.current.type;
@@ -441,18 +471,21 @@ node_t* parse_var_decl(parser_t* parser)
         advance_token(parser);
         node->var_decl->value = parse_expr(parser);
         if(!node->var_decl->value){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_EXPR, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_EXPR, node->loc, node->length, parser->lexer->input->data);
             return NULL;
         }
     }
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_var_ref(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_REF);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
         add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
@@ -464,32 +497,41 @@ node_t* parse_var_ref(parser_t* parser)
 
     advance_token(parser);
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_jump_stmt(parser_t* parser)
 {
-    node_t* node = new_node(parser->ast, 0);
-    if(!node) return NULL;
-
+    size_t start_pos = get_lexer_position(parser);
     int type = parser->token.current.type;
+    node_t* node = NULL;
 
-    advance_token(parser); // skip
+    advance_token(parser); // skip keyword
 
     switch(type){
         case KW_BREAK:
-            node->kind = NODE_BREAK;
+            node = new_node(parser->ast, NODE_BREAK);
             break;
         case KW_CONTINUE:
-            node->kind = NODE_CONTINUE;
+            node = new_node(parser->ast, NODE_CONTINUE);
             break;
         case KW_RETURN:
-            node->kind = NODE_RETURN;
-            node->ret->body = parse_expr(parser);
-            if(!node->ret->body) return NULL;
+            node = new_node(parser->ast, NODE_RETURN);
+            if(!node) return NULL;
+            if(!check_token(parser, CAT_OPERATOR, OPER_SEMICOLON) && 
+               !check_token(parser, CAT_PAREN, PAR_RBRACE)){
+                node->ret->body = parse_expr(parser);
+            }
             break;
+        default:
+            return NULL;
     }
 
+    if(node){
+        set_node_location(node, parser);
+        set_node_length(node, parser, start_pos);
+    }
     return node;
 }
 
@@ -504,11 +546,14 @@ node_t* parse_primary(parser_t* parser)
                 return parse_var_ref(parser);
             }
             else {
+                size_t start_pos = get_lexer_position(parser);
                 node_t* node = new_node(parser->ast, NODE_LITERAL);
                 if(!node) return NULL;
+                set_node_location(node, parser);
                 node->lit->value = new_string(parser->string_pool, parser->token.current.literal);
                 node->lit->type = parser->token.current.type;
                 advance_token(parser);
+                set_node_length(node, parser, start_pos);
                 return node;
             }
 
@@ -528,9 +573,9 @@ node_t* parse_primary(parser_t* parser)
             break;
         case CAT_OPERATOR:
             // check for unary operators
-            if(parser->token.current.type == OPER_PLUS  ||
-               parser->token.current.type == OPER_MINUS ||
-               parser->token.current.type == OPER_NOT)
+            if(parser->token.current.type == OPER_PLUS
+            || parser->token.current.type == OPER_MINUS
+            || parser->token.current.type == OPER_NOT)
             {
                 return parse_unary_op(parser);
             }
@@ -618,18 +663,21 @@ node_t* parse_postfix(parser_t* parser)
     if(!expr) return NULL;
 
     while(parser->token.current.category == CAT_OPERATOR){
-        int op = parser->token.current.type;
+        enum category_operator op = parser->token.current.type;
 
         if(op == OPER_INCREM || op == OPER_DECREM){
+            size_t start_pos = get_lexer_position(parser) - expr->length;
             node_t* postfix = new_node(parser->ast, NODE_UNARYOP);
-            if(!postfix){
-                return NULL;
-            }
+            if(!postfix) return NULL;
 
+            postfix->loc = expr->loc;
             postfix->unaryop->right = expr;
             postfix->unaryop->is_postfix = true;
+            postfix->unaryop->operator = op;
 
             advance_token(parser);
+            set_node_length(postfix, parser, start_pos);
+
             expr = postfix;
         }
         else break;
@@ -642,18 +690,24 @@ node_t* parse_bin_op(parser_t* parser, int min_precedence)
     node_t* left = parse_postfix(parser);
     if(!left) return NULL;
 
-    while(parser->token.current.category == CAT_OPERATOR){
-        enum category_operator op = parser->token.current.type;
-        if(op == OPER_SEMICOLON || op == OPER_COMMA) break;
+    size_t expr_start_pos = get_lexer_position(parser) - left->length;
 
-        int precedence = get_operator_precedence(op);
+    while(parser->token.current.category == CAT_OPERATOR){
+        enum category_operator op_type = parser->token.current.type;
+        if(op_type == OPER_SEMICOLON || op_type == OPER_COMMA) break;
+
+        int precedence = get_operator_precedence(op_type);
         if(precedence == 0 || precedence < min_precedence) break;
+
+        #ifdef DEBUG
+        const char* op_literal = parser->token.current.literal;
+        #endif
 
         advance_token(parser);
 
         // calculate next minimum precedence
         int next_min_prec;
-        if(is_right_associative(op)) next_min_prec = precedence;
+        if(is_right_associative(op_type)) next_min_prec = precedence;
         else next_min_prec = precedence + 1;
 
         node_t* right = parse_bin_op(parser, next_min_prec);
@@ -667,21 +721,32 @@ node_t* parse_bin_op(parser_t* parser, int min_precedence)
 
         node->binop->left = left;
         node->binop->right = right;
-        node->binop->operator = op;
+        node->binop->operator = op_type;
     #ifdef DEBUG
-        node->binop->lit = parser->token.current.literal;
+        node->binop->lit = op_literal;
     #endif
+        // use location from left operand
+        node->loc = left->loc;
 
         left = node;
     }
 
+    // update length to span the entire expression
+    if(left){
+        size_t current_pos = get_lexer_position(parser);
+        if(current_pos > expr_start_pos){
+            left->length = current_pos - expr_start_pos;
+        }
+    }
     return left;
 }
 
 node_t* parse_unary_op(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_UNARYOP);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     enum category_operator op_type = parser->token.current.type;
 
@@ -710,19 +775,22 @@ node_t* parse_unary_op(parser_t* parser)
 
     if(!node->unaryop->right) return NULL;
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_array(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_ARRAY);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip '['
 
     // parse elements (comma separated)
     while(!check_token(parser, CAT_PAREN, PAR_RBRACKET)){
-        node_t* element = parse_primary(parser);
+        node_t* element = parse_expr(parser);
         if(!element) return NULL;
 
         if(node->array_decl->count >= node->array_decl->capacity){
@@ -735,7 +803,7 @@ node_t* parse_array(parser_t* parser)
         node->array_decl->elements[node->array_decl->count++] = element;
 
         if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
-            advance_token(parser); // consume comma
+            advance_token(parser); // consume ','
             continue;
         }
         break;
@@ -746,12 +814,15 @@ node_t* parse_array(parser_t* parser)
         return NULL;
     }
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_if(parser_t* parser){
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_IF);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'if'
 
@@ -851,13 +922,16 @@ node_t* parse_if(parser_t* parser){
             break;
         }
     }
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_while(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_WHILE);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'while'
 
@@ -884,13 +958,16 @@ node_t* parse_while(parser_t* parser)
 
     if(!node->while_loop->body) return NULL;
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_for(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_FOR);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'for'
 
@@ -932,7 +1009,7 @@ node_t* parse_for(parser_t* parser)
         return NULL;
     }
 
-    // Parse body (can be a block or a single statement)
+    // parse body (can be a block or a single statement)
     if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
         node->for_loop->body = parse_block(parser);
     }
@@ -942,18 +1019,54 @@ node_t* parse_for(parser_t* parser)
 
     if(!node->for_loop->body) return NULL;
 
+    set_node_length(node, parser, start_pos);
+    return node;
+}
+
+node_t* parse_var_param(parser_t* parser)
+{
+    size_t start_pos = get_lexer_position(parser);
+    node_t* node = new_node(parser->ast, NODE_VAR_PARAM);
+    if(!node) return NULL;
+    set_node_location(node, parser);
+
+    // expect identifier
+    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        return NULL;
+    }
+    node->var_decl->name = new_string(parser->string_pool, parser->token.current.literal);
+    if(!node->var_decl->name.data) return NULL;
+    advance_token(parser);
+
+    // expect ':'
+    if(!consume_token(parser, CAT_OPERATOR, OPER_COLON, ERR_EXPEC_OPER)){
+        return NULL;
+    }
+
+    // expect datatype
+    if(parser->token.current.category != CAT_DATATYPE){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, node->loc, node->length, parser->lexer->input->data);
+        return NULL;
+    }
+    node->var_decl->dtype = parser->token.current.type;
+    advance_token(parser);
+
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_func(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_FUNC);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'func'
 
     // expect function name
-    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
         add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
         return NULL;
     }
@@ -967,27 +1080,25 @@ node_t* parse_func(parser_t* parser)
         return NULL;
     }
 
-    node->func_decl->param.elems = (node_t**)arena_alloc(parser->ast, node->func_decl->param.capacity * sizeof(node_t*), alignof(node_t*));
-    if(!node->func_decl->param.elems) return NULL;
-
     // parsing params until ')'
     if(!check_token(parser, CAT_PAREN, PAR_RPAREN)){
         while(true){
-            node_t* param = parse_var_decl(parser);
+            node_t* param = parse_var_param(parser);
             if(!param) return NULL;
 
             // check if param is a variable
-            if(param->kind != NODE_VAR){
-                add_report(parser->reports, SEV_ERR, ERR_EXPEC_PARAM, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            if(param->kind != NODE_VAR_PARAM){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_PARAM, node->loc, node->length, parser->lexer->input->data);
                 return NULL;
             }
 
             // check if there is enough capacity
             if(node->func_decl->param.count >= node->func_decl->param.capacity){
-                node->func_decl->param.capacity *= 2;
-                node_t** new_params = (node_t**)arena_alloc_array(parser->ast, sizeof(node->func_decl->param.elems[0]), node->func_decl->param.capacity * sizeof(node_t*), alignof(node_t));
+                size_t new_capacity = node->func_decl->param.capacity * 2;
+                node_t** new_params = (node_t**)arena_alloc_array(parser->ast, sizeof(node->func_decl->param.elems[0]), new_capacity * sizeof(node_t*), alignof(node_t*));
                 if(!new_params) return NULL;
                 node->func_decl->param.elems = new_params;
+                node->func_decl->param.capacity = new_capacity;
             }
 
             node->func_decl->param.elems[node->func_decl->param.count++] = param;
@@ -1009,7 +1120,7 @@ node_t* parse_func(parser_t* parser)
 
         // expect datatype
         if(parser->token.current.category != CAT_DATATYPE){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, node->loc, node->length, parser->lexer->input->data);
             return NULL;
         }
 
@@ -1021,22 +1132,26 @@ node_t* parse_func(parser_t* parser)
     node->func_decl->body = parse_block(parser);
     if(!node->func_decl->body) return NULL;
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_struct(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_STRUCT);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'struct'
 
     // expect struct name
-    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
         add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
         return NULL;
     }
     node->struct_decl->name = new_string(parser->string_pool, parser->token.current.literal);
+    if(!node->struct_decl->name.data) return NULL;
     advance_token(parser);
 
     // expect '{'
@@ -1049,7 +1164,7 @@ node_t* parse_struct(parser_t* parser)
 
         // check for EOF
         if(is_eof(parser->token.current) || is_eof(parser->token.next)){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
             return NULL;
         }
 
@@ -1078,19 +1193,21 @@ node_t* parse_struct(parser_t* parser)
         return NULL;
     }
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_enum(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_ENUM);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'enum'
 
     // expect enum name
-    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
-        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+    if(!consume_token(parser, CAT_LITERAL, LIT_IDENT, ERR_EXPEC_IDENT)){
         return NULL;
     }
     node->enum_decl->name = new_string(parser->string_pool, parser->token.current.literal);
@@ -1102,20 +1219,40 @@ node_t* parse_enum(parser_t* parser)
     }
 
     // parse enum members
-    while(!check_token(parser,  CAT_PAREN, PAR_RBRACE))
+    while(!check_token(parser, CAT_PAREN, PAR_RBRACE))
     {
         // check for EOF
-        if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        if(is_eof(parser->token.current) || is_eof(parser->token.next)){
             return NULL;
         }
 
         // expect member name
-        char* member_name = NULL;
-        if(!member_name) return NULL;
+        if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            return NULL;
+        }
+
+        // create enum member node
+        node_t* member = new_node(parser->ast, NODE_ENUM_MEMBER);
+        if(!member) return NULL;
+        
+        member->enum_member = (struct node_enum_member*)arena_alloc(parser->ast, sizeof(struct node_enum_member), alignof(struct node_enum_member));
+        if(!member->enum_member) return NULL;
+        
+        member->enum_member->name = new_string(parser->string_pool, parser->token.current.literal);
+        if(!member->enum_member->name.data) return NULL;
+        member->enum_member->value = NULL;
+        
         advance_token(parser);
 
-        // add member
+        // optional value assignment
+        if(check_token(parser, CAT_OPERATOR, OPER_ASSIGN)){
+            advance_token(parser);
+            member->enum_member->value = parse_expr(parser);
+            if(!member->enum_member->value) return NULL;
+        }
+
+        // grow array if needed
         if(node->enum_decl->member.count >= node->enum_decl->member.capacity){
             size_t new_cap = node->enum_decl->member.capacity == 0 ? 4 : node->enum_decl->member.capacity * 2;
             node_t** new_members = (node_t**)arena_alloc_array(parser->ast, sizeof(node->enum_decl->member.elems[0]), new_cap * sizeof(node_t*), alignof(node_t*));
@@ -1123,8 +1260,7 @@ node_t* parse_enum(parser_t* parser)
             node->enum_decl->member.elems = new_members;
             node->enum_decl->member.capacity = new_cap;
         }
-        node->enum_decl->name.data = member_name;
-
+        node->enum_decl->member.elems[node->enum_decl->member.count++] = member;
 
         // optional comma separator
         if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
@@ -1132,13 +1268,21 @@ node_t* parse_enum(parser_t* parser)
         }
     }
 
+    // expect '}'
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        return NULL;
+    }
+
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_match(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_MATCH);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'match'
 
@@ -1151,11 +1295,12 @@ node_t* parse_match(parser_t* parser)
         return NULL;
     }
 
-    // parse cases
-    while(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN))
+    // parse cases until '}'
+    while(!check_token(parser, CAT_PAREN, PAR_RBRACE))
     {
         // check for EOF
-        if(!consume_token(parser, CAT_KEYWORD, KW_CASE, ERR_EXPEC_KEYWORD)){
+        if(is_eof(parser->token.current) || is_eof(parser->token.next)){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
             return NULL;
         }
 
@@ -1180,7 +1325,7 @@ node_t* parse_match(parser_t* parser)
         case_node->match_case->body = parse_stmt(parser);
         if(!case_node->match_case->body) return NULL;
 
-        // add case to match statement
+        // grow array if needed
         if(node->match_stmt->block.count >= node->match_stmt->block.capacity){
             size_t new_cap = node->match_stmt->block.capacity == 0 ? 4 : node->match_stmt->block.capacity * 2;
             node_t** new_cases = (node_t**)arena_alloc_array(parser->ast, sizeof(node->match_stmt->block.elems[0]), new_cap * sizeof(node_t*), alignof(node_t*));
@@ -1191,22 +1336,31 @@ node_t* parse_match(parser_t* parser)
         node->match_stmt->block.elems[node->match_stmt->block.count++] = case_node;
     }
 
+    // expect '}'
+    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        return NULL;
+    }
+
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_trait(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_TRAIT);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'trait'
 
     // expect name
-    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
         add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
         return NULL;
     }
     node->trait_decl->name = new_string(parser->string_pool, parser->token.current.literal);
+    if(!node->trait_decl->name.data) return NULL;
     advance_token(parser);
 
     // expect '{'
@@ -1223,6 +1377,7 @@ node_t* parse_trait(parser_t* parser)
         return NULL;
     }
 
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
@@ -1233,31 +1388,38 @@ node_t* parse_type(parser_t* parser)
 
 node_t* parse_impl(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_IMPL);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'impl'
 
-    // expect name
-    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+    // expect trait name
+    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
         add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
         return NULL;
     }
     node->impl_stmt->trait_name = new_string(parser->string_pool, parser->token.current.literal);
-
+    if(!node->impl_stmt->trait_name.data) return NULL;
     advance_token(parser);
 
+    // optional 'for' clause
     if(check_token(parser, CAT_KEYWORD, KW_FOR)){
         advance_token(parser); // skip 'for'
 
-        // expect name
-        if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
+        // expect struct name
+        if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
             add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
             return NULL;
         }
         node->impl_stmt->struct_name = new_string(parser->string_pool, parser->token.current.literal);
+        if(!node->impl_stmt->struct_name.data) return NULL;
+        advance_token(parser);
     }
-    advance_token(parser);
+    else {
+        node->impl_stmt->struct_name = (string_t){0};
+    }
 
     // expect '{'
     if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
@@ -1268,18 +1430,16 @@ node_t* parse_impl(parser_t* parser)
     node->impl_stmt->body = parse_block(parser);
     if(!node->impl_stmt->body) return NULL;
 
-    // expect '}'
-    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
-        return NULL;
-    }
-
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_trycatch(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_TRYCATCH);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'try'
 
@@ -1292,24 +1452,21 @@ node_t* parse_trycatch(parser_t* parser)
     node->trycatch_stmt->try_block = parse_block(parser);
     if(!node->trycatch_stmt->try_block) return NULL;
 
-    // expect '}'
-    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
-        return NULL;
-    }
-
     // expect 'catch'
     if(!consume_token(parser, CAT_KEYWORD, KW_CATCH, ERR_EXPEC_KEYWORD)){
         return NULL;
     }
-
-    advance_token(parser);
 
     // expect '('
     if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
         return NULL;
     }
 
-    // TODO: parse catch exception variable
+    // tODO: parse catch exception variable
+    // for now, just skip the identifier if present
+    if(check_token(parser, CAT_LITERAL, LIT_IDENT)){
+        advance_token(parser);
+    }
 
     // expect ')'
     if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
@@ -1325,65 +1482,139 @@ node_t* parse_trycatch(parser_t* parser)
     node->trycatch_stmt->catch_block = parse_block(parser);
     if(!node->trycatch_stmt->catch_block) return NULL;
 
+    // optional 'finally' block
+    if(check_token(parser, CAT_KEYWORD, KW_FINALLY)){
+        advance_token(parser);
+        
+        // expect '{'
+        if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+            return NULL;
+        }
+        
+        node->trycatch_stmt->finally_block = parse_block(parser);
+        if(!node->trycatch_stmt->finally_block) return NULL;
+    }
+    else {
+        node->trycatch_stmt->finally_block = NULL;
+    }
+
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_module(parser_t* parser)
 {
-    return NULL;
+    size_t start_pos = get_lexer_position(parser);
+    node_t* node = new_node(parser->ast, NODE_MODULE);
+    if(!node) return NULL;
+    set_node_location(node, parser);
+    
+    advance_token(parser); // skip 'module'
+    
+    // expect module name
+    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        return NULL;
+    }
+    node->module_decl->name = new_string(parser->string_pool, parser->token.current.literal);
+    if(!node->module_decl->name.data) return NULL;
+    advance_token(parser);
+
+    // optional module body
+    if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
+        node->module_decl->body = parse_block(parser);
+        if(!node->module_decl->body) return NULL;
+    }
+    else {
+        node->module_decl->body = NULL;
+    }
+
+    set_node_length(node, parser, start_pos);
+    return node;
 }
 
 node_t* parse_import(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     node_t* node = new_node(parser->ast, NODE_IMPORT);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip 'import'
 
-    // expect module name
-    if(!check_token(parser,  CAT_LITERAL, LIT_IDENT)){
-        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
-        return NULL;
-    }
-    node->import_decl->path = new_string(parser->string_pool, parser->token.current.literal);
-    advance_token(parser);
+    // parse module path (e.g., "std.collection" or "std.collection.List")
+    do {
+        // expect module name component
+        if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            return NULL;
+        }
 
-    // expect '{'
-    if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
-        return NULL;
-    }
+        // grow array if needed
+        if(node->import_decl->count >= node->import_decl->capacity){
+            size_t new_cap = node->import_decl->capacity == 0 ? 4 : node->import_decl->capacity * 2;
+            string_t* new_modules = (string_t*)arena_alloc_array(parser->ast, sizeof(node->import_decl->modules[0]), new_cap * sizeof(string_t), alignof(string_t));
+            if(!new_modules) return NULL;
+            node->import_decl->modules = new_modules;
+            node->import_decl->capacity = new_cap;
+        }
 
-    // parse import modules
-    for(size_t i = 0; i < 1; ++i){
-        // node->import_decl->module.elems[i] = ;
-        // if(!node->import_decl->module.elems[i]) return NULL;
-    }
+        // store module name component
+        string_t module_name = new_string(parser->string_pool, parser->token.current.literal);
+        if(!module_name.data) return NULL;
+        node->import_decl->modules[node->import_decl->count++] = module_name;
 
-    // expect '}'
-    if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
-        return NULL;
-    }
+        advance_token(parser);
 
+        // check for '.' to continue path
+        if(check_token(parser, CAT_OPERATOR, OPER_DOT)){
+            advance_token(parser);
+            continue;
+        }
+        else {
+            break;
+        }
+    } while (true);
+
+    set_node_length(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_special(parser_t* parser)
 {
+    size_t start_pos = get_lexer_position(parser);
     int spec_kind = parser->token.current.type;
+    enum node_kind node_kind = (spec_kind == KW_NAMEOF) ? NODE_NAMEOF : NODE_TYPEOF;
 
-    node_t* node = new_node(parser->ast, spec_kind);
+    node_t* node = new_node(parser->ast, node_kind);
     if(!node) return NULL;
+    set_node_location(node, parser);
 
     advance_token(parser); // skip special keyword
 
-    if(!check_token(parser, CAT_OPERATOR, PAR_LPAREN)){
-        add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+    // expect '('
+    if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        return NULL;
     }
 
-    node->spec_stmt->content = new_string(parser->lexer->string_pool, parser->token.current.literal);
-
-    if(!check_token(parser, CAT_OPERATOR, PAR_RPAREN)){
-        add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+    // parse the expression inside
+    node_t* expr = parse_expr(parser);
+    if(!expr){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_EXPR, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        return NULL;
     }
+
+    // store expression as string representation (for now)
+    // tODO: This should store the actual expression node
+    node->spec_stmt->content = new_string(parser->string_pool, "");
+    if(!node->spec_stmt->content.data) return NULL;
+    node->spec_stmt->type = spec_kind;
+
+    // expect ')'
+    if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        return NULL;
+    }
+    
+    set_node_length(node, parser, start_pos);
     return node;
 }

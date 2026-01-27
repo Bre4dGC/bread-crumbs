@@ -14,9 +14,7 @@ report_table_t* new_report_table(arena_t* arena)
     if(!table) return NULL;
 
     table->arena = new_arena(DEFAULT_REPORT_POOL_SIZE * sizeof(report_t));
-    if(!table->arena){
-        return NULL;
-    }
+    if(!table->arena) return NULL;
 
     table->string_pool = new_string_pool(DEFAULT_REPORT_POOL_SIZE);
     table->count = 0;
@@ -64,10 +62,12 @@ void print_report(const report_t* report)
     if(!report || !report->input.data) return;
 
     printf("\n %zu |\t%s\n", report->loc.line, report->input.data);
-    printf(" %*s |\t%*s\033[31m",   (int)report->loc.line < 10   ? 1 :
-                                    (int)report->loc.line < 100  ? 2 :
-                                    (int)report->loc.line < 1000 ? 3 : 4,
-                                    "", report->loc.column != 0 ? (int)report->loc.column - 1 : 0, "");
+    printf(" %*s |\t%*s\033[31m",
+        (int)report->loc.line < 10   ? 1 :
+        (int)report->loc.line < 100  ? 2 :
+        (int)report->loc.line < 1000 ? 3 : 4,
+        "", report->loc.column != 0 ? (int)report->loc.column - 1 : 0, ""
+    );
 
     if(report->length == 1){
         printf("^");
@@ -76,13 +76,14 @@ void print_report(const report_t* report)
         printf("~");
     }
 
-    printf(" \033[36m%s\033[0m", report_msg(report->code));
-
-    printf("\n%s\033[0m %s at %zu:%zu\n",   report->severity == SEV_ERR  ? "\033[31m[ERROR]"   :
-                                            report->severity == SEV_WARN ? "\033[33m[WARNING]" :
-                                            report->severity == SEV_NOTE ? "\033[34m[NOTE]"    :
-                                                                           "\033[31m[UNKNOWN]",
-                                            report->filepath.data, report->loc.line, report->loc.column);
+    printf("\n%s\033[0m \x1b[4m%s\x1b[0m at %s:%zu:%zu\n",
+        report->severity == SEV_ERR  ? "\033[31m[ERROR]"   :
+        report->severity == SEV_WARN ? "\033[33m[WARNING]" :
+        report->severity == SEV_NOTE ? "\033[34m[NOTE]"    :
+                                       "\033[31m[UNKNOWN]",
+        report_msg(report->code),
+        report->filepath.data, report->loc.line, report->loc.column
+    );
 }
 
 void print_report_table(const report_table_t* table)

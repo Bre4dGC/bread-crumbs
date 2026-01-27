@@ -5,6 +5,11 @@
 #include "compiler/frontend/tokenizer.h"
 #include "compiler/frontend/types.h"
 #include "compiler/frontend/semantic.h"
+#ifdef DEBUG
+#include "common/debug.h"
+#endif
+
+type_t* infer_type(semantic_t* sem, node_t* node);
 
 bool check_node(semantic_t* sem, node_t* node);
 bool check_function(semantic_t* sem, node_t* node);
@@ -17,17 +22,15 @@ bool check_for(semantic_t* sem, node_t* node);
 bool check_return(semantic_t* sem, node_t* node);
 bool check_break(semantic_t* sem, node_t* node);
 bool check_continue(semantic_t* sem, node_t* node);
-bool check_expression(semantic_t* sem, node_t* node);
-bool check_binary_op(semantic_t* sem, node_t* node);
-bool check_unary_op(semantic_t* sem, node_t* node);
+bool check_expr(semantic_t* sem, node_t* node);
+bool check_binop(semantic_t* sem, node_t* node);
+bool check_unaryop(semantic_t* sem, node_t* node);
 bool check_func_call(semantic_t* sem, node_t* node);
 bool check_var_ref(semantic_t* sem, node_t* node);
 bool check_literal(semantic_t* sem, node_t* node);
 bool check_array(semantic_t* sem, node_t* node);
 bool check_struct(semantic_t* sem, node_t* node);
 bool check_enum(semantic_t* sem, node_t* node);
-
-type_t* infer_type(semantic_t* sem, node_t* node);
 
 bool check_type_compatibility(semantic_t* sem, node_t* node, type_t* expected, type_t* actual);
 
@@ -39,8 +42,8 @@ semantic_t* new_semantic(arena_t* arena, string_pool_t* string_pool, report_tabl
     semantic_t* sem = (semantic_t*)arena_alloc(arena, sizeof(semantic_t), alignof(semantic_t));
     if(!sem) return NULL;
 
-    // initialize built-in types if not already done
-    if(type_int == NULL) init_types(arena);
+    // init if not already done
+    if(!type_int) init_types(arena);
 
     sem->symbols = new_symbol_table(arena, string_pool);
     if(!sem->symbols) return NULL;
@@ -59,7 +62,7 @@ bool analyze_ast(semantic_t* sem, node_t* root)
 {
     if(!sem || !root) return false;
 
-    // declare top-level symbols (functions/types).
+    // declare top-level symbols
     sem->phase = PHASE_DECLARE;
     if(root->kind == NODE_BLOCK){
         for(size_t i = 0; i < root->block->statement.count; i++){
@@ -104,8 +107,8 @@ bool check_node(semantic_t* sem, node_t* node)
         case NODE_VAR:      return check_variable(sem, node);
         case NODE_REF:      return check_var_ref(sem, node);
         case NODE_LITERAL:  return check_literal(sem, node);
-        case NODE_BINOP:    return check_binary_op(sem, node);
-        case NODE_UNARYOP:  return check_unary_op(sem, node);
+        case NODE_BINOP:    return check_binop(sem, node);
+        case NODE_UNARYOP:  return check_unaryop(sem, node);
         case NODE_CALL:     return check_func_call(sem, node);
         case NODE_BLOCK:    return check_block(sem, node);
         case NODE_IF:       return check_if(sem, node);
@@ -145,7 +148,7 @@ bool check_function(semantic_t* sem, node_t* node)
     struct node_func* func = node->func_decl;
     if(!func || !func->name.data) return false;
 
-    // register the function symbol (no body checking yet)
+    // register the function symbol
     if(sem->phase == PHASE_DECLARE){
         if(is_scope_symbol_exist(sem->symbols, func->name.data)){
             add_report(sem->reports, SEV_ERR, ERR_FUNC_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
@@ -190,7 +193,7 @@ bool check_function(semantic_t* sem, node_t* node)
         if(!func_sym) return false;
     }
 
-    // create new scope for function body
+    // create new function body scope
     push_scope(sem->symbols, SCOPE_FUNCTION, node);
     symbol_t* prev_func = sem->current_function;
     sem->current_function = func_sym;
@@ -210,7 +213,7 @@ bool check_function(semantic_t* sem, node_t* node)
         success = check_node(sem, func->body);
     }
 
-    // TODO: Check that all paths return if return type is not void
+    // TODO: check that all paths return if return type is not void
 
     pop_scope(sem->symbols);
     sem->current_function = prev_func;
@@ -305,7 +308,7 @@ bool check_block(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_BLOCK) return false;
 
-    push_scope(sem->symbols, SCOPE_BLOCK, node); // create new scope for block
+    push_scope(sem->symbols, SCOPE_BLOCK, node); // create new block scope
 
     bool success = true;
     for(size_t i = 0; i < node->block->statement.count; i++){
@@ -406,14 +409,14 @@ bool check_continue(semantic_t* sem, node_t* node)
     return true;
 }
 
-bool check_expression(semantic_t* sem, node_t* node)
+bool check_expr(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_EXPR) return false;
-    // TODO: Implement expression checking
+    // TODO: implement expression checking
     return true;
 }
 
-bool check_binary_op(semantic_t* sem, node_t* node)
+bool check_binop(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_BINOP) return false;
 
@@ -441,7 +444,7 @@ bool check_binary_op(semantic_t* sem, node_t* node)
     return true;
 }
 
-bool check_unary_op(semantic_t* sem, node_t* node)
+bool check_unaryop(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_UNARYOP) return false;
 
@@ -452,7 +455,7 @@ bool check_func_call(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_CALL) return false;
 
-    // Lookup function
+    // lookup function
     symbol_t* func_sym = lookup_symbol(sem->symbols, node->call->name.data);
     if(!func_sym){
         add_report(sem->reports, SEV_ERR, ERR_UNDEC_FUNC, node->loc, DEFAULT_LEN, NULL);
@@ -468,7 +471,7 @@ bool check_func_call(semantic_t* sem, node_t* node)
         if(!check_node(sem, node->call->args.elems[i])) return false;
     }
 
-    // TODO: Check argument count and types match parameters
+    // TODO: check argument count and types match parameters
 
     func_sym->flags |= SYM_FLAG_USED;
     return true;
@@ -516,14 +519,14 @@ bool check_array(semantic_t* sem, node_t* node)
 bool check_struct(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_STRUCT) return false;
-    // TODO: Implement struct checking
+    // TODO: implement struct checking
     return true;
 }
 
 bool check_enum(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_ENUM) return false;
-    // TODO: Implement enum checking
+    // TODO: implement enum checking
     return true;
 }
 
@@ -559,7 +562,7 @@ type_t* infer_type(semantic_t* sem, node_t* node)
 
         case NODE_CALL: {
             symbol_t* func = lookup_symbol(sem->symbols, node->call->name.data);
-            if(func && func->type && func->type->kind == TYPE_FUNCTION){
+            if(func && func->type && func->type->kind == TYPE_FUNC){
                 return func->type->func.return_type;
             }
             return type_error;
@@ -569,43 +572,22 @@ type_t* infer_type(semantic_t* sem, node_t* node)
     }
 }
 
-inline bool is_type(type_t* expected, type_t* actual, enum type_kind kind)
-{
-    return expected->kind == kind && actual->kind == kind;
-}
-
 bool check_type_compatibility(semantic_t* sem, node_t* node, type_t* expected, type_t* actual)
 {
     if(!sem || !node || !expected || !actual) return false;
-
-    if(is_type(expected, actual, TYPE_ANY)) return true;
-    if(is_type(expected, actual, TYPE_ERROR)) return false;
-    if(is_type(expected, actual, TYPE_VOID)) return true;
-    if(is_type(expected, actual, TYPE_BOOL)) return true;
-    if(is_type(expected, actual, TYPE_INT)) return true;
-    if(is_type(expected, actual, TYPE_UINT)) return true;
-    if(is_type(expected, actual, TYPE_FLOAT)) return true;
-    if(is_type(expected, actual, TYPE_STR)) return true;
-    if(is_type(expected, actual, TYPE_CHAR)) return true;
-    if(is_type(expected, actual, TYPE_ARRAY)) return true;
-    if(is_type(expected, actual, TYPE_FUNCTION)) return true;
-    if(is_type(expected, actual, TYPE_STRUCT)) return true;
-    if(is_type(expected, actual, TYPE_ENUM)) return true;
-    if(is_type(expected, actual, TYPE_UNION)) return true;
-
     return types_compatible(expected, actual);
 }
 
 bool all_paths_return(node_t* node)
 {
-    // TODO: Implement control flow analysis
+    // TODO: implement control flow analysis
     (void)node;
     return true;
 }
 
 bool is_unreachable_code(node_t* node)
 {
-    // TODO: Implement unreachable code detection
+    // TODO: implement unreachable code detection
     (void)node;
     return false;
 }

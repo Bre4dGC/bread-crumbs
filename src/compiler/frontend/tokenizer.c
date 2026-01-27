@@ -5,7 +5,9 @@
 
 #include "compiler/core/hash_table.h"
 #include "compiler/frontend/tokenizer.h"
+#ifdef DEBUG
 #include "common/debug.h"
+#endif
 
 #define C_OP (CAT_OPERATOR)
 #define C_KW (CAT_KEYWORD)
@@ -55,8 +57,8 @@ void init_tokens(void)
         {"long",    DT_LONG,    C_DT}, {"ulong",   DT_ULONG,      C_DT},
         {"char",    DT_CHAR,    C_DT}, {"byte",    DT_BYTE,       C_DT},
         {"float",   DT_FLOAT,   C_DT}, {"decimal", DT_DECIMAL,    C_DT},
-        {"str",     DT_STR,     C_DT},
-        {"bool",    DT_BOOL,    C_DT}, {"any",     DT_ANY,        C_DT},
+        {"str",     DT_STR,     C_DT}, {"bool",    DT_BOOL,       C_DT},
+        {"void",     DT_VOID,   C_DT}, {"any",     DT_ANY,        C_DT},
 
         /* modifiers */
         {"var",     MOD_VAR,    C_MD}, {"const",   MOD_CONST,     C_MD},

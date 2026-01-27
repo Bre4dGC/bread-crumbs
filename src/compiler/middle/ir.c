@@ -4,107 +4,42 @@
 
 #include "compiler/middle/ir.h"
 
-static inline int64_t read_i64(virtual_machine_t *vm)
+ir_t* new_ir(void)
 {
-    int64_t v = 0;
-
-    return v;
+    // TODO: implement
 }
 
-static inline void push_val(virtual_machine_t *vm, int64_t v)
+void free_ir(ir_t* ir)
 {
-
+    // TODO: implement
 }
 
-static inline int64_t pop_val(virtual_machine_t *vm)
+void ir_add_op(ir_t* ir, enum op_code op, int64_t value)
 {
-
-    return 0;
+    // TODO: implement
 }
 
-void vm_execute(virtual_machine_t* vm)
+void ir_add_jump(ir_t* ir, int64_t target)
 {
-    while (vm->ip < vm->capacity){
-        const enum op_code op = (enum op_code)vm->code[vm->ip++];
-        switch(op){
-            case OP_PUSH: {
-                const int64_t val = read_i64(vm);
-                push_val(vm, val);
-                break;
-            }
+    // TODO: implement
+}
 
-            case OP_POP: {
-                pop_val(vm);
-                break;
-            }
+void ir_add_call(ir_t* ir, int64_t func_id)
+{
+    // TODO: implement
+}
 
-            case OP_DUP: {
-                if(vm->sp == 0) break;
-                const int64_t top = vm->stack[vm->sp - 1];
-                push_val(vm, top);
-                break;
-            }
+void ir_add_return(ir_t* ir)
+{
+    // TODO: implement
+}
 
-            case OP_ADD: {
-                const int64_t b = pop_val(vm);
-                const int64_t a = pop_val(vm);
-                push_val(vm, a + b);
-                break;
-            }
+void ir_add_jump_if(ir_t* ir, int64_t target)
+{
+    // TODO: implement
+}
 
-            case OP_SUB: {
-                const int64_t b = pop_val(vm);
-                const int64_t a = pop_val(vm);
-                push_val(vm, a - b);
-                break;
-            }
-
-            case OP_MUL: {
-                const int64_t b = pop_val(vm);
-                const int64_t a = pop_val(vm);
-                push_val(vm, a * b);
-                break;
-            }
-
-            case OP_DIV: {
-                const int64_t b = pop_val(vm);
-                const int64_t a = pop_val(vm);
-                push_val(vm, b == 0 ? 0 : a / b);
-                break;
-            }
-
-            case OP_JUMP: {
-                const int64_t target = read_i64(vm);
-                if(target >= 0 && (size_t)target < vm->capacity) vm->ip = (size_t)target;
-                break;
-            }
-
-            case OP_JUMP_IF: {
-                const int64_t target = read_i64(vm);
-                const int64_t cond = pop_val(vm);
-                if(cond){
-                    if(target >= 0 && (size_t)target < vm->capacity) vm->ip = (size_t)target;
-                }
-                break;
-            }
-
-            case OP_JUMP_IFNOT: {
-                const int64_t target = read_i64(vm);
-                const int64_t cond = pop_val(vm);
-                if(!cond){
-                    if(target >= 0 && (size_t)target < vm->capacity) vm->ip = (size_t)target;
-                }
-                break;
-            }
-
-            case OP_RETURN: {
-                return;
-            }
-
-            default: {
-                fprintf(stderr, "vm: unknown opcode %d at ip %zu\n", op, vm->ip - 1);
-                return;
-            }
-        }
-    }
+void ir_add_jump_ifnot(ir_t* ir, int64_t target)
+{
+    // TODO: implement
 }

@@ -7,6 +7,8 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
     if (!node) return NULL;
 
     node->kind = kind;
+    node->loc = (location_t){1, 1};
+    node->length = 0;
 
     switch (kind)
     {
@@ -89,15 +91,20 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             node->while_loop->condition = NULL;
             node->while_loop->body = NULL;
             break;
+        case NODE_VAR_PARAM:
+            node->func_param = (struct node_var_param*)arena_alloc(arena, sizeof(struct node_var_param), alignof(struct node_var_param));
+            if(!node->func_param) return NULL;
+            node->func_param->name = (string_t){0};
+            break;
         case NODE_FUNC:
             node->func_decl = (struct node_func*)arena_alloc(arena, sizeof(struct node_func), alignof(struct node_func));
             if(!node->func_decl) return NULL;
-            node->func_decl->param.elems = NULL;
-            node->func_decl->param.count = 0;
-            node->func_decl->param.capacity = 0;
             node->func_decl->return_type = DT_VOID;
             node->func_decl->body = NULL;
             node->func_decl->name = (string_t){0};
+            node->func_decl->param.capacity = 4;
+            node->func_decl->param.elems = (node_t**)arena_alloc(arena, node->func_decl->param.capacity * sizeof(node_t*), alignof(node_t*));
+            if(!node->func_decl->param.elems) return NULL;
             break;
         case NODE_ARRAY:
             node->array_decl = (struct node_array*)arena_alloc(arena, sizeof(struct node_array), alignof(struct node_array));
@@ -165,10 +172,10 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
         case NODE_IMPORT:
             node->import_decl = (struct node_import*)arena_alloc(arena, sizeof(struct node_import), alignof(struct node_import));
             if(!node->import_decl) return NULL;
-            node->import_decl->module.elems = NULL;
-            node->import_decl->module.count = 0;
-            node->import_decl->module.capacity = 0;
-            node->import_decl->path = (string_t){0};
+            node->import_decl->count = 0;
+            node->import_decl->capacity = 16;
+            node->import_decl->modules = (string_t*)arena_alloc_array(arena, sizeof(string_t), node->import_decl->capacity * sizeof(string_t), alignof(string_t));
+            if(!node->import_decl->modules) return NULL;
             break;
         case NODE_MODULE:
             node->module_decl = (struct node_module*)arena_alloc(arena, sizeof(struct node_module), alignof(struct node_module));
