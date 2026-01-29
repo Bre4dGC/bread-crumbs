@@ -4,11 +4,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "compiler/core/hash_table.h"
-#include "compiler/frontend/tokenizer.h"
+#include "core/hashmap.h"
+#include "compiler/frontend/lexer.h"
 #include "compiler/frontend/ast.h"
-#include "compiler/frontend/types.h"
-#include "compiler/frontend/symbol.h"
+#include "compiler/frontend/semantic.h"
 #include "compiler/middle/ir.h"
 
 static inline const char* token_to_str(const token_t token)
@@ -266,7 +265,7 @@ static inline void print_scope(const scope_t* scope, int indent)
     printf("%*sScope: %s (%zu symbols)\n", indent, "", scope_name[scope->kind], scope->count);
 
     for(size_t i = 0; i < scope->count; i++){
-        symbol_t* sym = ht_lookup(scope->symbols, (void*)(uintptr_t)i);
+        symbol_t* sym = hm_lookup(scope->symbols, (void*)(uintptr_t)i);
         while(sym){
             printf("%*s  %s '%s': %s\n", indent, "", symbol_kind_name(sym->kind), sym->name, type_to_string(sym->type));
             // sym = sym->next;

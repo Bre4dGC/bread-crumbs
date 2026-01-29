@@ -2,10 +2,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/diagnostic.h"
+#include "core/arena.h"
+#include "core/diagnostic.h"
 #include "compiler/frontend/ast.h"
-#include "compiler/frontend/symbol.h"
+#include "compiler/frontend/semantic/symbol.h"
 
 enum semantic_phase {
     PHASE_DECLARE, // register symbols

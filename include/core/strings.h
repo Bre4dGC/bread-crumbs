@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "compiler/core/arena_alloc.h"
+#include "core/arena.h"
 
 typedef struct {
     const char* data;

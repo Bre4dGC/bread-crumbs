@@ -15,11 +15,12 @@ typedef struct {
     size_t ip;
 } vm_stack_t;
 
-typedef struct {
-    vm_stack_t stack;
+typedef struct virtual_machine_t {
+    vm_stack_t* stack;
     memory_t* memory;
     garbage_collector_t* gc;
-} virtual_machine_t;
+} vm_core_t;
 
-void vm_execute(virtual_machine_t* vm);
-void free_vm(virtual_machine_t* vm);
+vm_core_t* new_vm_core(void);
+void vm_execute(vm_core_t* vm);
+void free_vm_core(vm_core_t* vm);

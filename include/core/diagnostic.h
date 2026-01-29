@@ -1,13 +1,12 @@
 #pragma once
-
 #include <stddef.h>
 
-#include "compiler/core/string_pool.h"
-#include "compiler/core/arena_alloc.h"
+#include "core/strings.h"
+#include "core/arena.h"
 
-#define MAX_REPORTS_COUNT           512
-#define DEFAULT_REPORT_POOL_SIZE    32
-#define DEFAULT_LEN                 1
+#define MAX_REPORTS_COUNT        512
+#define DEFAULT_REPORT_POOL_SIZE 32
+#define DEFAULT_LEN              1
 
 enum report_severity {
     SEV_NOTE, SEV_WARN, SEV_ERR

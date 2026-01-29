@@ -1,10 +1,10 @@
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/string_pool.h"
-#include "compiler/core/hash_table.h"
-#include "compiler/core/diagnostic.h"
+#include "core/arena.h"
+#include "core/strings.h"
+#include "core/hashmap.h"
+#include "core/diagnostic.h"
 
 #include "compiler/frontend/semantic.h"
-
+#include "compiler/backend/codegen.h"
 #include "compiler/runtime/vm.h"
 
 enum compile_phase {
@@ -26,8 +26,8 @@ typedef struct {
     string_pool_t permanent_strings;
     string_pool_t temp_strings;
 
-    hash_table_t global_idents;
-    hash_table_t local_idents;
+    hashmap_t global_idents;
+    hashmap_t local_idents;
 } compiler_memory_t;
 
 typedef struct {
@@ -40,9 +40,10 @@ typedef struct {
 
     arena_t ast_root;
     semantic_t semantic;
+    codegen_t codegen;
+    virtual_machine_t vm;
 } compiler_context_t;
 
 compiler_context_t* new_compiler_context(void);
-void free_compiler_context(compiler_context_t* context);
-
 void compile_program(compiler_context_t* context);
+void free_compiler_context(compiler_context_t* context);

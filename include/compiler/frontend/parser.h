@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "compiler/core/arena_alloc.h"
+#include "core/arena.h"
 #include "compiler/frontend/ast.h"
 #include "compiler/frontend/lexer.h"
 

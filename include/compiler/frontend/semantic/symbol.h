@@ -2,13 +2,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/diagnostic.h"
-#include "compiler/core/hash_table.h"
-#include "compiler/core/string_pool.h"
-
+#include "core/arena.h"
+#include "core/diagnostic.h"
+#include "core/hashmap.h"
+#include "core/strings.h"
 #include "compiler/frontend/ast.h"
-#include "compiler/frontend/types.h"
+#include "compiler/frontend/semantic/types.h"
 
 enum symbol_kind {
     SYMBOL_VAR,
@@ -61,7 +60,7 @@ struct scope {
     node_t* owner;
     int depth;
 
-    hash_table_t* symbols;
+    hashmap_t* symbols;
     size_t count;
 };
 

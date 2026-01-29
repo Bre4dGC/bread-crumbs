@@ -2,9 +2,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/string_pool.h"
-#include "compiler/core/diagnostic.h"
+#include "core/arena.h"
+#include "core/strings.h"
+#include "core/diagnostic.h"
 
 typedef struct node node_t;
 

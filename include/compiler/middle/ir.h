@@ -13,6 +13,7 @@ enum op_code {
     OP_SUB,         // a - b
     OP_MUL,         // a * b
     OP_DIV,         // a / b
+    OP_MOD,         // a % b
 
     /* logic */
     OP_AND,         // a && b
@@ -24,12 +25,16 @@ enum op_code {
     OP_NEQ,         // a != b
     OP_LT,          // a < b
     OP_GT,          // a > b
+    OP_LTE,         // a <= b
+    OP_GTE,         // a >= b
 
     /* memory */
     OP_STORE,       // store <var_id>
     OP_LOAD,        // load <var_id>
     OP_STORE_GLOB,  // store_global <name>
     OP_LOAD_GLOB,   // load_global <name>
+    OP_ALLOC,       // alloc <size>
+    OP_FREE,        // free <address>
 
     /* stream control */
     OP_JUMP,        // jmp <label>
@@ -40,15 +45,16 @@ enum op_code {
 };
 
 typedef struct {
-    uint8_t* code;
-    size_t length;
+    enum op_code op;
+    int64_t value;
+} ir_instr_t;
+
+typedef struct {
+    ir_instr_t* instructions;
+    size_t count;
+    size_t capacity;
 } ir_t;
 
 ir_t* new_ir(void);
 void free_ir(ir_t* ir);
-void ir_add_op(ir_t* ir, enum op_code op, int64_t value);
-void ir_add_jump(ir_t* ir, int64_t target);
-void ir_add_call(ir_t* ir, int64_t func_id);
-void ir_add_return(ir_t* ir);
-void ir_add_jump_if(ir_t* ir, int64_t target);
-void ir_add_jump_ifnot(ir_t* ir, int64_t target);
+void ir_add_instruction(ir_t* ir, enum op_code op, int64_t value);

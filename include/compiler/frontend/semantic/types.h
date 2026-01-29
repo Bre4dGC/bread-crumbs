@@ -2,8 +2,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "compiler/core/arena_alloc.h"
-#include "compiler/frontend/symbol.h"
+#include "core/arena.h"
+#include "compiler/frontend/semantic/symbol.h"
 
 enum type_kind {
     // service types

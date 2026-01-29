@@ -1,9 +1,9 @@
 #pragma once
 #include <stddef.h>
 
-#include "compiler/core/diagnostic.h"
-#include "compiler/core/string_pool.h"
-#include "compiler/frontend/tokenizer.h"
+#include "core/diagnostic.h"
+#include "core/strings.h"
+#include "compiler/frontend/lexer/tokens.h"
 
 typedef struct {
     string_t* input;
