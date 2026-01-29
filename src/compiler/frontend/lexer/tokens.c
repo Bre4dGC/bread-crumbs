@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "compiler/core/hash_table.h"
-#include "compiler/frontend/tokenizer.h"
+#include "core/hashmap.h"
+#include "compiler/frontend/lexer/tokens.h"
 #ifdef DEBUG
-#include "common/debug.h"
+#include "core/common/debug.h"
 #endif
 
 #define C_OP (CAT_OPERATOR)
@@ -17,7 +17,7 @@
 #define C_PR (CAT_PAREN)
 #define C_DL (CAT_DELIMITER)
 
-hash_table_t* tokens_table = NULL;
+hashmap_t* tokens_table = NULL;
 
 void init_tokens(void)
 {
@@ -74,10 +74,10 @@ void init_tokens(void)
 
     const size_t tokens_count = sizeof(tokens) / sizeof(tokens[0]);
 
-    tokens_table = new_hashtable();
+    tokens_table = new_hashmap();
 
     for(size_t i = 0; i < tokens_count; ++i){
-        ht_insert(tokens_table, tokens[i].literal, &tokens[i]);
+        hm_insert(tokens_table, tokens[i].literal, &tokens[i]);
     }
 }
 
@@ -98,10 +98,10 @@ token_t new_token(const enum category_tag category, const int type, const char *
 
 token_t* find_token(const char* literal)
 {
-    return (token_t*)ht_lookup(tokens_table, literal);
+    return (token_t*)hm_lookup(tokens_table, literal);
 }
 
 void free_tokens(void)
 {
-    free_hashtable(tokens_table);
+    free_hashmap(tokens_table);
 }

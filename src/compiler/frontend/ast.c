@@ -1,4 +1,4 @@
-#include "compiler/frontend/tokenizer.h"
+#include "compiler/frontend/lexer/tokens.h"
 #include "compiler/frontend/ast.h"
 
 node_t *new_node(arena_t* arena, enum node_kind kind)

@@ -1,9 +1,9 @@
 #include <stdlib.h>
 
-#include "compiler/frontend/symbol.h"
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/diagnostic.h"
-#include "compiler/core/hash_table.h"
+#include "compiler/frontend/semantic/symbol.h"
+#include "core/arena.h"
+#include "core/diagnostic.h"
+#include "core/hashmap.h"
 
 #define INITIAL_SCOPE_CAPACITY 16
 #define SYMBOL_TABLE_SIZE 64
@@ -25,7 +25,7 @@ scope_t* new_scope(int kind, node_t* owner)
     scope->count = 0;
     scope->depth = 0;
 
-    scope->symbols = new_hashtable();
+    scope->symbols = new_hashmap();
     if(!scope->symbols){
         free_scope(scope);
         return NULL;
@@ -126,7 +126,7 @@ symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_
         sym->flags |= SYM_FLAG_GLOBAL;
     }
 
-    ht_insert(scope->symbols, sym->name, sym);
+    hm_insert(scope->symbols, sym->name, sym);
     scope->count += 1;
 
     return sym;
@@ -136,7 +136,7 @@ static symbol_t* lookup_in_scope(scope_t* scope, const char* name)
 {
     if(!scope || !name) return NULL;
 
-    return (symbol_t*)ht_lookup(scope->symbols, name);
+    return (symbol_t*)hm_lookup(scope->symbols, name);
 }
 
 symbol_t* lookup_symbol(symbol_table_t* st, const char* name)
@@ -175,7 +175,7 @@ void free_scope(scope_t* scope)
 {
     if(!scope) return;
 
-    if(scope->symbols) free_hashtable(scope->symbols);
+    if(scope->symbols) free_hashmap(scope->symbols);
     scope->symbols = NULL;
     scope->parent = NULL;
     scope->first_child = NULL;

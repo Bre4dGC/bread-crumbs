@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "compiler/context.h"
-#include "compiler/core/diagnostic.h"
+#include "core/diagnostic.h"
 #include "compiler/frontend/semantic.h"
 
 compiler_memory_t* new_compiler_memory(void)

@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "compiler/core/string_pool.h"
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/hash_table.h"
+#include "core/strings.h"
+#include "core/arena.h"
+#include "core/hashmap.h"
 
 string_pool_t new_string_pool(const size_t capacity)
 {
@@ -43,7 +43,7 @@ string_t new_nstring(string_pool_t* pool, const char* str, const size_t length)
 
     pool->elements[pool->count].data = stored_str;
     pool->elements[pool->count].length = length;
-    pool->elements[pool->count].hash = ht_hash(stored_str);
+    pool->elements[pool->count].hash = hm_hash(stored_str);
 
     pool->count++;
 

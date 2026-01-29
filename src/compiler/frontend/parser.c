@@ -4,14 +4,13 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/diagnostic.h"
-#include "compiler/core/string_pool.h"
-#include "compiler/frontend/tokenizer.h"
+#include "core/arena.h"
+#include "core/diagnostic.h"
+#include "core/strings.h"
 #include "compiler/frontend/ast.h"
 #include "compiler/frontend/parser.h"
 #ifdef DEBUG
-#include "common/debug.h"
+#include "core/common/debug.h"
 #endif
 
 node_t* parse_expr(parser_t* parser);
@@ -397,7 +396,7 @@ node_t* parse_func_call(parser_t* parser)
     // parse arguments if '(' is present
     if(check_token(parser, CAT_PAREN, PAR_LPAREN)){
         advance_token(parser); // skip '('
-        
+
         // parse arguments until ')'
         while (!check_token(parser, CAT_PAREN, PAR_RPAREN)){
             node_t* arg = parse_expr(parser);
@@ -519,7 +518,7 @@ node_t* parse_jump_stmt(parser_t* parser)
         case KW_RETURN:
             node = new_node(parser->ast, NODE_RETURN);
             if(!node) return NULL;
-            if(!check_token(parser, CAT_OPERATOR, OPER_SEMICOLON) && 
+            if(!check_token(parser, CAT_OPERATOR, OPER_SEMICOLON) &&
                !check_token(parser, CAT_PAREN, PAR_RBRACE)){
                 node->ret->body = parse_expr(parser);
             }
@@ -1235,14 +1234,14 @@ node_t* parse_enum(parser_t* parser)
         // create enum member node
         node_t* member = new_node(parser->ast, NODE_ENUM_MEMBER);
         if(!member) return NULL;
-        
+
         member->enum_member = (struct node_enum_member*)arena_alloc(parser->ast, sizeof(struct node_enum_member), alignof(struct node_enum_member));
         if(!member->enum_member) return NULL;
-        
+
         member->enum_member->name = new_string(parser->string_pool, parser->token.current.literal);
         if(!member->enum_member->name.data) return NULL;
         member->enum_member->value = NULL;
-        
+
         advance_token(parser);
 
         // optional value assignment
@@ -1462,7 +1461,7 @@ node_t* parse_trycatch(parser_t* parser)
         return NULL;
     }
 
-    // tODO: parse catch exception variable
+    // TODO: parse catch exception variable
     // for now, just skip the identifier if present
     if(check_token(parser, CAT_LITERAL, LIT_IDENT)){
         advance_token(parser);
@@ -1485,12 +1484,12 @@ node_t* parse_trycatch(parser_t* parser)
     // optional 'finally' block
     if(check_token(parser, CAT_KEYWORD, KW_FINALLY)){
         advance_token(parser);
-        
+
         // expect '{'
         if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
             return NULL;
         }
-        
+
         node->trycatch_stmt->finally_block = parse_block(parser);
         if(!node->trycatch_stmt->finally_block) return NULL;
     }
@@ -1508,9 +1507,9 @@ node_t* parse_module(parser_t* parser)
     node_t* node = new_node(parser->ast, NODE_MODULE);
     if(!node) return NULL;
     set_node_location(node, parser);
-    
+
     advance_token(parser); // skip 'module'
-    
+
     // expect module name
     if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
         add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
@@ -1542,7 +1541,7 @@ node_t* parse_import(parser_t* parser)
 
     advance_token(parser); // skip 'import'
 
-    // parse module path (e.g., "std.collection" or "std.collection.List")
+    // parse module path
     do {
         // expect module name component
         if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
@@ -1550,7 +1549,6 @@ node_t* parse_import(parser_t* parser)
             return NULL;
         }
 
-        // grow array if needed
         if(node->import_decl->count >= node->import_decl->capacity){
             size_t new_cap = node->import_decl->capacity == 0 ? 4 : node->import_decl->capacity * 2;
             string_t* new_modules = (string_t*)arena_alloc_array(parser->ast, sizeof(node->import_decl->modules[0]), new_cap * sizeof(string_t), alignof(string_t));
@@ -1614,7 +1612,7 @@ node_t* parse_special(parser_t* parser)
     if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
         return NULL;
     }
-    
+
     set_node_length(node, parser, start_pos);
     return node;
 }

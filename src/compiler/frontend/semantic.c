@@ -1,12 +1,11 @@
 #include <stdlib.h>
 
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/diagnostic.h"
-#include "compiler/frontend/tokenizer.h"
-#include "compiler/frontend/types.h"
+#include "core/arena.h"
+#include "core/diagnostic.h"
+#include "compiler/frontend/lexer/tokens.h"
 #include "compiler/frontend/semantic.h"
 #ifdef DEBUG
-#include "common/debug.h"
+#include "core/common/debug.h"
 #endif
 
 type_t* infer_type(semantic_t* sem, node_t* node);

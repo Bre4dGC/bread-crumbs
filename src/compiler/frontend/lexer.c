@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/diagnostic.h"
-#include "compiler/core/string_pool.h"
+#include "core/arena.h"
+#include "core/diagnostic.h"
+#include "core/strings.h"
 #include "compiler/frontend/lexer.h"
 
 #define IDENT_SIZE 16

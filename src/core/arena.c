@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "compiler/core/arena_alloc.h"
+#include "core/arena.h"
 
 static arena_block_t* new_arena_block(size_t capacity)
 {

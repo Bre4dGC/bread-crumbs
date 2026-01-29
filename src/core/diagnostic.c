@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "compiler/core/diagnostic.h"
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/string_pool.h"
+#include "core/diagnostic.h"
+#include "core/arena.h"
+#include "core/strings.h"
 
 const char* report_msg(const enum report_code code);
 
