@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "compiler/core/arena_alloc.h"
-#include "common/benchmark.h"
+#include "core/arena.h"
+#include "core/common/source.h"
 
 int main(void)
 {

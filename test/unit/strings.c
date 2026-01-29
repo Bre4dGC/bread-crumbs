@@ -1,8 +1,6 @@
-#include <stdio.h>
-
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/string_pool.h"
-#include "common/benchmark.h"
+#include "core/arena.h"
+#include "core/strings.h"
+#include "core/common/source.h"
 
 int main(void)
 {

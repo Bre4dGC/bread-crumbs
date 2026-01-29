@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "compiler/core/diagnostic.h"
-#include "common/benchmark.h"
+#include "core/diagnostic.h"
+#include "core/common/source.h"
 
 int main(void)
 {

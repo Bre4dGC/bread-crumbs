@@ -1,8 +1,8 @@
-#include "compiler/core/arena_alloc.h"
-#include "compiler/core/diagnostic.h"
+#include "core/arena.h"
+#include "core/diagnostic.h"
 #include "compiler/frontend/parser.h"
-#include "common/file_reader.h"
-#include "common/benchmark.h"
+#include "core/common/source.h"
+#include "core/common/benchmark.h"
 
 int main(void)
 {
@@ -13,7 +13,7 @@ int main(void)
     string_pool_t parser_pool = new_string_pool(ARENA_DEFAULT_SIZE);
     arena_t* ast_arena = new_arena(ARENA_BIG_SIZE);
     report_table_t* reports = new_report_table(arena);
-    
+
     string_t input = read_file(&lexer_pool, "test/cases/parser.brc");
     if(!input.data){
         fprintf(stderr, "Failed to read input file\n");

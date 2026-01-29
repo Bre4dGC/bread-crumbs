@@ -15,11 +15,10 @@ DIR_SRC = src
 
 DIR_TESTS 		   = test
 DIR_TESTS_OUTPUT   = test/output
-DIR_TESTS_COMPILER = test/compiler
-DIR_TESTS_OTHER    = test/other
+DIR_TESTS_OTHER    = test/unit
 
 DIR_COMP 		  = src/compiler
-DIR_COMP_CORE 	  = $(wildcard src/compiler/core/*.c)
+DIR_COMP_CORE 	  = $(wildcard src/core/*.c)
 DIR_COMP_FRONTEND = $(wildcard src/compiler/frontend/*.c)
 DIR_COMP_MIDDLE   = $(wildcard src/compiler/middle/*.c)
 DIR_COMP_BACKEND  = $(wildcard src/compiler/backend/*.c)
@@ -41,7 +40,7 @@ EXEC_TEST_CODEGEN  = $(DIR_TESTS_OUTPUT)/codegen
 # Other tests
 EXEC_TEST_ARENA   	 = $(DIR_TESTS_OUTPUT)/arena
 EXEC_TEST_STRINGPOOL = $(DIR_TESTS_OUTPUT)/stringpool
-EXEC_TEST_HASHTABLE  = $(DIR_TESTS_OUTPUT)/hashtable
+EXEC_TEST_HASHTABLE  = $(DIR_TESTS_OUTPUT)/hashmap
 EXEC_TEST_DIAGNOSTIC = $(DIR_TESTS_OUTPUT)/diagnostic
 ###########################################################
 
@@ -54,26 +53,22 @@ SRC_MAIN =  $(DIR_SRC)/main.c 							\
 			$(DIR_COMP_BACKEND)							\
 			$(DIR_RUNTIME)
 
-SRC_TEST_LEXER = 	$(DIR_TESTS)/compiler/lexing.c 		\
+SRC_TEST_LEXER = 	$(DIR_SRC)/compiler/lexing.c 		\
 					$(DIR_COMP_CORE)			 		\
-					src/compiler/frontend/tokenizer.c 	\
-					src/compiler/frontend/lexer.c
+					${DIR_COMP_FRONTEND}
 				
-SRC_TEST_PARSER = 	$(DIR_TESTS)/compiler/parsing.c		\
+SRC_TEST_PARSER = 	$(DIR_SRC)/compiler/parsing.c		\
 					$(DIR_COMP_CORE)					\
-                    src/compiler/frontend/tokenizer.c 	\
-                    src/compiler/frontend/lexer.c 		\
-                    src/compiler/frontend/ast.c			\
-                    src/compiler/frontend/parser.c
+					${DIR_COMP_FRONTEND}
 				
-SRC_TEST_SEMANTIC = $(DIR_TESTS)/compiler/analisis.c	\
+SRC_TEST_SEMANTIC = $(DIR_SRC)/compiler/analisis.c		\
 					$(DIR_COMP_CORE)					\
 					${DIR_COMP_FRONTEND}
 
-SRC_TEST_ARENA 		= $(DIR_TESTS)/other/arena.c 		$(DIR_COMP_CORE)
-SRC_TEST_STRINGPOOL = $(DIR_TESTS)/other/stringpool.c 	$(DIR_COMP_CORE)
-SRC_TEST_HASHTABLE 	= $(DIR_TESTS)/other/hashtable.c 	$(DIR_COMP_CORE)
-SRC_TEST_DIAGNOSTIC = $(DIR_TESTS)/other/diagnostic.c 	$(DIR_COMP_CORE)
+SRC_TEST_ARENA 		= $(DIR_SRC)/core/arena.c 			$(DIR_COMP_CORE)
+SRC_TEST_STRINGPOOL = $(DIR_SRC)/core/strings.c 		$(DIR_COMP_CORE)
+SRC_TEST_HASHTABLE 	= $(DIR_SRC)/core/hashmap.c 		$(DIR_COMP_CORE)
+SRC_TEST_DIAGNOSTIC = $(DIR_SRC)/core/diagnostic.c		$(DIR_COMP_CORE)
 ###########################################################
 
 ################### COMPILE TO OBJECTS ####################
