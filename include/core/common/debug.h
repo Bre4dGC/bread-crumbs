@@ -91,17 +91,17 @@ static inline void print_node(node_t* node, int indent)
             print_node(node->unaryop->right, indent + 1);
             break;
         case NODE_CALL:
-            printf("Call: %s\n", node->call->name.data);
-            for(size_t i = 0; i < node->call->args.count; i++){
-                print_node(node->call->args.elems[i], indent + 1);
+            printf("Call: %s\n", node->func_call->name.data);
+            for(size_t i = 0; i < node->func_call->args.count; i++){
+                print_node(node->func_call->args.elems[i], indent + 1);
             }
             break;
-        case NODE_ENUM_MEMBER:
-            printf("Enum Member: %s\n", node->enum_member->name.data);
+        case NODE_MEMBER:
+            printf("Enum Member: %s\n", node->member_decl->name.data);
             break;
         case NODE_RETURN:
             printf("Return:\n");
-            print_node(node->ret->body, indent + 1);
+            print_node(node->return_stmt->body, indent + 1);
             break;
         case NODE_BREAK:
             printf("Break:\n");
@@ -128,23 +128,23 @@ static inline void print_node(node_t* node, int indent)
             break;
         case NODE_WHILE:
             printf("While Loop:\n");
-            print_node(node->while_loop->condition, indent + 1);
-            print_node(node->while_loop->body, indent + 1);
+            print_node(node->while_stmt->condition, indent + 1);
+            print_node(node->while_stmt->body, indent + 1);
             break;
         case NODE_FOR:
             printf("For Loop:\n");
-            print_node(node->for_loop->init, indent + 1);
-            print_node(node->for_loop->condition, indent + 1);
-            print_node(node->for_loop->update, indent + 1);
-            print_node(node->for_loop->body, indent + 1);
+            print_node(node->for_stmt->init, indent + 1);
+            print_node(node->for_stmt->condition, indent + 1);
+            print_node(node->for_stmt->update, indent + 1);
+            print_node(node->for_stmt->body, indent + 1);
             break;
-        case NODE_VAR_PARAM:
-            printf("Function Parameter: %s\n", node->func_param->name.data);
+        case NODE_PARAM:
+            printf("Function Parameter: %s\n", node->param_decl->name.data);
             break;
         case NODE_FUNC:
             printf("Function: %s\n", node->func_decl->name.data);
-            for(size_t i = 0; i < node->func_decl->param.count; i++){
-                print_node(node->func_decl->param.elems[i], indent + 1);
+            for(size_t i = 0; i < node->func_decl->param_decl.count; i++){
+                print_node(node->func_decl->param_decl.elems[i], indent + 1);
             }
             print_node(node->func_decl->body, indent + 1);
             break;
@@ -169,15 +169,15 @@ static inline void print_node(node_t* node, int indent)
             break;
         case NODE_CASE:
             printf("Case:\n");
-            print_node(node->match_case->condition, indent + 1);
-            print_node(node->match_case->body, indent + 1);
+            print_node(node->case_stmt->condition, indent + 1);
+            print_node(node->case_stmt->body, indent + 1);
             break;
         case NODE_TRAIT:
             printf("Trait: %s\n", node->trait_decl->name.data);
             print_node(node->trait_decl->body, indent + 1);
             break;
         case NODE_IMPL:
-            printf("Impl: %s\n", node->impl_stmt->trait_name.data);
+            printf("Impl: %s\n", node->impl_decl->trait_name.data);
             print_node(node->trait_decl->body, indent + 1);
             break;
         case NODE_TRYCATCH:
@@ -207,7 +207,7 @@ static inline void print_node(node_t* node, int indent)
         case NODE_NAMEOF:
         case NODE_TYPEOF:
             printf("Reflection:\n");
-            printf("\tContent: %s\n", node->spec_stmt->content.data);
+            printf("\tContent: %s\n", node->special_stmt->content.data);
             break;
     }
 }

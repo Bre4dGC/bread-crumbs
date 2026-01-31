@@ -156,13 +156,13 @@ bool check_function(semantic_t* sem, node_t* node)
 
         // build a function type from signature
         type_t* return_type = datatype_to_type(func->return_type);
-        size_t param_count = func->param.count;
+        size_t param_count = func->param_decl.count;
         type_t** param_types = NULL;
         if(param_count > 0){
             param_types = (type_t**)arena_alloc_array(sem->arena, sizeof(type_t*), param_count, alignof(type_t*));
             if(!param_types) return false;
             for(size_t i = 0; i < param_count; i++){
-                node_t* p = func->param.elems[i];
+                node_t* p = func->param_decl.elems[i];
                 if(p && p->kind == NODE_VAR && p->var_decl){
                     int dt = p->var_decl->dtype;
                     param_types[i] = (dt == DT_VOID) ? type_any : datatype_to_type(dt);
@@ -198,8 +198,8 @@ bool check_function(semantic_t* sem, node_t* node)
     sem->current_function = func_sym;
 
     // add parameters to function scope
-    for(size_t i = 0; i < func->param.count; i++){
-        if(!check_param(sem, func->param.elems[i])){
+    for(size_t i = 0; i < func->param_decl.count; i++){
+        if(!check_param(sem, func->param_decl.elems[i])){
             pop_scope(sem->symbols);
             sem->current_function = prev_func;
             return false;
@@ -343,8 +343,8 @@ bool check_while(semantic_t* sem, node_t* node)
     sem->loop_depth++;
 
     bool success = true;
-    if(node->while_loop->condition) success = check_node(sem, node->while_loop->condition) && success;
-    if(node->while_loop->body)      success = check_node(sem, node->while_loop->body) && success;
+    if(node->while_stmt->condition) success = check_node(sem, node->while_stmt->condition) && success;
+    if(node->while_stmt->body)      success = check_node(sem, node->while_stmt->body) && success;
 
     sem->loop_depth--;
     return success;
@@ -358,10 +358,10 @@ bool check_for(semantic_t* sem, node_t* node)
     sem->loop_depth++;
 
     bool success = true;
-    if(node->for_loop->init)      success = check_node(sem, node->for_loop->init) && success;
-    if(node->for_loop->condition) success = check_node(sem, node->for_loop->condition) && success;
-    if(node->for_loop->update)    success = check_node(sem, node->for_loop->update) && success;
-    if(node->for_loop->body)      success = check_node(sem, node->for_loop->body) && success;
+    if(node->for_stmt->init)      success = check_node(sem, node->for_stmt->init) && success;
+    if(node->for_stmt->condition) success = check_node(sem, node->for_stmt->condition) && success;
+    if(node->for_stmt->update)    success = check_node(sem, node->for_stmt->update) && success;
+    if(node->for_stmt->body)      success = check_node(sem, node->for_stmt->body) && success;
 
     sem->loop_depth--;
     pop_scope(sem->symbols);
@@ -377,8 +377,8 @@ bool check_return(semantic_t* sem, node_t* node)
         return false;
     }
 
-    if(node->ret->body){
-        return check_node(sem, node->ret->body);
+    if(node->return_stmt->body){
+        return check_node(sem, node->return_stmt->body);
     }
 
     return true;
@@ -455,7 +455,7 @@ bool check_func_call(semantic_t* sem, node_t* node)
     if(!sem || !node || node->kind != NODE_CALL) return false;
 
     // lookup function
-    symbol_t* func_sym = lookup_symbol(sem->symbols, node->call->name.data);
+    symbol_t* func_sym = lookup_symbol(sem->symbols, node->func_call->name.data);
     if(!func_sym){
         add_report(sem->reports, SEV_ERR, ERR_UNDEC_FUNC, node->loc, DEFAULT_LEN, NULL);
         return false;
@@ -466,8 +466,8 @@ bool check_func_call(semantic_t* sem, node_t* node)
         return false;
     }
 
-    for(size_t i = 0; i < node->call->args.count; i++){
-        if(!check_node(sem, node->call->args.elems[i])) return false;
+    for(size_t i = 0; i < node->func_call->args.count; i++){
+        if(!check_node(sem, node->func_call->args.elems[i])) return false;
     }
 
     // TODO: check argument count and types match parameters
@@ -560,7 +560,7 @@ type_t* infer_type(semantic_t* sem, node_t* node)
         }
 
         case NODE_CALL: {
-            symbol_t* func = lookup_symbol(sem->symbols, node->call->name.data);
+            symbol_t* func = lookup_symbol(sem->symbols, node->func_call->name.data);
             if(func && func->type && func->type->kind == TYPE_FUNC){
                 return func->type->func.return_type;
             }

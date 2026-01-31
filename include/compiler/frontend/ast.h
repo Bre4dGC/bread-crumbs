@@ -190,26 +190,26 @@ struct node {
     size_t length;
 
     union {
-        struct node_literal*     lit;
-        struct node_binop*       binop;
-        struct node_unaryop*     unaryop;
-        struct node_var_assign*  var_assign;
-        struct node_var_ref*     var_ref;
-        struct node_block*       block;
-        struct node_func_call*   func_call;
+        struct node_binop*      binop;
+        struct node_unaryop*    unaryop;
+        struct node_var_assign* var_assign;
+        struct node_var_ref*    var_ref;
+        struct node_block*      block;
+        struct node_func_call*  func_call;
+        struct node_literal*    lit;
 
         struct node_var*    var_decl;
         struct node_array*  array_decl;
         struct node_param*  param_decl;
+        struct node_member* member_decl;
         struct node_func*   func_decl;
+        struct node_type*   type_decl;
         struct node_struct* struct_decl;
         struct node_enum*   enum_decl;
         struct node_trait*  trait_decl;
-        struct node_type*   type_decl;
         struct node_module* module_decl;
         struct node_import* import_decl;
         struct node_impl*   impl_decl;
-        struct node_member* member_decl;
 
         struct node_if*       if_stmt;
         struct node_while*    while_stmt;

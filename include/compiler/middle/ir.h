@@ -38,7 +38,7 @@ enum op_code {
 
     /* stream control */
     OP_JUMP,        // jmp <label>
-    OP_CALL,        // call <func_id>
+    OP_CALL,        // func_call <func_id>
     OP_RETURN,      // return
     OP_JUMP_IF,     // jmp_if <label>
     OP_JUMP_IFNOT,  // jmp_ifnot <label>
