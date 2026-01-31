@@ -50,7 +50,7 @@ struct node_func_call {
     nodes_t args;
 };
 
-struct node_return_stmt {
+struct node_return {
     node_t* body;
 };
 
@@ -91,7 +91,7 @@ struct node_for {
     node_t* body;
 };
 
-struct node_var_param {
+struct node_param {
     string_t name;
     bool is_variadic;
     int dtype;
@@ -99,7 +99,7 @@ struct node_var_param {
 
 struct node_func {
     string_t name;
-    nodes_t param;
+    nodes_t param_decl;
     int return_type;
     node_t* body;
 };
@@ -119,7 +119,7 @@ struct node_struct {
     nodes_t member;
 };
 
-struct node_enum_member {
+struct node_member {
     string_t name;
     node_t* value;
 };
@@ -162,7 +162,7 @@ struct node_import {
     size_t capacity;
 };
 
-struct node_spec {
+struct node_special {
     int type;
     string_t content;
 };
@@ -171,8 +171,7 @@ enum node_kind {
     NODE_LITERAL, NODE_BINOP,   NODE_EXPR,
     NODE_BLOCK,   NODE_UNARYOP, NODE_VAR,
     NODE_CALL,    NODE_ASSIGN,  NODE_REF,
-
-    NODE_ENUM_MEMBER, NODE_VAR_PARAM,
+    NODE_MEMBER,  NODE_PARAM,
 
     NODE_IF,      NODE_WHILE,   NODE_FOR,
     NODE_FUNC,    NODE_MATCH,   NODE_CASE,
@@ -197,27 +196,29 @@ struct node {
         struct node_var_assign*  var_assign;
         struct node_var_ref*     var_ref;
         struct node_block*       block;
-        struct node_func_call*   call;
-        struct node_return_stmt* ret;
-        struct node_var*         var_decl;
-        struct node_array*       array_decl;
-        struct node_if*          if_stmt;
-        struct node_while*       while_loop;
-        struct node_for*         for_loop;
-        struct node_var_param*  func_param;
-        struct node_func*        func_decl;
-        struct node_match*       match_stmt;
-        struct node_case*        match_case;
-        struct node_struct*      struct_decl;
-        struct node_enum_member* enum_member;
-        struct node_enum*        enum_decl;
-        struct node_trait*       trait_decl;
-        struct node_impl*        impl_stmt;
-        struct node_trycatch*    trycatch_stmt;
-        struct node_type*        type_decl;
-        struct node_module*      module_decl;
-        struct node_import*      import_decl;
-        struct node_spec*        spec_stmt;
+        struct node_func_call*   func_call;
+
+        struct node_var*    var_decl;
+        struct node_array*  array_decl;
+        struct node_param*  param_decl;
+        struct node_func*   func_decl;
+        struct node_struct* struct_decl;
+        struct node_enum*   enum_decl;
+        struct node_trait*  trait_decl;
+        struct node_type*   type_decl;
+        struct node_module* module_decl;
+        struct node_import* import_decl;
+        struct node_impl*   impl_decl;
+        struct node_member* member_decl;
+
+        struct node_if*       if_stmt;
+        struct node_while*    while_stmt;
+        struct node_for*      for_stmt;
+        struct node_case*     case_stmt;
+        struct node_match*    match_stmt;
+        struct node_trycatch* trycatch_stmt;
+        struct node_special*  special_stmt;
+        struct node_return*   return_stmt;
     };
 };
 
