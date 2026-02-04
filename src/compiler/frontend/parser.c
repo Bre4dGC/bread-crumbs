@@ -8,11 +8,36 @@
 #include "core/diagnostic.h"
 #include "core/strings.h"
 #include "compiler/frontend/ast.h"
-#include "compiler/frontend/parser.h"
+#include "compiler/frontend/parser/decl.h"
+#include "compiler/frontend/parser/stmt.h"
 
 #ifdef DEBUG
 #include "core/common/debug.h"
 #endif
+
+parse_func_t parse_table[] = {
+    [KW_IF]       = parse_stmt_if,
+    [KW_WHILE]    = parse_stmt_while,
+    [KW_FOR]      = parse_stmt_for,
+    [KW_MATCH]    = parse_stmt_match,
+    [KW_TRY]      = parse_stmt_trycatch,
+    [KW_BREAK]    = parse_stmt_jump,
+    [KW_CONTINUE] = parse_stmt_jump,
+    [KW_RETURN]   = parse_stmt_jump,
+    [KW_TYPEOF]   = parse_stmt_special,
+    [KW_NAMEOF]   = parse_stmt_special,
+
+    [KW_FUNC]     = parse_decl_func,
+    [KW_STRUCT]   = parse_decl_struct,
+    [KW_ENUM]     = parse_decl_enum,
+    [KW_TRAIT]    = parse_decl_trait,
+    [KW_IMPL]     = parse_decl_impl,
+    [KW_TYPE]     = parse_decl_type,
+    [KW_MODULE]   = parse_decl_module,
+    [KW_IMPORT]   = parse_decl_import,
+};
+
+const size_t PARSE_TABLE_LENGTH = sizeof(parse_table)/sizeof(parse_table[0]);
 
 parser_t* new_parser(arena_t* arena, arena_t* ast, report_table_t* reports, string_pool_t* string_pool, lexer_t* lexer)
 {
@@ -52,7 +77,7 @@ ast_t* parse_program(parser_t* parser)
             continue;
         }
 
-        if(!add_block_stmt(parser, ast->nodes, stmt)) goto cleanup;
+        if(!add_stmt_block(parser, ast->nodes, stmt)) goto cleanup;
 
         // optionally consume ';'
         if(check_token(parser, CAT_OPERATOR, OPER_SEMICOLON)){

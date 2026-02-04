@@ -1,7 +1,6 @@
 #pragma once
 #include <stdint.h>
 
-#include "core/hashmap.h"
 #include "core/strings.h"
 
 typedef struct {
@@ -9,9 +8,9 @@ typedef struct {
     void* value;
 } bucket_t;
 
-typedef struct {
+typedef struct hashmap_t {
     bucket_t* curr;
-    bucket_t* next;
+    struct hashmap_t* next;
     size_t count;
 } hashmap_t;
 

@@ -51,7 +51,7 @@ void hm_insert(hashmap_t* map, const char* key, void* value)
             }
         }
         if(map->next == NULL) break;
-        map->curr = map->next;
+        map = map->next;
     }
 
     hashmap_t* new_entry = (hashmap_t*)malloc(sizeof(hashmap_t));
