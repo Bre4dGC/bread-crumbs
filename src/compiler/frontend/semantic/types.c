@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdalign.h>
 
-#include "compiler/frontend/types.h"
+#include "compiler/frontend/semantic/types.h"
 
 #define DEF_TYPE_SIZE  0
 #define DEF_TYPE_ALIGN 1

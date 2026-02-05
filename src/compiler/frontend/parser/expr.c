@@ -1,4 +1,6 @@
 #include "compiler/frontend/parser/expr.h"
+#include "compiler/frontend/parser/decl.h"
+#include "compiler/frontend/parser/stmt.h"
 #include "compiler/frontend/parser.h"
 
 node_t* parse_expr(parser_t* parser)

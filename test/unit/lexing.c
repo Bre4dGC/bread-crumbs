@@ -2,6 +2,8 @@
 #include "core/diagnostic.h"
 #include "core/strings.h"
 #include "compiler/frontend/lexer.h"
+#include <stdio.h>
+#include "core/common/filesystem.h"
 #include "core/common/source.h"
 #include "core/common/benchmark.h"
 
@@ -13,7 +15,7 @@ int main(void)
     string_pool_t string_pool = new_string_pool(ARENA_DEFAULT_SIZE);
     report_table_t* reports = new_report_table(arena);
 
-    string_t input = read_file(&string_pool, "test/cases/tokens.brc");
+    string_t input = fs_read_file(&string_pool, "test/cases/tokens.brc");
     if(!input.data){
         fprintf(stderr, "Failed to read input file\n");
         return 1;

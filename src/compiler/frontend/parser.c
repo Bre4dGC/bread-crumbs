@@ -7,6 +7,7 @@
 #include "core/arena.h"
 #include "core/diagnostic.h"
 #include "core/strings.h"
+#include "compiler/frontend/parser.h"
 #include "compiler/frontend/ast.h"
 #include "compiler/frontend/parser/decl.h"
 #include "compiler/frontend/parser/stmt.h"
@@ -98,23 +99,23 @@ cleanup:
     return NULL;
 }
 
-inline bool check_token(parser_t* parser, enum category_tag category, int type)
+bool check_token(parser_t* parser, enum category_tag category, int type)
 {
     return parser->token.current.category == category && parser->token.current.type == type;
 }
 
-inline bool is_eof(const token_t token)
+bool is_eof(const token_t token)
 {
     return token.category == CAT_SERVICE && token.type == SERV_EOF;
 }
 
-inline void set_node_location(node_t* node, parser_t* parser)
+void set_node_location(node_t* node, parser_t* parser)
 {
     if(!node || !parser) return;
     node->loc = parser->lexer->loc;
 }
 
-inline void set_node_length(node_t* node, parser_t* parser, size_t start_pos)
+void set_node_length(node_t* node, parser_t* parser, size_t start_pos)
 {
     if(!node || !parser) return;
     size_t end_pos = parser->lexer->pos;
@@ -126,7 +127,7 @@ inline void set_node_length(node_t* node, parser_t* parser, size_t start_pos)
     }
 }
 
-inline size_t get_lexer_position(parser_t* parser)
+size_t get_lexer_position(parser_t* parser)
 {
     return parser ? parser->lexer->pos : 0;
 }

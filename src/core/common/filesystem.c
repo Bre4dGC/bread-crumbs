@@ -8,7 +8,7 @@
 
 #include "core/strings.h"
 
-string_t read_file(string_pool_t* sp, const char* filepath)
+string_t fs_read_file(string_pool_t* sp, const char* filepath)
 {
     if(!filepath) return (string_t){0};
 
@@ -44,6 +44,11 @@ string_t read_file(string_pool_t* sp, const char* filepath)
     free(buffer);
 
     return result;
+}
+
+string_t read_file(string_pool_t* sp, const char* filepath)
+{
+    return fs_read_file(sp, filepath);
 }
 
 int is_file_exists(const char* filepath)

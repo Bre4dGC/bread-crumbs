@@ -2,6 +2,7 @@
 
 #include "core/diagnostic.h"
 #include "core/common/source.h"
+#include "core/common/benchmark.h"
 
 int main(void)
 {

@@ -1,6 +1,8 @@
 #include "core/arena.h"
 #include "core/diagnostic.h"
 #include "compiler/frontend/parser.h"
+#include <stdio.h>
+#include "core/common/filesystem.h"
 #include "core/common/source.h"
 #include "core/common/benchmark.h"
 
@@ -14,7 +16,7 @@ int main(void)
     arena_t* ast_arena = new_arena(ARENA_BIG_SIZE);
     report_table_t* reports = new_report_table(arena);
 
-    string_t input = read_file(&lexer_pool, "test/cases/parser.brc");
+    string_t input = fs_read_file(&lexer_pool, "test/cases/parser.brc");
     if(!input.data){
         fprintf(stderr, "Failed to read input file\n");
         return 1;

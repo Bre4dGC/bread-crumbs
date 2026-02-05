@@ -1,5 +1,6 @@
 #include "compiler/frontend/parser/stmt.h"
 #include "compiler/frontend/parser.h"
+#include "compiler/frontend/parser/expr.h"
 
 node_t* parse_stmt(parser_t* parser)
 {

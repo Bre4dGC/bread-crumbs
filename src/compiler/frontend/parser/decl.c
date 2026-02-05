@@ -1,4 +1,6 @@
 #include "compiler/frontend/parser/decl.h"
+#include "compiler/frontend/parser/expr.h"
+#include "compiler/frontend/parser/stmt.h"
 
 node_t* parse_decl_var(parser_t* parser)
 {

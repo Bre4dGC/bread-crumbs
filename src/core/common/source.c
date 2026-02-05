@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "core/strings.h"
-#include "core/filesystem.h"
+#include "core/common/filesystem.h"
 
 source_t* new_source(string_t filename);
 void free_source(source_t* source);

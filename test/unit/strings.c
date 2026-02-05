@@ -1,6 +1,9 @@
+#include <stdio.h>
+
 #include "core/arena.h"
 #include "core/strings.h"
 #include "core/common/source.h"
+#include "core/common/benchmark.h"
 
 int main(void)
 {

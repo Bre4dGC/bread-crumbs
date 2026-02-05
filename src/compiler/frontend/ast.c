@@ -174,7 +174,7 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             if(!node->import_decl) return NULL;
             node->import_decl->count = 0;
             node->import_decl->capacity = 16;
-            node->import_decl->modules = (string_t*)arena_alloc_array(arena, sizeof(string_t), node->import_decl->capacity * sizeof(string_t), alignof(string_t));
+            node->import_decl->modules = (string_t*)arena_alloc_array(arena, sizeof(string_t), node->import_decl->capacity, alignof(string_t));
             if(!node->import_decl->modules) return NULL;
             break;
         case NODE_MODULE:
