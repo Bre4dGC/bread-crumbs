@@ -1,4 +1,15 @@
-#[ Network base usage
+#[ Network library basic usage
+
+        === Methods ===
+.connect(host : str, port : int) : socket
+.listen(port : int) : socket
+.send(socket : socket, data : str) : void
+.recv(socket : socket) : str
+.close(socket : socket) : void
+
+        === Properties ===
+.host : str
+.port : int
 
 ]#
 

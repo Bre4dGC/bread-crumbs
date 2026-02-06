@@ -1,4 +1,4 @@
-#[ Console library functions
+#[ Console library basic usage
 
         === Functions ===
 console.clear() -- Clear the console screen.
@@ -9,10 +9,5 @@ console.pause() -- Pause the console until a key is pressed.
 .set_color(fg : int, bg : int)      -- Set the console text foreground and background
 .set_cursor_pos(x : int, y : int)   -- Set the console cursor position.
 .get_cursor_pos() : (int, int)      -- Get the console cursor position.
-
-        === Properties ===
-.width  : int   -- Get the width of the console in characters.
-.height : int   -- Get the height of the console in characters.
-.
 
 ]#

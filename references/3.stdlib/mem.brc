@@ -1,11 +1,11 @@
-#[ Base memory API
+#[ Memory library basic usage
 
         === Static methods ===
 memory.reserve(size : int) : memory -- reserve memory block
 
         === Methods ===
-.store(element : type)      -- store element in memory
-.delete(element : type)     -- delete element from memory
+.store(element : any)       -- store element in memory
+.delete(element : any)      -- delete element from memory
 .split(size : int) : memory -- split memory block into two parts
 .extend(size : int)         -- increase memory block size
 .shrink(size : int)         -- decrease memory block size
@@ -16,7 +16,7 @@ memory.reserve(size : int) : memory -- reserve memory block
 .volume    : int    -- total size of memory block
 .used      : int    -- currently used memory size
 .available : int    -- available memory size
-.data      : type[] -- array of stored elements
+.data      : any[]  -- array of stored elements
 
 ]#
 

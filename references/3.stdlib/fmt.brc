@@ -1,2 +1,7 @@
 #[ Format library basic usage
+
+        === Methods ===
+.print(format : str, args : ...any)
+.println(format : str, args : ...any)
+
 ]#

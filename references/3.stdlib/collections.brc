@@ -1,6 +1,4 @@
-#[ Collections usage
-
-<mod> <name> [: <collection><<generic>>] = {<data>}
+#[ Collections library basic usage
 
         === Collection types ===
 list<t>     -- a dynamic array of elements of type t
@@ -13,16 +11,16 @@ graph<t>    -- a collection of nodes and edges, where nodes are of type t
 tree<t>     -- a hierarchical collection of elements of type t
 
         === Methods ===
-.add(element : type)                -- add element to the collection
-.remove(element : type)             -- remove element from the collection
-.contains(element : type) : bool    -- check if the collection contains the element
+.add(element : any)                -- add element to the collection
+.remove(element : any)             -- remove element from the collection
+.contains(element : any) : bool    -- check if the collection contains the element
 .is_empty() : bool                  -- check if the collection is empty
 .clear()                            -- remove all elements from the collection
 
         === Properties ===
-.len    : int        -- number of elements in the collection
-.front  : type       -- get the first element of the collection
-.back   : type       -- get the last element of the collection
+.len    : int       -- number of elements in the collection
+.front  : any       -- get the first element of the collection
+.back   : any       -- get the last element of the collection
 ]#
 
 import std.collection

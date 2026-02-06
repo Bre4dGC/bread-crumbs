@@ -3,10 +3,10 @@
 <modif> <name> [: type] = <expression>
 
         === Functions ===
-alloc(size : int) : *type                 -- Allocates memory for the specified type and returns a raw pointer.
-realloc(ptr : *type, size : int) : *type  -- Reallocates memory for the specified type and returns a raw pointer.
-capac(ptr : *type) : int                  -- Returns the capacity of the memory allocated for the specified raw pointer.
-free(ptr : *type)                         -- Frees the memory allocated for the specified raw pointer.
+alloc(size : int) : *any                 -- Allocates memory for the specified type and returns a raw pointer.
+realloc(ptr : *any, size : int) : *any   -- Reallocates memory for the specified type and returns a raw pointer.
+capac(ptr : *any) : int                  -- Returns the capacity of the memory allocated for the specified raw pointer.
+free(ptr : *any)                         -- Frees the memory allocated for the specified raw pointer.
 
 ]#
 

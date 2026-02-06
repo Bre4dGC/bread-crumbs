@@ -1,8 +1,6 @@
-#[ System library functions
+#[ System library basic usage
 
-
-        === Functions ===
-.exit(code : int)    -- Exit the program with the given exit code.
-.
+        === Static methods ===
+exit(code : int)    -- Exit the program with the given exit code.
 
 ]#
