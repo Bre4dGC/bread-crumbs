@@ -1,16 +1,22 @@
 #[ Network library basic usage
 
         === Methods ===
-.connect(host : str, port : int) : socket
-.listen(port : int) : socket
-.send(socket : socket, data : str) : void
-.recv(socket : socket) : str
-.close(socket : socket) : void
+.connect(host : str, port : int) : socket   -- connect to host on port
+.listen(port : int) : socket                -- listen on port
+.send(socket : socket, data : str)          -- send data to socket
+.recv(socket : socket) : str                -- receive data from socket
+.close(socket : socket)                     -- close socket
 
         === Properties ===
-.host : str
-.port : int
+.host : str     -- host address
+.port : int     -- port number
 
 ]#
 
 import std.network
+
+var socket : socket = net.connect("localhost", 8080)
+net.send(socket, "Hello, world!")
+
+var data : str = net.recv(socket)
+net.close(socket)

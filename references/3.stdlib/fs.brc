@@ -1,0 +1,18 @@
+#[ File system library basic usage
+
+        === Functions ===
+.create(path : str, mode : str) : file  -- create file or directory with mode
+.open(path : str, mode : str) : file    -- open file
+.close(file : file)                     -- close file
+.read(file : file) : str                
+.write(file : file, data : str)         
+.rename(old : str, new : str)           
+.remove(path : str)                     
+.copy(src : str, dest : str)            
+.move(src : str, dest : str)            
+
+        === Properties ===
+.path : str
+.mode : str
+
+]#

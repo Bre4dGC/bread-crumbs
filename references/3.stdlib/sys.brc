@@ -1,6 +1,7 @@
 #[ System library basic usage
 
-        === Static methods ===
-exit(code : int)    -- Exit the program with the given exit code.
+        === Methods ===
+.exit(code : int)           -- Exit the program with the given exit code.
+.getenv(key : str) : str    -- Get the value of the environment variable with the given key.
 
 ]#

@@ -1,11 +1,7 @@
 #[ Time library basic usage
 
-        === Static methods ===
-sleep(duration : float) : void
-
-        === Methods ===
+        === Functions ===
+.sleep(duration : float)
 .now() : time
-
-        === Properties ===
 
 ]#

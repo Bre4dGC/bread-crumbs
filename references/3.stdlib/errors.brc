@@ -2,7 +2,6 @@
 
         === Methods ===
 .new(message : str, code : int) : error
-.free(err : error)
 
         === Properties ===
 .message : str
