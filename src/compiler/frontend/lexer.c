@@ -168,7 +168,7 @@ token_t handle_operator(lexer_t* lexer)
     const char next = peek_ch(lexer);
 
     if(next != '\0'){
-        const char potential_op[3] ={current, next, '\0'};
+        const char potential_op[3] = {current, next, '\0'};
         const token_t *op = find_token(potential_op);
         if(op){
             read_ch(lexer);

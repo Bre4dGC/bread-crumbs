@@ -3,13 +3,9 @@
 
 #include "core/strings.h"
 
-typedef struct {
+typedef struct hashmap_t {
     string_t key;
     void* value;
-} bucket_t;
-
-typedef struct hashmap_t {
-    bucket_t* curr;
     struct hashmap_t* next;
     size_t count;
 } hashmap_t;

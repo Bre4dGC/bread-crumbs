@@ -19,13 +19,8 @@ hashmap_t* new_hashmap(void)
 {
     hashmap_t* map = (hashmap_t*)malloc(sizeof(hashmap_t));
     if(!map) return NULL;
-    map->curr = (bucket_t*)malloc(sizeof(bucket_t));
-    if(!map->curr) {
-        free(map);
-        return NULL;
-    }
-    map->curr->key = (string_t){NULL, 0, 0};
-    map->curr->value = NULL;
+    map->key = (string_t){NULL, 0, 0};
+    map->value = NULL;
     map->next = NULL;
     map->count = 0;
     return map;
@@ -37,33 +32,31 @@ void hm_insert(hashmap_t* map, const char* key, void* value)
 
     const string_t str = {key, strlen(key), hm_hash(key)};
 
-    if(!map->curr->key.data){
-        map->curr->key = str;
-        map->curr->value = value;
+    if(!map->key.data){
+        map->key = str;
+        map->value = value;
+        map->count = 1;
         return;
     }
 
-    while(map != NULL){
-        if(map->curr->key.data && map->curr->key.hash == str.hash){
-            if(strcmp(map->curr->key.data, str.data) == 0){
-                map->curr->value = value;
+    hashmap_t* curr = map;
+    while(curr != NULL){
+        if(curr->key.data && curr->key.hash == str.hash){
+            if(strcmp(curr->key.data, str.data) == 0){
+                curr->value = value;
                 return;
             }
         }
-        if(map->next == NULL) break;
-        map = map->next;
+        if(curr->next == NULL) break;
+        curr = curr->next;
     }
 
     hashmap_t* new_entry = (hashmap_t*)malloc(sizeof(hashmap_t));
     if(!new_entry) return;
-    new_entry->curr = (bucket_t*)malloc(sizeof(bucket_t));
-    if(!new_entry->curr){
-        free(new_entry);
-        return;
-    }
-    new_entry->curr->key = str;
-    new_entry->curr->value = value;
+    new_entry->key = str;
+    new_entry->value = value;
     new_entry->next = NULL;
+    curr->next = new_entry;
     map->count++;
 }
 
@@ -74,9 +67,9 @@ void* hm_lookup(hashmap_t* map, const char* key)
     const string_t str = {key, strlen(key), hm_hash(key)};
 
     while(map != NULL){
-        if(map->curr->key.data && map->curr->key.hash == str.hash){
-            if(strcmp(map->curr->key.data, str.data) == 0){
-                return map->curr->value;
+        if(map->key.data && map->key.hash == str.hash){
+            if(strcmp(map->key.data, str.data) == 0){
+                return map->value;
             }
         }
         map = map->next;
@@ -90,17 +83,17 @@ void hm_delete(hashmap_t* map, const char* key)
 
     const string_t str = {key, strlen(key), hm_hash(key)};
 
-    if(map->curr->key.data && map->curr->key.hash == str.hash){
+    if(map->key.data && map->key.hash == str.hash){
         if(map->next){
             hashmap_t* next = map->next;
-            map->curr->key = next->curr->key;
-            map->curr->value = next->curr->value;
+            map->key = next->key;
+            map->value = next->value;
             map->next = next->next;
             free(next);
         }
         else {
-            map->curr->key.data = NULL;
-            map->curr->value = NULL;
+            map->key.data = NULL;
+            map->value = NULL;
         }
         return;
     }
@@ -109,8 +102,8 @@ void hm_delete(hashmap_t* map, const char* key)
     map = map->next;
 
     while(map != NULL){
-        if(map->curr->key.data && map->curr->key.hash == str.hash){
-            if(strcmp(map->curr->key.data, str.data) == 0){
+        if(map->key.data && map->key.hash == str.hash){
+            if(strcmp(map->key.data, str.data) == 0){
                 prev->next = map->next;
                 free(map);
                 return;
@@ -127,8 +120,7 @@ void free_hashmap(hashmap_t* map)
     hashmap_t* curr = map;
     while(curr){
         hashmap_t* next = curr->next;
-        free(curr->curr);
+        free(curr);
         curr = next;
     }
-    free(map);
 }
