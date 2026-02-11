@@ -222,7 +222,7 @@ token_t handle_ident(lexer_t* lexer)
 
 token_t handle_number(lexer_t *lexer)
 {
-    enum category_literal lit = 0;
+    enum category_literal lit = LIT_NUMBER;
 
     if(lexer->ch == '0'){
         switch(peek_ch(lexer)){
