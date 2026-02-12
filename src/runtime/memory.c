@@ -1,4 +1,4 @@
-#include "compiler/runtime/memory.h"
+#include "runtime/memory.h"
 
 memory_t* new_memory_manager(void)
 {

@@ -13,20 +13,20 @@ DIR_BIN = bin
 DIR_OBJ = obj
 DIR_SRC = src
 
-DIR_TESTS 		   = test
-DIR_TESTS_OTHER    = test/unit
-
-DIR_TESTS_OUTPUT    = $(DIR_BIN)/tests
+DIR_TESTS 		   	  = test
+DIR_TESTS_UNIT     	  = test/unit
+DIR_TESTS_INTEGRATION = test/integration
+DIR_TESTS_OUTPUT   	  = $(DIR_BIN)/tests
 
 DIR_COMP 		  = src/compiler
 DIR_COMP_CORE 	  = $(wildcard src/core/*.c)
 DIR_COMP_FRONTEND = $(wildcard src/compiler/frontend/*.c)
-DIR_COMP_FRONTEND_PARSER = $(wildcard src/compiler/frontend/parser/*.c)
-DIR_COMP_FRONTEND_LEXER  = $(wildcard src/compiler/frontend/lexer/*.c)
+DIR_COMP_FRONTEND_PARSER   = $(wildcard src/compiler/frontend/parser/*.c)
+DIR_COMP_FRONTEND_LEXER    = $(wildcard src/compiler/frontend/lexer/*.c)
 DIR_COMP_FRONTEND_SEMANTIC = $(wildcard src/compiler/frontend/semantic/*.c)
 DIR_COMP_MIDDLE   = $(wildcard src/compiler/middle/*.c)
 DIR_COMP_BACKEND  = $(wildcard src/compiler/backend/*.c)
-DIR_RUNTIME 	  = $(wildcard src/compiler/runtime/*.c)
+DIR_RUNTIME 	  = $(wildcard src/runtime/*.c)
 
 DIR_CLI     = $(wildcard src/cli/*.c)
 DIR_CLI_COMMANDS = $(wildcard src/cli/commands/*.c)
@@ -72,7 +72,7 @@ SRC_MAIN = $(DIR_SRC)/main.c \
 	$(DIR_RUNTIME)
 
 SRC_TEST_LEXER = \
-	$(DIR_TESTS_OTHER)/lexing.c \
+	$(DIR_TESTS_INTEGRATION)/lexing.c \
 	$(DIR_COMP_CORE) \
 	$(DIR_SRC)/core/common/filesystem.c \
 	$(DIR_SRC)/core/common/benchmark.c \
@@ -80,51 +80,51 @@ SRC_TEST_LEXER = \
 	$(DIR_SRC)/compiler/frontend/lexer/tokens.c
 
 SRC_TEST_PARSER = \
-	$(DIR_TESTS_OTHER)/parsing.c \
+	$(DIR_TESTS_INTEGRATION)/parsing.c \
 	$(DIR_COMP_CORE) \
 	$(DIR_SRC)/core/common/filesystem.c \
 	$(DIR_SRC)/core/common/benchmark.c \
 	$(DIR_SRC)/compiler/frontend/ast.c \
-	$(DIR_SRC)/compiler/frontend/lexer.c \
 	$(DIR_SRC)/compiler/frontend/lexer/tokens.c \
-	$(DIR_SRC)/compiler/frontend/parser.c \
-	$(DIR_SRC)/compiler/frontend/parser/decl.c \
-	$(DIR_SRC)/compiler/frontend/parser/expr.c \
-	$(DIR_SRC)/compiler/frontend/parser/stmt.c
-
-SRC_TEST_SEMANTIC = \
-	$(DIR_TESTS_OTHER)/analisis.c \
-	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/common/filesystem.c \
-	$(DIR_SRC)/core/common/benchmark.c \
-	$(DIR_SRC)/compiler/frontend/ast.c \
 	$(DIR_SRC)/compiler/frontend/lexer.c \
-	$(DIR_SRC)/compiler/frontend/lexer/tokens.c \
-	$(DIR_SRC)/compiler/frontend/parser.c \
 	$(DIR_SRC)/compiler/frontend/parser/decl.c \
 	$(DIR_SRC)/compiler/frontend/parser/expr.c \
 	$(DIR_SRC)/compiler/frontend/parser/stmt.c \
-	$(DIR_SRC)/compiler/frontend/semantic.c \
+	$(DIR_SRC)/compiler/frontend/parser.c
+
+SRC_TEST_SEMANTIC = \
+	$(DIR_TESTS_INTEGRATION)/analisis.c \
+	$(DIR_COMP_CORE) \
+	$(DIR_SRC)/core/common/filesystem.c \
+	$(DIR_SRC)/core/common/benchmark.c \
+	$(DIR_SRC)/compiler/frontend/ast.c \
+	$(DIR_SRC)/compiler/frontend/lexer/tokens.c \
+	$(DIR_SRC)/compiler/frontend/lexer.c \
+	$(DIR_SRC)/compiler/frontend/parser/decl.c \
+	$(DIR_SRC)/compiler/frontend/parser/expr.c \
+	$(DIR_SRC)/compiler/frontend/parser/stmt.c \
+	$(DIR_SRC)/compiler/frontend/parser.c \
 	$(DIR_SRC)/compiler/frontend/semantic/symbol.c \
-	$(DIR_SRC)/compiler/frontend/semantic/types.c
+	$(DIR_SRC)/compiler/frontend/semantic/types.c \
+	$(DIR_SRC)/compiler/frontend/semantic.c
 
 SRC_TEST_ARENA = \
-	$(DIR_TESTS_OTHER)/arena.c \
+	$(DIR_TESTS_UNIT)/arena.c \
 	$(DIR_COMP_CORE) \
 	$(DIR_SRC)/core/common/benchmark.c
 
 SRC_TEST_STRINGPOOL = \
-	$(DIR_TESTS_OTHER)/strings.c \
+	$(DIR_TESTS_UNIT)/strings.c \
 	$(DIR_COMP_CORE) \
 	$(DIR_SRC)/core/common/benchmark.c
 
 SRC_TEST_HASHTABLE = \
-	$(DIR_TESTS_OTHER)/hashmap.c \
+	$(DIR_TESTS_UNIT)/hashmap.c \
 	$(DIR_COMP_CORE) \
 	$(DIR_SRC)/core/common/benchmark.c
 
 SRC_TEST_DIAGNOSTIC = \
-	$(DIR_TESTS_OTHER)/diagnostic.c \
+	$(DIR_TESTS_UNIT)/diagnostic.c \
 	$(DIR_COMP_CORE) \
 	$(DIR_SRC)/core/common/benchmark.c
 ###########################################################

@@ -1,4 +1,4 @@
-#include "compiler/runtime/profiler.h"
+#include "runtime/profiler.h"
 
 profiler_t* new_profiler(void)
 {

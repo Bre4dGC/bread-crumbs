@@ -3,9 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "compiler/middle/ir.h"
-#include "compiler/runtime/memory.h"
-#include "compiler/runtime/gc.h"
-#include "compiler/runtime/ffi.h"
+#include "runtime/memory.h"
+#include "runtime/gc.h"
+#include "runtime/ffi.h"
 #include "compiler/backend/vm/core.h"
 #include "compiler/backend/vm/compiler.h"
 

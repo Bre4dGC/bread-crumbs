@@ -26,8 +26,8 @@ set(FRONTEND_SRC
 )
 
 set(BACKEND_SRC
-    src/compiler/backend/native/compiler.c
-    src/compiler/backend/native/asm.c
+    src/compiler/backend/aot/compiler.c
+    src/compiler/backend/aot/asm.c
 )
 
 set(MIDDLE_SRC
@@ -37,10 +37,10 @@ set(MIDDLE_SRC
 )
 
 set(RUNTIME_SRC
-    src/compiler/runtime/ffi.c
-    src/compiler/runtime/memory.c
-    src/compiler/runtime/gc.c
-    src/compiler/runtime/profiler.c
+    src/runtime/ffi.c
+    src/runtime/memory.c
+    src/runtime/gc.c
+    src/runtime/profiler.c
 )
 
 add_library(core_lib STATIC ${CORE_SRC})
@@ -53,13 +53,13 @@ target_link_libraries(compiler_lib PRIVATE core_lib frontend_lib runtime_lib)
 add_executable(crum src/main.c)
 target_link_libraries(crum PRIVATE compiler_lib runtime_lib)
 
-add_executable(lexing test/unit/lexing.c)
+add_executable(lexing test/integration/lexing.c)
 target_link_libraries(lexing PRIVATE core_lib frontend_lib runtime_lib)
 
-add_executable(parsing test/unit/parsing.c)
+add_executable(parsing test/integration/parsing.c)
 target_link_libraries(parsing PRIVATE core_lib frontend_lib runtime_lib)
 
-add_executable(analysis test/unit/analisis.c)
+add_executable(analysis test/integration/analisis.c)
 target_link_libraries(analysis PRIVATE core_lib frontend_lib runtime_lib)
 
 install(TARGETS crum DESTINATION /usr/local/bin)

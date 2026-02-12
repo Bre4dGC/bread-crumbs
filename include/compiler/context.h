@@ -5,7 +5,7 @@
 
 #include "compiler/frontend/semantic.h"
 #include "compiler/backend/codegen.h"
-#include "compiler/runtime/vm.h"
+#include "runtime/vm.h"
 
 enum compile_phase {
     COMPILE_PHASE_LEXING,

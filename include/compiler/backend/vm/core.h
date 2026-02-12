@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 #include "compiler/middle/ir.h"
-#include "compiler/runtime/memory.h"
-#include "compiler/runtime/gc.h"
+#include "runtime/memory.h"
+#include "runtime/gc.h"
 
 typedef struct {
     ir_t* ir;
