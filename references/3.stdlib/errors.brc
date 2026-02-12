@@ -1,10 +1,12 @@
 #[ Program errors library basic usage
 
         === Methods ===
-.new(message : str, code : int) : error
+.new(message : str, code : int) : error     -- create new error
 
         === Properties ===
-.message : str
-.code    : int
+.message : str      -- error message
+.code    : int      -- error code
 
 ]#
+
+import std.errors

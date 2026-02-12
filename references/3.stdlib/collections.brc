@@ -1,20 +1,20 @@
 #[ Collections library basic usage
 
         === Collection types ===
-list<t>     -- a dynamic array of elements of type t
-stack<t>    -- a last-in-first-out (LIFO) collection of elements of type t
-queue<t>    -- a first-in-first-out (FIFO) collection of elements of type t
-map<t,v>    -- a collection of key-value pairs, where keys are of type t and values are of type v
-hash<t,v>   -- a hash table mapping keys of type t to values of type v
-set<t>      -- a collection of unique elements of type t
-graph<t>    -- a collection of nodes and edges, where nodes are of type t
-tree<t>     -- a hierarchical collection of elements of type t
+list<t>     -- dynamic array of elements of type t
+stack<t>    -- last-in-first-out (LIFO) collection of elements of type t
+queue<t>    -- first-in-first-out (FIFO) collection of elements of type t
+map<t,v>    -- collection of key-value pairs, where keys are of type t and values are of type v
+hash<t,v>   -- hash table mapping keys of type t to values of type v
+set<t>      -- collection of unique elements of type t
+graph<t>    -- collection of nodes and edges, where nodes are of type t
+tree<t>     -- hierarchical collection of elements of type t
 
         === Methods ===
-.add(element : any)                -- add element to the collection
-.remove(element : any)             -- remove element from the collection
-.contains(element : any) : bool    -- check if the collection contains the element
-.is_empty() : bool                  -- check if the collection is empty
+.add(element : any)                 -- add element to the collection
+.remove(element : any)              -- remove element from the collection
+.contains(element : any) : bool     -- check if the collection contains the element
+.isempty() : bool                   -- check if the collection is empty
 .clear()                            -- remove all elements from the collection
 
         === Properties ===

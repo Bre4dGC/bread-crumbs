@@ -1,13 +1,14 @@
 #[ Console library basic usage
 
         === Functions ===
-.clear() -- Clear the console screen.
-.pause() -- Pause the console until a key is pressed.
+.clear()    -- Clear the console screen.
+.pause()    -- Pause the console until a key is pressed.
 
         === Methods ===
 .title(title : str)         -- Set the console window title.
 .color(fg : int, bg : int)  -- Set the console text foreground and background.
 .cursor(x : int, y : int)   -- Set the console cursor position.
-.get_cursor() : (int, int)  -- Get the console cursor position.
 
 ]#
+
+import std.console

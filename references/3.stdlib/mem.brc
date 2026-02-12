@@ -1,16 +1,16 @@
 #[ Memory library basic usage
 
         === Static methods ===
-memory.reserve(size : int) : memory -- reserve memory block
+memory.reserve(size : int) : memory     -- reserve memory block
 
         === Methods ===
-.store(element : any)       -- store element in memory
-.delete(element : any)      -- delete element from memory
-.split(size : int) : memory -- split memory block into two parts
-.extend(size : int)         -- increase memory block size
-.shrink(size : int)         -- decrease memory block size
-.release()                  -- clear all used memory
-.compact()                  -- compact memory block
+.store(element : any)           -- store element in memory
+.delete(element : any)          -- delete element from memory
+.split(size : int) : memory     -- split memory block into two parts
+.extend(size : int)             -- increase memory block size
+.shrink(size : int)             -- decrease memory block size
+.release()                      -- clear all used memory
+.compact()                      -- compact memory block
 
         === Properties ===
 .volume    : int    -- total size of memory block
@@ -29,7 +29,7 @@ print(mem.volume) # -- 64 byte
 var part_1 = mem.split(mem.volume / 2) #split memory between 'mem' and 'partition'
 
 var hw : str = "hello world"
-var x : int = 42
+var x  : int = 42
 
 #copy variables to the memory
 mem.store(hw)

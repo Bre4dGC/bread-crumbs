@@ -1,7 +1,20 @@
 #[ Time library basic usage
 
-        === Functions ===
-.sleep(duration : float)
-.now() : time
+        === Methods ===
+.now() : time               -- get current time
+.utc() : time               -- get UTC time
+.localtime() : time         -- get local time
+.sleep(duration : float)    -- sleep for duration seconds
+
+        === Properties ===
+.year : int
+.month : int
+.day : int
+.hour : int
+.minute : int
+.second : int
+.microsecond : int
 
 ]#
+
+import std.time

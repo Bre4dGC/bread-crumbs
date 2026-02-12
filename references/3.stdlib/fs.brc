@@ -1,18 +1,26 @@
 #[ File system library basic usage
 
-        === Functions ===
-.create(path : str, mode : str) : file  -- create file or directory with mode
-.open(path : str, mode : str) : file    -- open file
-.close(file : file)                     -- close file
-.read(file : file) : str                
-.write(file : file, data : str)         
-.rename(old : str, new : str)           
-.remove(path : str)                     
-.copy(src : str, dest : str)            
-.move(src : str, dest : str)            
+        === Methods ===
+.create(path : str, mode : str) : file
+.open(path : str, mode : str) : file
+.close(file : file)
+.read(file : file) : str
+.write(file : file, data : str)
+.rename(old : str, new : str)
+.remove(path : str)
+.copy(src : str, dest : str)
+.move(src : str, dest : str)
+.list(path : str) : str[]
+.exists(path : str) : bool
+.isfile(path : str) : bool
+.isdir(path : str) : bool
+.getperm(path : str) : str
+.chmod(path : str, perm : str)
 
         === Properties ===
 .path : str
 .mode : str
 
 ]#
+
+import std.filesystem

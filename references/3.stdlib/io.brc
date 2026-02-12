@@ -10,13 +10,14 @@ stderr  -- Standard error stream.
 .println(data : str)    -- print to output stream with newline
 .printerr(data : str)   -- print to error stream
 .scan(var_name : str)   -- scan input stream
+.input() : str          -- read input stream
 .flush()                -- flush output buffer
 
 ]#
 
 import std.inout
 
-io.print("Hello from io.print!")
-io.println("Hello from io.println!")
-io.printerr("This is an error message.")
-io.scan(var_name)
+io.println("Hello, World!")
+io.print("Enter your name: ")
+name := io.input()
+io.println("Hello, " + name)

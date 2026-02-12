@@ -6,3 +6,5 @@
 .scan(format : str, args : ...any)      -- scans formatted input
 
 ]#
+
+import std.format

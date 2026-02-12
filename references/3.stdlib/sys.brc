@@ -5,3 +5,5 @@
 .getenv(key : str) : str    -- Get the value of the environment variable with the given key.
 
 ]#
+
+import std.system

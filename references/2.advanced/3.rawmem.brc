@@ -1,6 +1,7 @@
 #[ Raw pointers basic usage
 
-<modif> <name> [: type] = <expression>
+* - Pointer declaration
+@ - Get address of variable
 
         === Functions ===
 alloc(size : int) : *any                 -- Allocates memory for the specified type and returns a raw pointer.
