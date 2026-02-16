@@ -17,7 +17,6 @@ enum symbol_kind {
     SYMBOL_STRUCT,
     SYMBOL_ENUM,
     SYMBOL_ENUM_VARIANT,
-    SYMBOL_UNION,
     SYMBOL_TYPE_ALIAS,
     SYMBOL_BUILTIN_TYPE,
     SYMBOL_MODULE,
@@ -43,7 +42,6 @@ enum scope_kind {
     SCOPE_BLOCK,
     SCOPE_STRUCT,
     SCOPE_ENUM,
-    SCOPE_UNION,
     SCOPE_SWITCH,
     SCOPE_LOOP,
 };

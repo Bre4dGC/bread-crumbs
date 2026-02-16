@@ -1,6 +1,6 @@
 #include "compiler/frontend/parser/stmt.h"
-#include "compiler/frontend/parser.h"
 #include "compiler/frontend/parser/expr.h"
+#include "compiler/frontend/parser/decl.h"
 
 node_t* parse_stmt(parser_t* parser)
 {
@@ -15,8 +15,10 @@ node_t* parse_stmt(parser_t* parser)
     if(parser->token.current.category == CAT_KEYWORD){
         return parse_stmt_keyword(parser);
     }
-
-    if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
+    else if(parser->token.current.category == CAT_MODIFIER){
+        return parse_decl_var(parser);
+    }
+    else if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
         return parse_stmt_block(parser);
     }
 
@@ -52,10 +54,10 @@ bool add_stmt_block(parser_t* parser, node_t* node, node_t* stmt)
 
 node_t* parse_stmt_block(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_BLOCK);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip '{'
 
@@ -96,13 +98,13 @@ node_t* parse_stmt_block(parser_t* parser)
         return NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_stmt_jump(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     int type = parser->token.current.type;
     node_t* node = NULL;
 
@@ -128,17 +130,17 @@ node_t* parse_stmt_jump(parser_t* parser)
     }
 
     if(node){
-        set_node_location(node, parser);
-        set_node_length(node, parser, start_pos);
+        set_node_loc(node, parser);
+        set_node_len(node, parser, start_pos);
     }
     return node;
 }
 
 node_t* parse_stmt_if(parser_t* parser){
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_IF);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'if'
 
@@ -238,16 +240,16 @@ node_t* parse_stmt_if(parser_t* parser){
             break;
         }
     }
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_stmt_while(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_WHILE);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'while'
 
@@ -274,16 +276,16 @@ node_t* parse_stmt_while(parser_t* parser)
 
     if(!node->while_stmt->body) return NULL;
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_stmt_for(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_FOR);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'for'
 
@@ -335,16 +337,16 @@ node_t* parse_stmt_for(parser_t* parser)
 
     if(!node->for_stmt->body) return NULL;
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_stmt_match(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_MATCH);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'match'
 
@@ -410,16 +412,16 @@ node_t* parse_stmt_match(parser_t* parser)
         return NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_trait(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_TRAIT);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'trait'
 
@@ -446,16 +448,16 @@ node_t* parse_decl_trait(parser_t* parser)
         return NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_stmt_trycatch(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_TRYCATCH);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'try'
 
@@ -514,19 +516,19 @@ node_t* parse_stmt_trycatch(parser_t* parser)
         node->trycatch_stmt->finally_block = NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_stmt_special(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     int spec_kind = parser->token.current.type;
     enum node_kind node_kind = (spec_kind == KW_NAMEOF) ? NODE_NAMEOF : NODE_TYPEOF;
 
     node_t* node = new_node(parser->ast, node_kind);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip special keyword
 
@@ -553,6 +555,6 @@ node_t* parse_stmt_special(parser_t* parser)
         return NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }

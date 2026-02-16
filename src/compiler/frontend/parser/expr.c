@@ -1,7 +1,6 @@
 #include "compiler/frontend/parser/expr.h"
 #include "compiler/frontend/parser/decl.h"
 #include "compiler/frontend/parser/stmt.h"
-#include "compiler/frontend/parser.h"
 
 node_t* parse_expr(parser_t* parser)
 {
@@ -79,10 +78,10 @@ node_t* parse_expr_operator(parser_t* parser)
 
 node_t* parse_expr_func_call(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_CALL);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     // extract function name before consuming token
     if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
@@ -126,16 +125,16 @@ node_t* parse_expr_func_call(parser_t* parser)
         }
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_expr_var_ref(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_REF);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
         add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
@@ -147,7 +146,7 @@ node_t* parse_expr_var_ref(parser_t* parser)
 
     advance_token(parser);
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
@@ -162,14 +161,14 @@ node_t* parse_expr_primary(parser_t* parser)
                 return parse_expr_var_ref(parser);
             }
             else {
-                size_t start_pos = get_lexer_position(parser);
+                size_t start_pos = get_lexer_pos(parser);
                 node_t* node = new_node(parser->ast, NODE_LITERAL);
                 if(!node) return NULL;
-                set_node_location(node, parser);
+                set_node_loc(node, parser);
                 node->lit->value = new_string(parser->string_pool, parser->token.current.literal);
                 node->lit->type = parser->token.current.type;
                 advance_token(parser);
-                set_node_length(node, parser, start_pos);
+                set_node_len(node, parser, start_pos);
                 return node;
             }
 
@@ -282,7 +281,7 @@ node_t* parse_expr_postfix(parser_t* parser)
         enum category_operator op = parser->token.current.type;
 
         if(op == OPER_INCREM || op == OPER_DECREM){
-            size_t start_pos = get_lexer_position(parser) - expr->length;
+            size_t start_pos = get_lexer_pos(parser) - expr->length;
             node_t* postfix = new_node(parser->ast, NODE_UNARYOP);
             if(!postfix) return NULL;
 
@@ -292,7 +291,7 @@ node_t* parse_expr_postfix(parser_t* parser)
             postfix->unaryop->operator = op;
 
             advance_token(parser);
-            set_node_length(postfix, parser, start_pos);
+            set_node_len(postfix, parser, start_pos);
 
             expr = postfix;
         }
@@ -306,7 +305,7 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
     node_t* left = parse_expr_postfix(parser);
     if(!left) return NULL;
 
-    size_t expr_start_pos = get_lexer_position(parser) - left->length;
+    size_t expr_start_pos = get_lexer_pos(parser) - left->length;
 
     while(parser->token.current.category == CAT_OPERATOR){
         enum category_operator op_type = parser->token.current.type;
@@ -316,7 +315,36 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
         if(precedence == 0 || precedence < min_precedence) break;
 
         #ifdef DEBUG
-        const char* op_literal = parser->token.current.literal;
+        const char* op_literal;
+        switch(op_type) {
+            case OPER_PLUS:      op_literal = "+"; break;
+            case OPER_MINUS:     op_literal = "-"; break;
+            case OPER_ASTERISK:  op_literal = "*"; break;
+            case OPER_SLASH:     op_literal = "/"; break;
+            case OPER_PERCENT:   op_literal = "%"; break;
+            case OPER_ASSIGN:    op_literal = "="; break;
+            case OPER_ADD:        op_literal = "+="; break;
+            case OPER_SUB:        op_literal = "-="; break;
+            case OPER_MUL:        op_literal = "*="; break;
+            case OPER_DIV:        op_literal = "/="; break;
+            case OPER_MOD:        op_literal = "%="; break;
+            case OPER_EQ:        op_literal = "=="; break;
+            case OPER_NEQ:       op_literal = "!="; break;
+            case OPER_LANGLE:    op_literal = "<"; break;
+            case OPER_RANGLE:    op_literal = ">"; break;
+            case OPER_LTE:       op_literal = "<="; break;
+            case OPER_GTE:       op_literal = ">="; break;
+            case OPER_AND:       op_literal = "&&"; break;
+            case OPER_OR:        op_literal = "||"; break;
+            case OPER_NOT:       op_literal = "!"; break;
+            case OPER_INCREM:    op_literal = "++"; break;
+            case OPER_DECREM:    op_literal = "--"; break;
+            case OPER_DOT:       op_literal = "."; break;
+            case OPER_ARROW:     op_literal = "->"; break;
+            case OPER_QUESTION:   op_literal = "?"; break;
+            case OPER_COLON:     op_literal = ":"; break;
+            default:             op_literal = "?"; break;
+        }
         #endif
 
         advance_token(parser);
@@ -349,7 +377,7 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
 
     // update length to span the entire expression
     if(left){
-        size_t current_pos = get_lexer_position(parser);
+        size_t current_pos = get_lexer_pos(parser);
         if(current_pos > expr_start_pos){
             left->length = current_pos - expr_start_pos;
         }
@@ -359,10 +387,10 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
 
 node_t* parse_expr_unaryop(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_UNARYOP);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     enum category_operator op_type = parser->token.current.type;
 
@@ -378,7 +406,15 @@ node_t* parse_expr_unaryop(parser_t* parser)
     node->unaryop->operator = op_type;
     node->unaryop->is_postfix = false;
 #ifdef DEBUG
-    node->unaryop->lit = parser->token.current.literal;
+    // Use operator string instead of potentially NULL token literal
+    switch(op_type) {
+        case OPER_PLUS:   node->unaryop->lit = "+"; break;
+        case OPER_MINUS:  node->unaryop->lit = "-"; break;
+        case OPER_NOT:    node->unaryop->lit = "!"; break;
+        case OPER_INCREM: node->unaryop->lit = "++"; break;
+        case OPER_DECREM: node->unaryop->lit = "--"; break;
+        default:          node->unaryop->lit = "?"; break;
+    }
 #endif
     advance_token(parser);
 
@@ -391,6 +427,6 @@ node_t* parse_expr_unaryop(parser_t* parser)
 
     if(!node->unaryop->right) return NULL;
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }

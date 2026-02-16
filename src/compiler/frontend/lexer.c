@@ -30,7 +30,7 @@ string_t read_number(lexer_t* lexer, enum category_literal lit);
 string_t read_string(lexer_t* lexer, char quote_char);
 char read_escseq(lexer_t* lexer);
 
-void read_ch(lexer_t *lexer)
+void read_ch(lexer_t* lexer)
 {
     if(!lexer || !lexer->input->data) return;
 
@@ -43,7 +43,7 @@ void read_ch(lexer_t *lexer)
     }
 }
 
-void skip_whitespace(lexer_t *lexer)
+void skip_whitespace(lexer_t* lexer)
 {
     while(true){
         switch(lexer->ch){
@@ -169,7 +169,7 @@ token_t handle_operator(lexer_t* lexer)
 
     if(next != '\0'){
         const char potential_op[3] = {current, next, '\0'};
-        const token_t *op = find_token(potential_op);
+        const token_t* op = find_token(potential_op);
         if(op){
             read_ch(lexer);
             read_ch(lexer);
@@ -214,13 +214,13 @@ token_t handle_ident(lexer_t* lexer)
         return new_token(CAT_SERVICE, SERV_ILLEGAL, "INVALID_IDENT");
     }
 
-    const token_t *kw = find_token(ident.data);
+    const token_t* kw = find_token(ident.data);
 
     if(kw) return new_token(kw->category, kw->type, kw->literal);
     else   return new_token(CAT_LITERAL, LIT_IDENT, ident.data);
 }
 
-token_t handle_number(lexer_t *lexer)
+token_t handle_number(lexer_t* lexer)
 {
     enum category_literal lit = LIT_NUMBER;
 
@@ -241,7 +241,7 @@ token_t handle_number(lexer_t *lexer)
     return token;
 }
 
-token_t handle_paren(lexer_t *lexer)
+token_t handle_paren(lexer_t* lexer)
 {
     if(!lexer) return new_token(CAT_SERVICE, SERV_ILLEGAL, "NULL_LEXER");
     if(lexer->ch == '(' || lexer->ch == '{' || lexer->ch == '['){
@@ -456,7 +456,7 @@ char read_escseq(lexer_t* lexer)
     return esc_seq;
 }
 
-string_t read_string(lexer_t *lexer, char quote_char)
+string_t read_string(lexer_t* lexer, char quote_char)
 {
     char stack_buffer[STR_SIZE];
     char* buffer = stack_buffer;

@@ -4,10 +4,10 @@
 
 node_t* parse_decl_var(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_VAR);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     // expect modifier
     if(parser->token.current.category != CAT_MODIFIER){
@@ -46,16 +46,16 @@ node_t* parse_decl_var(parser_t* parser)
         }
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_type(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_TYPE);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'type'
 
@@ -76,16 +76,16 @@ node_t* parse_decl_type(parser_t* parser)
         node->type_decl->body = NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_array(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_ARRAY);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip '['
 
@@ -115,16 +115,16 @@ node_t* parse_decl_array(parser_t* parser)
         return NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_param(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_VAR);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     // expect identifier
     if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
@@ -148,16 +148,16 @@ node_t* parse_decl_param(parser_t* parser)
     node->var_decl->dtype = parser->token.current.type;
     advance_token(parser);
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_func(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_FUNC);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'func'
 
@@ -228,16 +228,16 @@ node_t* parse_decl_func(parser_t* parser)
     node->func_decl->body = parse_stmt_block(parser);
     if(!node->func_decl->body) return NULL;
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_struct(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_STRUCT);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'struct'
 
@@ -289,17 +289,17 @@ node_t* parse_decl_struct(parser_t* parser)
         return NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_enum(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_ENUM);
     if(!node) return NULL;
 
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'enum'
 
@@ -372,16 +372,16 @@ node_t* parse_decl_enum(parser_t* parser)
         return NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_module(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_MODULE);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'module'
 
@@ -403,16 +403,16 @@ node_t* parse_decl_module(parser_t* parser)
         node->module_decl->body = NULL;
     }
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_import(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_IMPORT);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'import'
 
@@ -449,16 +449,16 @@ node_t* parse_decl_import(parser_t* parser)
         }
     } while (true);
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }
 
 node_t* parse_decl_impl(parser_t* parser)
 {
-    size_t start_pos = get_lexer_position(parser);
+    size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_IMPL);
     if(!node) return NULL;
-    set_node_location(node, parser);
+    set_node_loc(node, parser);
 
     advance_token(parser); // skip 'impl'
 
@@ -497,6 +497,6 @@ node_t* parse_decl_impl(parser_t* parser)
     node->impl_decl->body = parse_stmt_block(parser);
     if(!node->impl_decl->body) return NULL;
 
-    set_node_length(node, parser, start_pos);
+    set_node_len(node, parser, start_pos);
     return node;
 }

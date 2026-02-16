@@ -1,7 +1,12 @@
-func main()
+func main() : int
 {
-    # Type mismatch error
-    var x : int = "This is a string"
-    print(y) # Undeclared variable error
-    var z : int = 10 / 0 # Division by zero error
+    var x : str = "This is a string"
+    var z : int = 10
+
+    for(var i : int = 0; i < 10; i++)
+    {
+        x++
+    }
+
+    return 0
 }

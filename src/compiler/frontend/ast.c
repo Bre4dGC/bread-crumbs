@@ -1,9 +1,9 @@
 #include "compiler/frontend/lexer/tokens.h"
 #include "compiler/frontend/ast.h"
 
-node_t *new_node(arena_t* arena, enum node_kind kind)
+node_t* new_node(arena_t* arena, enum node_kind kind)
 {
-    node_t *node = (node_t*)arena_alloc(arena, sizeof(node_t), alignof(node_t));
+    node_t* node = (node_t*)arena_alloc(arena, sizeof(node_t), alignof(node_t));
     if (!node) return NULL;
 
     node->kind = kind;
@@ -18,6 +18,9 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             node->binop->left = NULL;
             node->binop->right = NULL;
             node->binop->operator = 0;
+#ifdef DEBUG
+            node->binop->lit = NULL;
+#endif
             break;
         case NODE_UNARYOP:
             node->unaryop = (struct node_unaryop*)arena_alloc(arena, sizeof(struct node_unaryop), alignof(struct node_unaryop));
@@ -25,6 +28,9 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             node->unaryop->right = NULL;
             node->unaryop->operator = 0;
             node->unaryop->is_postfix = false;
+#ifdef DEBUG
+            node->unaryop->lit = NULL;
+#endif
             break;
         case NODE_VAR:
             node->var_decl = (struct node_var*)arena_alloc(arena, sizeof(struct node_var), alignof(struct node_var));
@@ -68,6 +74,7 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             node->lit = (struct node_literal*)arena_alloc(arena, sizeof(struct node_literal), alignof(struct node_literal));
             if(!node->lit) return NULL;
             node->lit->type = LIT_NULL;
+            node->lit->value = (string_t){0};
             break;
         case NODE_FOR:
             node->for_stmt = (struct node_for*)arena_alloc(arena, sizeof(struct node_for), alignof(struct node_for));
@@ -102,6 +109,7 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
             node->func_decl->return_type = DT_VOID;
             node->func_decl->body = NULL;
             node->func_decl->name = (string_t){0};
+            node->func_decl->param_decl.count = 0;
             node->func_decl->param_decl.capacity = 4;
             node->func_decl->param_decl.elems = (node_t**)arena_alloc(arena, node->func_decl->param_decl.capacity * sizeof(node_t*), alignof(node_t*));
             if(!node->func_decl->param_decl.elems) return NULL;
@@ -195,7 +203,7 @@ node_t *new_node(arena_t* arena, enum node_kind kind)
     return node;
 }
 
-void free_ast(arena_t *root)
+void free_ast(arena_t* root)
 {
     if (!root) return;
     free_arena(root);

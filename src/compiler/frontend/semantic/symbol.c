@@ -1,9 +1,9 @@
 #include <stdlib.h>
 
-#include "compiler/frontend/semantic/symbol.h"
 #include "core/arena.h"
 #include "core/diagnostic.h"
 #include "core/hashmap.h"
+#include "compiler/frontend/semantic/symbol.h"
 
 #define INITIAL_SCOPE_CAPACITY 16
 #define SYMBOL_TABLE_SIZE 64
@@ -77,14 +77,32 @@ scope_t* push_scope(symbol_table_t* st, int scope_kind, node_t* owner)
 
     st->current = scope;
     st->scope_count += 1;
+
     return scope;
 }
 
 void pop_scope(symbol_table_t* st)
 {
     if(!st || !st->current || st->current == st->global) return;
+
     scope_t* dead = st->current;
     st->current = dead->parent;
+
+    // Remove from parent's child list to prevent dangling references
+    if(dead->parent && dead->parent->first_child){
+        if(dead->parent->first_child == dead){
+            dead->parent->first_child = dead->next_sibling;
+        } else {
+            scope_t* sib = dead->parent->first_child;
+            while(sib->next_sibling && sib->next_sibling != dead){
+                sib = sib->next_sibling;
+            }
+            if(sib->next_sibling == dead){
+                sib->next_sibling = dead->next_sibling;
+            }
+        }
+    }
+
     free_scope(dead);
 }
 
@@ -175,19 +193,29 @@ void free_scope(scope_t* scope)
 {
     if(!scope) return;
 
+    // Free all child scopes first
+    scope_t* child = scope->first_child;
+    while(child){
+        scope_t* next_child = child->next_sibling;
+        free_scope(child);
+        child = next_child;
+    }
+
     if(scope->symbols) free_hashmap(scope->symbols);
     scope->symbols = NULL;
     scope->parent = NULL;
     scope->first_child = NULL;
     scope->next_sibling = NULL;
+    scope->owner = NULL;
 
     free(scope);
-    scope = NULL;
 }
 
 void free_symbol_table(symbol_table_t* st)
 {
     if(!st) return;
+
+    // Free the entire scope hierarchy starting from global
     if(st->global) free_scope(st->global);
     st->global = NULL;
     st->current = NULL;

@@ -85,6 +85,11 @@ bool analyze_ast(semantic_t* sem, node_t* root)
         for(size_t i = 0; i < root->block->statement.count; i++){
             ok = check_node(sem, root->block->statement.elems[i]) && ok;
         }
+
+#ifdef DEBUG
+        print_symbol_table(sem->symbols);
+#endif
+
         return ok;
     }
 
@@ -180,6 +185,10 @@ bool check_function(semantic_t* sem, node_t* node)
             return false;
         }
 
+#ifdef DEBUG
+        print_symbol(func_sym, 0);
+#endif
+
         return true;
     }
 
@@ -193,30 +202,39 @@ bool check_function(semantic_t* sem, node_t* node)
     }
 
     // create new function body scope
-    push_scope(sem->symbols, SCOPE_FUNCTION, node);
+    scope_t* function_scope = push_scope(sem->symbols, SCOPE_FUNCTION, node);
+    if(!function_scope) return false;
+
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
+
     symbol_t* prev_func = sem->current_function;
     sem->current_function = func_sym;
 
     // add parameters to function scope
+    bool params_ok = true;
     for(size_t i = 0; i < func->param_decl.count; i++){
         if(!check_param(sem, func->param_decl.elems[i])){
-            pop_scope(sem->symbols);
-            sem->current_function = prev_func;
-            return false;
+            params_ok = false;
+            break;
         }
     }
 
     // check function body
     bool success = true;
-    if(func->body){
+    if(params_ok && func->body){
         success = check_node(sem, func->body);
     }
 
     // TODO: check that all paths return if return type is not void
 
     pop_scope(sem->symbols);
+#ifdef DEBUG
+    print_symbol_table(sem->symbols);
+#endif
     sem->current_function = prev_func;
-    return success;
+    return success && params_ok;
 }
 
 bool check_param(semantic_t* sem, node_t* node)
@@ -239,6 +257,10 @@ bool check_param(semantic_t* sem, node_t* node)
         return false;
     }
     sym->flags |= SYM_FLAG_ASSIGNED;
+
+#ifdef DEBUG
+    print_symbol(sym, 0);
+#endif
     return true;
 }
 
@@ -297,6 +319,10 @@ bool check_variable(semantic_t* sem, node_t* node)
         return false;
     }
 
+#ifdef DEBUG
+    print_symbol(sym, 0);
+#endif
+
     // mark as initialized if has value
     if(var->value) sym->flags |= SYM_FLAG_ASSIGNED;
 
@@ -307,7 +333,12 @@ bool check_block(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_BLOCK) return false;
 
-    push_scope(sem->symbols, SCOPE_BLOCK, node); // create new block scope
+    scope_t* block_scope = push_scope(sem->symbols, SCOPE_BLOCK, node);
+    if(!block_scope) return false;
+
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
 
     bool success = true;
     for(size_t i = 0; i < node->block->statement.count; i++){
@@ -318,6 +349,9 @@ bool check_block(semantic_t* sem, node_t* node)
     }
 
     pop_scope(sem->symbols);
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
     return success;
 }
 
@@ -329,6 +363,9 @@ bool check_if(semantic_t* sem, node_t* node)
 
     // check branches
     bool success = true;
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
     if(node->if_stmt->then_block)  success = check_node(sem, node->if_stmt->then_block)  && success;
     if(node->if_stmt->else_block)  success = check_node(sem, node->if_stmt->else_block)  && success;
     if(node->if_stmt->elif_blocks) success = check_node(sem, node->if_stmt->elif_blocks) && success;
@@ -342,11 +379,18 @@ bool check_while(semantic_t* sem, node_t* node)
 
     sem->loop_depth++;
 
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
+
     bool success = true;
     if(node->while_stmt->condition) success = check_node(sem, node->while_stmt->condition) && success;
     if(node->while_stmt->body)      success = check_node(sem, node->while_stmt->body) && success;
 
     sem->loop_depth--;
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
     return success;
 }
 
@@ -354,7 +398,13 @@ bool check_for(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_FOR) return false;
 
-    push_scope(sem->symbols, SCOPE_BLOCK, node);
+    scope_t* for_scope = push_scope(sem->symbols, SCOPE_BLOCK, node);
+    if(!for_scope) return false;
+
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
+
     sem->loop_depth++;
 
     bool success = true;
@@ -365,6 +415,9 @@ bool check_for(semantic_t* sem, node_t* node)
 
     sem->loop_depth--;
     pop_scope(sem->symbols);
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
     return success;
 }
 
@@ -461,6 +514,10 @@ bool check_func_call(semantic_t* sem, node_t* node)
         return false;
     }
 
+#ifdef DEBUG
+    print_symbol(func_sym, 0);
+#endif
+
     if(func_sym->kind != SYMBOL_FUNC){
         add_report(sem->reports, SEV_ERR, ERR_NOT_A_FUNC, node->loc, DEFAULT_LEN, NULL);
         return false;
@@ -490,6 +547,10 @@ bool check_var_ref(semantic_t* sem, node_t* node)
         return false;
     }
 
+#ifdef DEBUG
+    print_symbol(sym, 0);
+#endif
+
     sym->flags |= SYM_FLAG_USED;
 
     return true;
@@ -518,15 +579,52 @@ bool check_array(semantic_t* sem, node_t* node)
 bool check_struct(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_STRUCT) return false;
-    // TODO: implement struct checking
-    return true;
+    
+    struct node_struct* struct_decl = node->struct_decl;
+    if(!struct_decl || !struct_decl->name.data) return false;
+
+    scope_t* struct_scope = push_scope(sem->symbols, SCOPE_STRUCT, node);
+    if(!struct_scope) return false;
+    
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
+    
+    // TODO: implement struct member checking
+    bool success = true;
+    
+    pop_scope(sem->symbols);
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
+    
+    return success;
 }
 
 bool check_enum(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_ENUM) return false;
-    // TODO: implement enum checking
-    return true;
+    
+    struct node_enum* enum_decl = node->enum_decl;
+    if(!enum_decl || !enum_decl->name.data) return false;
+    
+    // Create enum scope
+    scope_t* enum_scope = push_scope(sem->symbols, SCOPE_ENUM, node);
+    if(!enum_scope) return false;
+    
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
+    
+    // TODO: implement enum variant checking
+    bool success = true;
+    
+    pop_scope(sem->symbols);
+#ifdef DEBUG
+    print_current_scope(sem->symbols);
+#endif
+    
+    return success;
 }
 
 

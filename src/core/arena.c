@@ -95,6 +95,7 @@ void* arena_alloc(arena_t* arena, size_t size, size_t alignment)
     }
 
     void* ptr = b->data + aligned_offset;
+    memset(ptr, 0, size);  // Zero-initialize to prevent uninitialized values
     b->offset = aligned_offset + size;
     return ptr;
 }

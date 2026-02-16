@@ -109,13 +109,13 @@ bool is_eof(const token_t token)
     return token.category == CAT_SERVICE && token.type == SERV_EOF;
 }
 
-void set_node_location(node_t* node, parser_t* parser)
+void set_node_loc(node_t* node, parser_t* parser)
 {
     if(!node || !parser) return;
     node->loc = parser->lexer->loc;
 }
 
-void set_node_length(node_t* node, parser_t* parser, size_t start_pos)
+void set_node_len(node_t* node, parser_t* parser, size_t start_pos)
 {
     if(!node || !parser) return;
     size_t end_pos = parser->lexer->pos;
@@ -127,7 +127,7 @@ void set_node_length(node_t* node, parser_t* parser, size_t start_pos)
     }
 }
 
-size_t get_lexer_position(parser_t* parser)
+size_t get_lexer_pos(parser_t* parser)
 {
     return parser ? parser->lexer->pos : 0;
 }

@@ -44,17 +44,34 @@ enum op_code {
     OP_JUMP_IFNOT,  // jmp_ifnot <label>
 };
 
+
+typedef union {
+    int64_t ival;
+    char* sval;
+    float fval;
+} ir_data_t;
+
 typedef struct {
     enum op_code op;
-    int64_t value;
+    ir_data_t data;
 } ir_instr_t;
 
 typedef struct {
-    ir_instr_t* instructions;
+    ir_instr_t* instrs;
     size_t count;
     size_t capacity;
 } ir_t;
 
+typedef struct {
+    char* name;
+    size_t param_count;
+    size_t local_count;
+    ir_t* body;
+} ir_func_t;
+
 ir_t* new_ir(void);
 void free_ir(ir_t* ir);
-void ir_add_instruction(ir_t* ir, enum op_code op, int64_t value);
+
+void ir_add_instr(ir_t* ir, enum op_code op, ir_data_t value);
+
+// ir code generation
