@@ -8,7 +8,10 @@
 #include "compiler/frontend/lexer.h"
 #include "compiler/frontend/ast.h"
 #include "compiler/frontend/semantic.h"
-#include "compiler/middle/ir.h"
+
+//
+// LEXER
+//
 
 static inline const char* token_to_str(const token_t token)
 {
@@ -52,216 +55,413 @@ static inline const char* token_to_str(const token_t token)
     return NULL;
 }
 
+static inline void print_token(token_t token)
+{
+    const char* str_type = token_to_str(token);
+    const char* literal = token.literal ? token.literal : "(null)";
+    printf("\033[1m%-*s\033[0m%s\033[0m\033[0m\n", 12, str_type, literal);
+}
+
+//
+// PARSER
+//
+static inline void print_node(node_t* node, int indent);
+
+static inline void print_indent(int indent, const char* prefix)
+{
+    for(int i = 0; i < indent; i++){
+        printf("  ");
+    }
+    if(prefix) printf("%s", prefix);
+}
+
+static inline void print_node_type(const char* type, const char* name, const char* color, bool bold)
+{
+    printf("%s%s%s%s%s", color, bold ? "\033[1m" : "", type, bold ? "\033[0m" : "", "\033[0m");
+    if(name) printf(" %s\033[0m", name);
+    printf("\n");
+}
+
 static inline void print_node(node_t* node, int indent)
 {
     if(!node) return;
 
-    for(int i = 0; i < indent; i++){
-        printf("  ");
-    }
+    print_indent(indent, NULL);
 
     switch(node->kind){
         case NODE_EXPR:
         case NODE_ASSIGN:
-            printf("Expression / Assignment (Unhandled display for now)");
+            printf("\033[90mEXPRESSION/ASSIGN\033[0m (unhandled display)\033[0m\n");
             break;
         case NODE_LITERAL:
-            if(node->lit && node->lit->value.data)
-                printf("Literal: %s\n", node->lit->value.data);
-            else
-                printf("Literal: (null)\n");
+            if(node->lit && node->lit->value.data){
+                printf("\033[1mLITERAL\033[0m ");
+                printf("\"%s\"\033[0m \033[90m[type:%d]\033[0m\n", node->lit->value.data, node->lit->type);
+            }
+            else {
+                printf("\033[1mLITERAL\033[0m (null)\033[0m\n");
+            }
             break;
         case NODE_REF:
-            if(node->var_ref && node->var_ref->name.data)
-                printf("Ref: %s\n", node->var_ref->name.data);
-            else
-                printf("Ref: (null)\n");
+            if(node->var_ref && node->var_ref->name.data){
+                printf("\033[1mREFERENCE\033[0m ");
+                printf("%s\033[0m\n", node->var_ref->name.data);
+            }
+            else {
+                printf("\033[1mREFERENCE\033[0m (null)\033[0m\n");
+            }
             break;
         case NODE_BINOP:
-            if(node->binop && node->binop->lit)
-                printf("BinOp: %s\n", node->binop->lit);
-            else
-                printf("BinOp: (null)\n");
+            if(node->binop && node->binop->lit){
+                printf("\033[1mBINARY_OP\033[0m ");
+                printf("%s\033[0m\n", node->binop->lit);
+            }
+            else {
+                printf("\033[1mBINARY_OP\033[0m (null)\033[0m\n");
+            }
             if(node->binop->left) print_node(node->binop->left, indent + 1);
             if(node->binop->right) print_node(node->binop->right, indent + 1);
             break;
         case NODE_VAR:
-            if(node->var_decl && node->var_decl->name.data)
-                printf("Var: %s\n", node->var_decl->name.data);
-            else
-                printf("Var: (null)\n");
+            if(node->var_decl && node->var_decl->name.data){
+                printf("\033[1mVARIABLE\033[0m ");
+                printf("%s\033[0m \033[90m[modif:%d, type:%d]\033[0m\n", 
+                       node->var_decl->name.data, node->var_decl->modif, node->var_decl->dtype);
+            }
+            else {
+                printf("\033[1mVARIABLE\033[0m (null)\033[0m\n");
+            }
             if(node->var_decl->value) print_node(node->var_decl->value, indent + 1);
             break;
         case NODE_BLOCK:
-            printf("Block:\n");
+            printf("\033[1mBLOCK\033[0m \033[90m(%zu statements)\033[0m\n", 
+                   node->block ? node->block->statement.count : 0);
             if(node->block && node->block->statement.elems){
                 for(size_t i = 0; i < node->block->statement.count; i++){
-                    if(node->block->statement.elems[i])
+                    if(node->block->statement.elems[i]){
                         print_node(node->block->statement.elems[i], indent + 1);
+                    }
                 }
             }
             break;
         case NODE_UNARYOP:
-            printf("UnaryOp: %s\n", node->unaryop->lit ? node->unaryop->lit : "(null)");
+            printf("\033[1mUNARY_OP\033[0m ");
+            printf("%s\033[0m \033[90m[postfix:%s]\033[0m\n", 
+                   node->unaryop->lit ? node->unaryop->lit : "(null)",
+                   node->unaryop->is_postfix ? "true" : "false");
             print_node(node->unaryop->right, indent + 1);
             break;
         case NODE_CALL:
-            if(node->func_call && node->func_call->name.data)
-                printf("Call: %s\n", node->func_call->name.data);
-            else
-                printf("Call: (null)\n");
+            if(node->func_call && node->func_call->name.data){
+                printf("\033[1mCALL\033[0m ");
+                printf("%s\033[0m \033[90m(%zu args)\033[0m\n", 
+                       node->func_call->name.data, node->func_call->args.count);
+            }
+            else {
+                printf("\033[1mCALL\033[0m (null)\033[0m\n");
+            }
             if(node->func_call && node->func_call->args.elems){
                 for(size_t i = 0; i < node->func_call->args.count; i++){
-                    if(node->func_call->args.elems[i])
+                    if(node->func_call->args.elems[i]){
                         print_node(node->func_call->args.elems[i], indent + 1);
+                    }
                 }
             }
             break;
         case NODE_MEMBER:
-            if(node->member_decl && node->member_decl->name.data)
-                printf("Enum Member: %s\n", node->member_decl->name.data);
-            else
-                printf("Enum Member: (null)\n");
+            if(node->member_decl && node->member_decl->name.data){
+                printf("\033[1mMEMBER\033[0m ");
+                printf("%s\033[0m\n", node->member_decl->name.data);
+            }
+            else {
+                printf("\033[1mMEMBER\033[0m (null)\033[0m\n");
+            }
+            if(node->member_decl && node->member_decl->value){
+                print_node(node->member_decl->value, indent + 1);
+            }
             break;
         case NODE_RETURN:
-            printf("Return:\n");
-            if(node->return_stmt && node->return_stmt->body)
+            printf("\033[1mRETURN\033[0m\n");
+            if(node->return_stmt && node->return_stmt->body){
                 print_node(node->return_stmt->body, indent + 1);
+            }
             break;
         case NODE_BREAK:
-            printf("Break:\n");
+            printf("\033[1mBREAK\033[0m\n");
             break;
         case NODE_CONTINUE:
-            printf("Continue:\n");
+            printf("\033[1mCONTINUE\033[0m\n");
             break;
         case NODE_ARRAY:
-            printf("Array:\n");
+            printf("\033[1mARRAY\033[0m (%zu elements)\033[0m\n", 
+                   node->array_decl ? node->array_decl->count : 0);
             if(node->array_decl && node->array_decl->elements){
                 for(size_t i = 0; i < node->array_decl->count; i++){
-                    if(node->array_decl->elements[i])
+                    if(node->array_decl->elements[i]){
                         print_node(node->array_decl->elements[i], indent + 1);
+                    }
                 }
             }
             break;
         case NODE_IF:
-            printf("If Statement:\n");
+            printf("\033[1mIF_STATEMENT\033[0m\n");
             if(node->if_stmt){
-                if(node->if_stmt->condition) print_node(node->if_stmt->condition, indent + 1);
-                if(node->if_stmt->then_block) print_node(node->if_stmt->then_block, indent + 1);
-                if(node->if_stmt->elif_blocks) print_node(node->if_stmt->elif_blocks, indent + 1);
-                if(node->if_stmt->else_block) print_node(node->if_stmt->else_block, indent + 1);
+                if(node->if_stmt->condition){
+                    print_indent(indent + 1, "\033[90mCONDITION:\033[0m\n");
+                    print_node(node->if_stmt->condition, indent + 2);
+                }
+                if(node->if_stmt->then_block){
+                    print_indent(indent + 1, "\033[90mTHEN:\033[0m\n");
+                    print_node(node->if_stmt->then_block, indent + 2);
+                }
+                if(node->if_stmt->elif_blocks){
+                    print_indent(indent + 1, "\033[90mELSEIF:\033[0m\n");
+                    print_node(node->if_stmt->elif_blocks, indent + 2);
+                }
+                if(node->if_stmt->else_block){
+                    print_indent(indent + 1, "\033[90mELSE:\033[0m\n");
+                    print_node(node->if_stmt->else_block, indent + 2);
+                }
             }
             break;
         case NODE_WHILE:
-            printf("While Loop:\n");
+            printf("\033[1mWHILE_LOOP\033[0m\n");
             if(node->while_stmt){
-                if(node->while_stmt->condition) print_node(node->while_stmt->condition, indent + 1);
-                if(node->while_stmt->body) print_node(node->while_stmt->body, indent + 1);
+                if(node->while_stmt->condition){
+                    print_indent(indent + 1, "\033[90mCONDITION:\033[0m\n");
+                    print_node(node->while_stmt->condition, indent + 2);
+                }
+                if(node->while_stmt->body){
+                    print_indent(indent + 1, "\033[90mBODY:\033[0m\n");
+                    print_node(node->while_stmt->body, indent + 2);
+                }
             }
             break;
         case NODE_FOR:
-            printf("For Loop:\n");
+            printf("\033[1mFOR_LOOP\033[0m\n");
             if(node->for_stmt){
-                if(node->for_stmt->init) print_node(node->for_stmt->init, indent + 1);
-                if(node->for_stmt->condition) print_node(node->for_stmt->condition, indent + 1);
-                if(node->for_stmt->update) print_node(node->for_stmt->update, indent + 1);
-                if(node->for_stmt->body) print_node(node->for_stmt->body, indent + 1);
+                if(node->for_stmt->init){
+                    print_indent(indent + 1, "\033[90mINIT:\033[0m\n");
+                    print_node(node->for_stmt->init, indent + 2);
+                }
+                if(node->for_stmt->condition){
+                    print_indent(indent + 1, "\033[90mCONDITION:\033[0m\n");
+                    print_node(node->for_stmt->condition, indent + 2);
+                }
+                if(node->for_stmt->update){
+                    print_indent(indent + 1, "\033[90mUPDATE:\033[0m\n");
+                    print_node(node->for_stmt->update, indent + 2);
+                }
+                if(node->for_stmt->body){
+                    print_indent(indent + 1, "\033[90mBODY:\033[0m\n");
+                    print_node(node->for_stmt->body, indent + 2);
+                }
             }
             break;
         case NODE_PARAM:
-            if(node->param_decl && node->param_decl->name.data)
-                printf("Function Parameter: %s\n", node->param_decl->name.data);
-            else
-                printf("Function Parameter: (null)\n");
+            if(node->param_decl && node->param_decl->name.data){
+                printf("\033[1mPARAMETER\033[0m ");
+                printf("%s\033[0m \033[90m[variadic:%s, type:%d]\033[0m\n", 
+                       node->param_decl->name.data,
+                       node->param_decl->is_variadic ? "true" : "false",
+                       node->param_decl->dtype);
+            }
+            else {
+                printf("\033[1mPARAMETER\033[0m (null)\033[0m\n");
+            }
             break;
         case NODE_FUNC:
-            if(node->func_decl && node->func_decl->name.data)
-                printf("Function: %s\n", node->func_decl->name.data);
-            else
-                printf("Function: (null)\n");
+            if(node->func_decl && node->func_decl->name.data){
+                printf("\033[1mFUNCTION\033[0m ");
+                printf("%s\033[0m \033[90m(%zu params, return_type:%d)\033[0m\n", 
+                       node->func_decl->name.data,
+                       node->func_decl->param_decl.count,
+                       node->func_decl->return_type);
+            }
+            else {
+                printf("\033[1mFUNCTION\033[0m (null)\033[0m\n");
+            }
             if(node->func_decl && node->func_decl->param_decl.elems){
+                print_indent(indent + 1, "\033[90mPARAMETERS:\033[0m\n");
                 for(size_t i = 0; i < node->func_decl->param_decl.count; i++){
-                    if(node->func_decl->param_decl.elems[i])
-                        print_node(node->func_decl->param_decl.elems[i], indent + 1);
+                    if(node->func_decl->param_decl.elems[i]){
+                        print_node(node->func_decl->param_decl.elems[i], indent + 2);
+                    }
                 }
             }
-            if(node->func_decl && node->func_decl->body) print_node(node->func_decl->body, indent + 1);
+            if(node->func_decl && node->func_decl->body){
+                print_indent(indent + 1, "\033[90mBODY:\033[0m\n");
+                print_node(node->func_decl->body, indent + 2);
+            }
             break;
         case NODE_STRUCT:
-            if(node->struct_decl && node->struct_decl->name.data)
-                printf("Struct: %s\n", node->struct_decl->name.data);
-            else
-                printf("Struct: (anonymous)\n");
+            if(node->struct_decl && node->struct_decl->name.data){
+                printf("\033[1mSTRUCT\033[0m ");
+                printf("%s\033[0m \033[90m(%zu members)\033[0m\n", 
+                       node->struct_decl->name.data,
+                       node->struct_decl->member.count);
+            }
+            else {
+                printf("\033[1mSTRUCT\033[0m (anonymous)\033[0m\n");
+            }
             if(node->struct_decl && node->struct_decl->member.elems){
                 for(size_t i = 0; i < node->struct_decl->member.count; i++){
-                    if(node->struct_decl->member.elems[i])
+                    if(node->struct_decl->member.elems[i]){
                         print_node(node->struct_decl->member.elems[i], indent + 1);
+                    }
                 }
             }
             break;
         case NODE_ENUM:
-            if(node->enum_decl && node->enum_decl->name.data)
-                printf("Enum: %s\n", node->enum_decl->name.data);
-            else
-                printf("Enum: (anonymous)\n");
+            if(node->enum_decl && node->enum_decl->name.data){
+                printf("\033[1mENUM\033[0m ");
+                printf("%s\033[0m \033[90m(%zu members)\033[0m\n", 
+                       node->enum_decl->name.data,
+                       node->enum_decl->member.count);
+            }
+            else {
+                printf("\033[1mENUM\033[0m (anonymous)\033[0m\n");
+            }
             if(node->enum_decl && node->enum_decl->member.elems){
                 for(size_t i = 0; i < node->enum_decl->member.count; i++){
-                    if(node->enum_decl->member.elems[i] && node->enum_decl->member.elems[i]->lit && node->enum_decl->member.elems[i]->lit->value.data)
-                        printf("  %s\n", node->enum_decl->member.elems[i]->lit->value.data);
+                    if(node->enum_decl->member.elems[i] && 
+                       node->enum_decl->member.elems[i]->lit && 
+                       node->enum_decl->member.elems[i]->lit->value.data){
+                        print_indent(indent + 1, "");
+                        printf("%s\033[0m\n", node->enum_decl->member.elems[i]->lit->value.data);
+                    }
                 }
             }
             break;
         case NODE_MATCH:
-            printf("Match Statement:\n");
-            print_node(node->match_stmt->target, indent + 1);
-            for(size_t i = 0; i < node->match_stmt->block.count; i++){
-                print_node(node->match_stmt->block.elems[i], indent + 1);
+            printf("\033[1mMATCH\033[0m\n");
+            if(node->match_stmt){
+                if(node->match_stmt->target){
+                    print_indent(indent + 1, "\033[90mTARGET:\033[0m\n");
+                    print_node(node->match_stmt->target, indent + 2);
+                }
+                print_indent(indent + 1, "\033[90mCASES (%zu):\033[0m\n");
+                for(size_t i = 0; i < node->match_stmt->block.count; i++){
+                    if(node->match_stmt->block.elems[i]){
+                        print_node(node->match_stmt->block.elems[i], indent + 2);
+                    }
+                }
             }
             break;
         case NODE_CASE:
-            printf("Case:\n");
-            print_node(node->case_stmt->condition, indent + 1);
-            print_node(node->case_stmt->body, indent + 1);
+            printf("\033[1mCASE\033[0m\n");
+            if(node->case_stmt){
+                if(node->case_stmt->condition){
+                    print_indent(indent + 1, "\033[90mPATTERN:\033[0m\n");
+                    print_node(node->case_stmt->condition, indent + 2);
+                }
+                if(node->case_stmt->body){
+                    print_indent(indent + 1, "\033[90mBODY:\033[0m\n");
+                    print_node(node->case_stmt->body, indent + 2);
+                }
+            }
             break;
         case NODE_TRAIT:
-            printf("Trait: %s\n", node->trait_decl->name.data);
-            print_node(node->trait_decl->body, indent + 1);
+            if(node->trait_decl && node->trait_decl->name.data){
+                printf("\033[1mTRAIT\033[0m ");
+                printf("%s\033[0m\n", node->trait_decl->name.data);
+            }
+            else {
+                printf("\033[1mTRAIT\033[0m (null)\033[0m\n");
+            }
+            if(node->trait_decl && node->trait_decl->body){
+                print_node(node->trait_decl->body, indent + 1);
+            }
             break;
         case NODE_IMPL:
-            printf("Impl: %s\n", node->impl_decl->trait_name.data);
-            print_node(node->trait_decl->body, indent + 1);
+            if(node->impl_decl && node->impl_decl->trait_name.data){
+                printf("\033[1mIMPL\033[0m ");
+                printf("%s for %s\033[0m\n", 
+                       node->impl_decl->trait_name.data,
+                       node->impl_decl->struct_name.data);
+            }
+            else {
+                printf("\033[1mIMPL\033[0m (null)\033[0m\n");
+            }
+            if(node->impl_decl && node->impl_decl->body){
+                print_node(node->impl_decl->body, indent + 1);
+            }
             break;
         case NODE_TRYCATCH:
-            printf("Try-Catch:\n");
-            print_node(node->trycatch_stmt->try_block, indent + 1);
-            if(node->trycatch_stmt->catch_block){
-                print_node(node->trycatch_stmt->catch_block, indent + 1);
-            }
-            if(node->trycatch_stmt->finally_block){
-                print_node(node->trycatch_stmt->finally_block, indent + 1);
+            printf("\033[1mTRY-CATCH\033[0m\n");
+            if(node->trycatch_stmt){
+                if(node->trycatch_stmt->try_block){
+                    print_indent(indent + 1, "\033[90mTRY:\033[0m\n");
+                    print_node(node->trycatch_stmt->try_block, indent + 2);
+                }
+                if(node->trycatch_stmt->catch_block){
+                    print_indent(indent + 1, "\033[90mCATCH:\033[0m\n");
+                    print_node(node->trycatch_stmt->catch_block, indent + 2);
+                }
+                if(node->trycatch_stmt->finally_block){
+                    print_indent(indent + 1, "\033[90mFINALLY:\033[0m\n");
+                    print_node(node->trycatch_stmt->finally_block, indent + 2);
+                }
             }
             break;
         case NODE_TYPE:
-            printf("Type: %s\n", node->type_decl->name.data);
-            print_node(node->type_decl->body, indent + 1);
+            if(node->type_decl && node->type_decl->name.data){
+                printf("\033[1mTYPE_ALIAS\033[0m ");
+                printf("%s\033[0m\n", node->type_decl->name.data);
+            }
+            else {
+                printf("\033[1mTYPE_ALIAS\033[0m (null)\033[0m\n");
+            }
+            if(node->type_decl && node->type_decl->body){
+                print_node(node->type_decl->body, indent + 1);
+            }
             break;
         case NODE_IMPORT:
-            printf("Import:\n");
-            for(size_t i = 0; i < node->import_decl->count; ++i){
-                printf("Module: %s\n", node->import_decl->modules[i].data);
+            printf("\033[1mIMPORT\033[0m (%zu modules)\033[0m\n", 
+                   node->import_decl ? node->import_decl->count : 0);
+            if(node->import_decl){
+                for(size_t i = 0; i < node->import_decl->count; ++i){
+                    print_indent(indent + 1, "");
+                    printf("%s\033[0m\n", node->import_decl->modules[i].data);
+                }
             }
             break;
         case NODE_MODULE:
-            printf("Module: %s\n", node->module_decl->name.data);
-            print_node(node->module_decl->body, indent + 1);
+            if(node->module_decl && node->module_decl->name.data){
+                printf("\033[1mMODULE\033[0m ");
+                printf("%s\033[0m\n", node->module_decl->name.data);
+            }
+            else {
+                printf("\033[1mMODULE\033[0m (null)\033[0m\n");
+            }
+            if(node->module_decl && node->module_decl->body){
+                print_node(node->module_decl->body, indent + 1);
+            }
             break;
         case NODE_NAMEOF:
+            printf("\033[1mNAMEOF\033[0m ");
+            if(node->special_stmt && node->special_stmt->content.data){
+                printf("\"%s\"\033[0m\n", node->special_stmt->content.data);
+            }
+            else {
+                printf("(null)\033[0m\n");
+            }
+            break;
         case NODE_TYPEOF:
-            printf("Reflection:\n");
-            printf("\tContent: %s\n", node->special_stmt->content.data);
+            printf("\033[1mTYPEOF\033[0m ");
+            if(node->special_stmt && node->special_stmt->content.data){
+                printf("\"%s\"\033[0m\n", node->special_stmt->content.data);
+            }
+            else {
+                printf("(null)\033[0m\n");
+            }
             break;
     }
 }
+
+//
+// SEMANTIC
+//
 
 static inline const char* symbol_kind_to_str(enum symbol_kind kind)
 {
@@ -323,8 +523,7 @@ static inline const char* type_kind_to_str(enum type_kind kind)
 static inline void print_symbol_flags(enum symbol_flags flags)
 {
     if(flags == SYM_FLAG_NONE){
-        printf("NONE");
-        return;
+        printf("NONE"); return;
     }
 
     bool first = true;
@@ -407,8 +606,7 @@ static inline void print_scope(scope_t* scope, int indent)
 static inline void print_symbol_table(symbol_table_t* st)
 {
     if(!st){
-        printf("Symbol table: (null)\n");
-        return;
+        printf("Symbol table: (null)\n"); return;
     }
 
     printf("Total scopes: %zu\n", st->scope_count);
@@ -421,8 +619,7 @@ static inline void print_symbol_table(symbol_table_t* st)
 static inline void print_current_scope(symbol_table_t* st)
 {
     if(!st || !st->current){
-        printf("Current scope: (null)\n");
-        return;
+        printf("Current scope: (null)\n"); return;
     }
 
     print_scope(st->current, 0);
@@ -431,8 +628,7 @@ static inline void print_current_scope(symbol_table_t* st)
 static inline void print_symbol_lookup(symbol_table_t* st, const char* name)
 {
     if(!st || !name){
-        printf("Symbol lookup: invalid parameters\n");
-        return;
+        printf("Symbol lookup: invalid parameters\n"); return;
     }
 
     symbol_t* sym = lookup_symbol(st, name);
@@ -444,12 +640,12 @@ static inline void print_symbol_lookup(symbol_table_t* st, const char* name)
     }
 }
 
-
-#define print_token(t) do{ printf("\033[34m%s\033[0m(\033[1m%s\033[0m)\n", token_to_str(t), t.literal); } while(0)
+#define print_token(t) print_token(t)
+#define print_token_list(tokens, count) print_token_list(tokens, count)
 #define print_ast(n, i) print_node(n, i)
-#define print_symbol_table_debug(st) print_symbol_table(st)
-#define print_current_scope_debug(st) print_current_scope(st)
-#define print_symbol_lookup_debug(st, name) print_symbol_lookup(st, name)
-#define print_symbol_debug(sym, indent) print_symbol(sym, indent)
+#define print_symbol_table(st) print_symbol_table(st)
+#define print_current_scope(st) print_current_scope(st)
+#define print_symbol_lookup(st, name) print_symbol_lookup(st, name)
+#define print_symbol(sym, indent) print_symbol(sym, indent)
 
 #endif
