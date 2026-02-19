@@ -95,6 +95,7 @@ symbol_table_t* new_symbol_table(arena_t* arena, string_pool_t* string_pool);
 symbol_t* lookup_symbol(symbol_table_t* st, const char* name);
 symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_kind kind, struct type* type, node_t* decl_node);
 scope_t* push_scope(symbol_table_t* st, int scope_kind, node_t* owner);
+scope_t* new_scope(arena_t* arena, int kind, node_t* owner);
 void pop_scope(symbol_table_t* st);
 
 bool is_scope_symbol_exist(symbol_table_t* st, const char* name);

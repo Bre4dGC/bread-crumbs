@@ -10,9 +10,11 @@
 
 static symbol_t* lookup_in_scope(scope_t* scope, const char* name);
 
-scope_t* new_scope(int kind, node_t* owner)
+scope_t* new_scope(arena_t* arena, int kind, node_t* owner)
 {
-    scope_t* scope = (scope_t*)malloc(sizeof(scope_t));
+    if(!arena) return NULL;
+    
+    scope_t* scope = arena_alloc(arena, sizeof(scope_t), alignof(scope_t));
     if(!scope) return NULL;
 
     scope->parent = NULL;
@@ -26,30 +28,26 @@ scope_t* new_scope(int kind, node_t* owner)
     scope->depth = 0;
 
     scope->symbols = new_hashmap();
-    if(!scope->symbols){
-        free_scope(scope);
-        return NULL;
-    }
+    if(!scope->symbols) return NULL;
 
     return scope;
 }
 
 symbol_table_t* new_symbol_table(arena_t* arena, string_pool_t* string_pool)
 {
-    symbol_table_t* st = (symbol_table_t*)arena_alloc(arena, sizeof(symbol_table_t), alignof(symbol_table_t));
+    symbol_table_t* st = arena_alloc(arena, sizeof(symbol_table_t), alignof(symbol_table_t));
     if(!st) return NULL;
 
-    st->global = new_scope(SCOPE_GLOBAL, NULL);
-    if(!st->global){
-        free_symbol_table(st);
-        return NULL;
-    }
+    st->arena = arena;
+    st->string_pool = string_pool;
+    
+    st->global = new_scope(st->arena, SCOPE_GLOBAL, NULL);
+    if(!st->global) return NULL;
 
     st->current = st->global;
     st->scope_capacity = INITIAL_SCOPE_CAPACITY;
     st->scope_count = 1;
-    st->arena = arena;
-    st->string_pool = string_pool;
+    
     return st;
 }
 
@@ -57,7 +55,7 @@ scope_t* push_scope(symbol_table_t* st, int scope_kind, node_t* owner)
 {
     if(!st) return NULL;
 
-    scope_t* scope = new_scope(scope_kind, owner);
+    scope_t* scope = new_scope(st->arena, scope_kind, owner);
     if(!scope) return NULL;
 
     scope->parent = st->current;
@@ -88,7 +86,6 @@ void pop_scope(symbol_table_t* st)
     scope_t* dead = st->current;
     st->current = dead->parent;
 
-    // Remove from parent's child list to prevent dangling references
     if(dead->parent && dead->parent->first_child){
         if(dead->parent->first_child == dead){
             dead->parent->first_child = dead->next_sibling;
@@ -102,8 +99,6 @@ void pop_scope(symbol_table_t* st)
             }
         }
     }
-
-    free_scope(dead);
 }
 
 scope_t* current_scope(symbol_table_t* st)
@@ -121,7 +116,7 @@ symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_
         return NULL;
     }
 
-    symbol_t* sym = (symbol_t*)arena_alloc(st->arena, sizeof(symbol_t), alignof(symbol_t));
+    symbol_t* sym = arena_alloc(st->arena, sizeof(symbol_t), alignof(symbol_t));
     if(!sym) return NULL;
 
     string_t interned = new_string(st->string_pool, name);
@@ -154,7 +149,7 @@ static symbol_t* lookup_in_scope(scope_t* scope, const char* name)
 {
     if(!scope || !name) return NULL;
 
-    return (symbol_t*)hm_lookup(scope->symbols, name);
+    return hm_lookup(scope->symbols, name);
 }
 
 symbol_t* lookup_symbol(symbol_table_t* st, const char* name)
@@ -193,7 +188,6 @@ void free_scope(scope_t* scope)
 {
     if(!scope) return;
 
-    // Free all child scopes first
     scope_t* child = scope->first_child;
     while(child){
         scope_t* next_child = child->next_sibling;
@@ -201,22 +195,26 @@ void free_scope(scope_t* scope)
         child = next_child;
     }
 
-    if(scope->symbols) free_hashmap(scope->symbols);
-    scope->symbols = NULL;
+    if(scope->symbols) {
+        free_hashmap(scope->symbols);
+        scope->symbols = NULL;
+    }
+    
     scope->parent = NULL;
     scope->first_child = NULL;
     scope->next_sibling = NULL;
     scope->owner = NULL;
-
-    free(scope);
 }
 
 void free_symbol_table(symbol_table_t* st)
 {
     if(!st) return;
 
-    // Free the entire scope hierarchy starting from global
-    if(st->global) free_scope(st->global);
+    if(st->global && st->global->symbols) {
+        free_hashmap(st->global->symbols);
+        st->global->symbols = NULL;
+    }
+    
     st->global = NULL;
     st->current = NULL;
 }

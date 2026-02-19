@@ -1,12 +1,14 @@
 func main() : int
 {
-    var x : str = "This is a string"
-    var z : int = 10
+    const PI : float = 3.14159
 
-    for(var i : int = 0; i < 10; i++)
-    {
-        x++
+    if(true){
+        if(false){
+            final x = 42
+        }
     }
-
+    else{
+        
+    }
     return 0
 }

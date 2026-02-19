@@ -38,14 +38,24 @@ bool is_unreachable_code(node_t* node);
 
 semantic_t* new_semantic(arena_t* arena, string_pool_t* string_pool, report_table_t* reports)
 {
-    semantic_t* sem = (semantic_t*)arena_alloc(arena, sizeof(semantic_t), alignof(semantic_t));
-    if(!sem) return NULL;
+    if(!arena || !string_pool || !reports) {
+        return NULL;
+    }
+
+    semantic_t* sem = arena_alloc(arena, sizeof(semantic_t), alignof(semantic_t));
+    if(!sem) {
+        return NULL;
+    }
 
     // init if not already done
-    if(!type_int) init_types(arena);
+    if(!type_int) {
+        init_types(arena);
+    }
 
     sem->symbols = new_symbol_table(arena, string_pool);
-    if(!sem->symbols) return NULL;
+    if(!sem->symbols) {
+        return NULL;
+    }
 
     sem->current_function = NULL;
     sem->loop_depth = 0;
@@ -164,7 +174,7 @@ bool check_function(semantic_t* sem, node_t* node)
         size_t param_count = func->param_decl.count;
         type_t** param_types = NULL;
         if(param_count > 0){
-            param_types = (type_t**)arena_alloc_array(sem->arena, sizeof(type_t*), param_count, alignof(type_t*));
+            param_types = arena_alloc_array(sem->arena, sizeof(type_t*), param_count, alignof(type_t*));
             if(!param_types) return false;
             for(size_t i = 0; i < param_count; i++){
                 node_t* p = func->param_decl.elems[i];
@@ -188,7 +198,6 @@ bool check_function(semantic_t* sem, node_t* node)
 #ifdef DEBUG
         print_symbol(func_sym, 0);
 #endif
-
         return true;
     }
 
@@ -336,10 +345,6 @@ bool check_block(semantic_t* sem, node_t* node)
     scope_t* block_scope = push_scope(sem->symbols, SCOPE_BLOCK, node);
     if(!block_scope) return false;
 
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
-
     bool success = true;
     for(size_t i = 0; i < node->block->statement.count; i++){
         if(!check_node(sem, node->block->statement.elems[i])){
@@ -361,14 +366,16 @@ bool check_if(semantic_t* sem, node_t* node)
 
     if(!check_node(sem, node->if_stmt->condition)) return false; // check condition
 
-    // check branches
-    bool success = true;
 #ifdef DEBUG
     print_current_scope(sem->symbols);
+    // printf("%d", sem.)
 #endif
+
+    // check branches
+    bool success = true;
     if(node->if_stmt->then_block)  success = check_node(sem, node->if_stmt->then_block)  && success;
-    if(node->if_stmt->else_block)  success = check_node(sem, node->if_stmt->else_block)  && success;
     if(node->if_stmt->elif_blocks) success = check_node(sem, node->if_stmt->elif_blocks) && success;
+    if(node->if_stmt->else_block)  success = check_node(sem, node->if_stmt->else_block)  && success;
 
     return success;
 }
@@ -378,10 +385,6 @@ bool check_while(semantic_t* sem, node_t* node)
     if(!sem || !node || node->kind != NODE_WHILE) return false;
 
     sem->loop_depth++;
-
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
 
     bool success = true;
     if(node->while_stmt->condition) success = check_node(sem, node->while_stmt->condition) && success;
@@ -400,10 +403,6 @@ bool check_for(semantic_t* sem, node_t* node)
 
     scope_t* for_scope = push_scope(sem->symbols, SCOPE_BLOCK, node);
     if(!for_scope) return false;
-
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
 
     sem->loop_depth++;
 
@@ -583,21 +582,95 @@ bool check_struct(semantic_t* sem, node_t* node)
     struct node_struct* struct_decl = node->struct_decl;
     if(!struct_decl || !struct_decl->name.data) return false;
 
+    // register struct symbol in declare phase
+    if(sem->phase == PHASE_DECLARE){
+        if(is_scope_symbol_exist(sem->symbols, struct_decl->name.data)){
+            add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+            return false;
+        }
+
+        // create struct type (will be populated in check phase)
+        type_t* struct_type = new_type_compound(sem->arena, TYPE_STRUCT, NULL, 0);
+        symbol_t* struct_sym = define_symbol(sem->symbols, struct_decl->name.data, SYMBOL_STRUCT, struct_type, node);
+        if(!struct_sym){
+            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc, DEFAULT_LEN, NULL);
+            return false;
+        }
+        return true;
+    }
+
+    // check struct members
+    symbol_t* struct_sym = lookup_symbol(sem->symbols, struct_decl->name.data);
+    if(!struct_sym) return false;
+
     scope_t* struct_scope = push_scope(sem->symbols, SCOPE_STRUCT, node);
     if(!struct_scope) return false;
     
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
-    
-    // TODO: implement struct member checking
     bool success = true;
+    size_t member_count = 0;
+    
+    for(size_t i = 0; i < struct_decl->member.count; i++){
+        node_t* member = struct_decl->member.elems[i];
+        if(!member || member->kind != NODE_VAR) {
+            add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member ? member->loc : node->loc, DEFAULT_LEN, NULL);
+            success = false;
+            continue;
+        }
+
+        struct node_var* var = member->var_decl;
+        if(!var || !var->name.data) {
+            success = false;
+            continue;
+        }
+
+        // check for duplicate member names
+        if(is_scope_symbol_exist(sem->symbols, var->name.data)){
+            add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, member->loc, DEFAULT_LEN, NULL);
+            success = false;
+            continue;
+        }
+
+        // determine member type
+        type_t* member_type = NULL;
+        if(var->dtype != DT_VOID){
+            member_type = datatype_to_type(var->dtype);
+        } else if(var->value) {
+            if(!check_node(sem, var->value)) {
+                success = false;
+                continue;
+            }
+            member_type = infer_type(sem, var->value);
+        } else {
+            add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, member->loc, DEFAULT_LEN, NULL);
+            success = false;
+            continue;
+        }
+
+        if(!member_type || member_type == type_error) {
+            add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, member->loc, DEFAULT_LEN, NULL);
+            success = false;
+            continue;
+        }
+
+        // create member symbol
+        symbol_t* member_sym = define_symbol(sem->symbols, var->name.data, SYMBOL_VAR, member_type, member);
+        if(!member_sym) {
+            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc, DEFAULT_LEN, NULL);
+            success = false;
+            continue;
+        }
+
+        member_sym->flags |= SYM_FLAG_ASSIGNED; // struct members are always "assigned"
+        member_count++;
+    }
+
+    // update struct type with member information
+    if(struct_sym->type && struct_sym->type->kind == TYPE_STRUCT){
+        struct_sym->type->compound.scope = struct_scope->symbols ? (struct symbol*)struct_scope : NULL;
+        struct_sym->type->compound.member_count = member_count;
+    }
     
     pop_scope(sem->symbols);
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
-    
     return success;
 }
 
@@ -608,22 +681,97 @@ bool check_enum(semantic_t* sem, node_t* node)
     struct node_enum* enum_decl = node->enum_decl;
     if(!enum_decl || !enum_decl->name.data) return false;
     
-    // Create enum scope
+    // register enum symbol in declare phase
+    if(sem->phase == PHASE_DECLARE){
+        if(is_scope_symbol_exist(sem->symbols, enum_decl->name.data)){
+            add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+            return false;
+        }
+
+        // create enum type
+        type_t* enum_type = new_type_compound(sem->arena, TYPE_ENUM, NULL, 0);
+        symbol_t* enum_sym = define_symbol(sem->symbols, enum_decl->name.data, SYMBOL_ENUM, enum_type, node);
+        if(!enum_sym){
+            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc, DEFAULT_LEN, NULL);
+            return false;
+        }
+        return true;
+    }
+
+    // check enum variants
+    symbol_t* enum_sym = lookup_symbol(sem->symbols, enum_decl->name.data);
+    if(!enum_sym) return false;
+
     scope_t* enum_scope = push_scope(sem->symbols, SCOPE_ENUM, node);
     if(!enum_scope) return false;
     
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
-    
-    // TODO: implement enum variant checking
     bool success = true;
+    size_t variant_count = 0;
+    int next_value = 0; // auto-increment values
+    
+    for(size_t i = 0; i < enum_decl->member.count; i++){
+        node_t* member = enum_decl->member.elems[i];
+        if(!member) {
+            success = false;
+            continue;
+        }
+
+        const char* variant_name = NULL;
+        int variant_value = next_value;
+
+        // handle different enum member formats
+        if(member->kind == NODE_VAR && member->var_decl) {
+            variant_name = member->var_decl->name.data;
+            if(member->var_decl->value) {
+                // explicit value assignment
+                if(member->var_decl->value->kind == NODE_LITERAL) {
+                    variant_value = atoi(member->var_decl->value->lit->value.data);
+                } else {
+                    add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member->var_decl->value->loc, DEFAULT_LEN, NULL);
+                    success = false;
+                    continue;
+                }
+            }
+        } else if(member->kind == NODE_REF && member->var_ref) {
+            variant_name = member->var_ref->name.data;
+        } else {
+            add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member->loc, DEFAULT_LEN, NULL);
+            success = false;
+            continue;
+        }
+
+        if(!variant_name) {
+            success = false;
+            continue;
+        }
+
+        // check for duplicate variant names
+        if(is_scope_symbol_exist(sem->symbols, variant_name)){
+            add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, member->loc, DEFAULT_LEN, NULL);
+            success = false;
+            continue;
+        }
+
+        // create variant symbol with int type
+        symbol_t* variant_sym = define_symbol(sem->symbols, variant_name, SYMBOL_ENUM_VARIANT, type_int, member);
+        if(!variant_sym) {
+            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc, DEFAULT_LEN, NULL);
+            success = false;
+            continue;
+        }
+
+        variant_sym->flags |= SYM_FLAG_ASSIGNED;
+        variant_count++;
+        next_value = variant_value + 1;
+    }
+
+    // update enum type with variant information
+    if(enum_sym->type && enum_sym->type->kind == TYPE_ENUM){
+        enum_sym->type->compound.scope = enum_scope->symbols ? (struct symbol*)enum_scope : NULL;
+        enum_sym->type->compound.member_count = variant_count;
+    }
     
     pop_scope(sem->symbols);
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
-    
     return success;
 }
 

@@ -76,8 +76,9 @@ extern type_t* type_char;
 void init_types(arena_t* arena);
 void free_type(type_t* type);
 
+type_t* new_type(arena_t* arena, enum type_kind kind, size_t size, size_t align);
 type_t* new_type_array(arena_t* arena, type_t* elem_type, const size_t length);
 type_t* new_type_function(arena_t* arena, type_t* return_type, type_t** param_types, const size_t param_count);
-type_t* new_type_compound(arena_t* arena, struct symbol* scope, const size_t member_count);
+type_t* new_type_compound(arena_t* arena, enum type_kind kind, struct symbol* scope, const size_t member_count);
 
 bool types_compatible(const type_t* a, const type_t* b);
