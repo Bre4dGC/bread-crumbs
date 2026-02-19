@@ -4,7 +4,6 @@
 
 #include "core/arena.h"
 #include "core/hashmap.h"
-#include "core/strings.h"
 #include "compiler/frontend/ast.h"
 
 #define NUM_NODE_KINDS 24

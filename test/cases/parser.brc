@@ -3,26 +3,21 @@ func main(args : str[]) : int
     var x : int = 52
     var y : int = 67
 
-    if(x > y)
-    {
+    if(x > y) {
         return x + y
     }
-    else if(x < y)
-    {
+    elif(x < y) {
         return x - y
     }
-    else
-    {
+    else {
         return x * y
     }
 
-    while(x > 0)
-    {
+    while(x > 0) {
         x--
     }
 
-    for(var i : int = 0; i < 10; i++)
-    {
+    for(var i : int = 0; i < 10; i++) {
         x++
     }
 

@@ -10,7 +10,7 @@ const char* report_msg(const enum report_code code);
 
 report_table_t* new_report_table(arena_t* arena)
 {
-    report_table_t* table = (report_table_t*)arena_alloc(arena, sizeof(report_table_t), alignof(report_table_t));
+    report_table_t* table = arena_alloc(arena, sizeof(report_table_t), alignof(report_table_t));
     if(!table) return NULL;
 
     table->arena = new_arena(DEFAULT_REPORT_POOL_SIZE * sizeof(report_t));

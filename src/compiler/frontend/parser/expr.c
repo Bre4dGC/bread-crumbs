@@ -103,7 +103,7 @@ node_t* parse_expr_func_call(parser_t* parser)
             // grow array if needed
             if(node->func_call->args.count >= node->func_call->args.capacity){
                 size_t new_capacity = node->func_call->args.capacity == 0 ? 4 : node->func_call->args.capacity * 2;
-                node_t** new_args = (node_t**)arena_alloc_array(parser->ast, sizeof(node_t*), new_capacity, alignof(node_t*));
+                node_t** new_args = arena_alloc_array(parser->ast, sizeof(node_t*), new_capacity, alignof(node_t*));
                 if(!new_args) return NULL;
                 node->func_call->args.elems = new_args;
                 node->func_call->args.capacity = new_capacity;

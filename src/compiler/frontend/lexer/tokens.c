@@ -98,7 +98,7 @@ token_t new_token(const enum category_tag category, const int type, const char *
 
 token_t* find_token(const char* literal)
 {
-    return (token_t*)hm_lookup(tokens_table, literal);
+    return hm_lookup(tokens_table, literal);
 }
 
 void free_tokens(void)

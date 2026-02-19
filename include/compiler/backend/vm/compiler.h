@@ -2,7 +2,6 @@
 
 #include "core/arena.h"
 #include "core/hashmap.h"
-#include "core/strings.h"
 #include "compiler/middle/ir.h"
 
 typedef struct compiler_t {

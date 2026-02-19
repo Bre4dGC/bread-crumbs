@@ -1,5 +1,5 @@
 ########################## MAIN ###########################
-CC = gcc
+CC = clang
 CFLAGS = 	-Wall -Wextra -Wpedantic -Wformat=2 		\
 		 	-Wno-unused-parameter -Wshadow				\
 			-Wwrite-strings -Wstrict-prototypes			\
@@ -75,7 +75,6 @@ SRC_TEST_LEXER = \
 	$(DIR_TESTS_INTEGRATION)/lexing.c \
 	$(DIR_COMP_CORE) \
 	$(DIR_SRC)/core/common/filesystem.c \
-	$(DIR_SRC)/core/common/benchmark.c \
 	$(DIR_SRC)/compiler/frontend/lexer.c \
 	$(DIR_SRC)/compiler/frontend/lexer/tokens.c
 
@@ -83,7 +82,6 @@ SRC_TEST_PARSER = \
 	$(DIR_TESTS_INTEGRATION)/parsing.c \
 	$(DIR_COMP_CORE) \
 	$(DIR_SRC)/core/common/filesystem.c \
-	$(DIR_SRC)/core/common/benchmark.c \
 	$(DIR_SRC)/compiler/frontend/ast.c \
 	$(DIR_SRC)/compiler/frontend/lexer/tokens.c \
 	$(DIR_SRC)/compiler/frontend/lexer.c \
@@ -96,7 +94,6 @@ SRC_TEST_SEMANTIC = \
 	$(DIR_TESTS_INTEGRATION)/analisis.c \
 	$(DIR_COMP_CORE) \
 	$(DIR_SRC)/core/common/filesystem.c \
-	$(DIR_SRC)/core/common/benchmark.c \
 	$(DIR_SRC)/compiler/frontend/ast.c \
 	$(DIR_SRC)/compiler/frontend/lexer/tokens.c \
 	$(DIR_SRC)/compiler/frontend/lexer.c \
@@ -108,25 +105,10 @@ SRC_TEST_SEMANTIC = \
 	$(DIR_SRC)/compiler/frontend/semantic/types.c \
 	$(DIR_SRC)/compiler/frontend/semantic.c
 
-SRC_TEST_ARENA = \
-	$(DIR_TESTS_UNIT)/arena.c \
-	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/common/benchmark.c
-
-SRC_TEST_STRINGPOOL = \
-	$(DIR_TESTS_UNIT)/strings.c \
-	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/common/benchmark.c
-
-SRC_TEST_HASHTABLE = \
-	$(DIR_TESTS_UNIT)/hashmap.c \
-	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/common/benchmark.c
-
-SRC_TEST_DIAGNOSTIC = \
-	$(DIR_TESTS_UNIT)/diagnostic.c \
-	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/common/benchmark.c
+SRC_TEST_ARENA = $(DIR_TESTS_UNIT)/arena.c $(DIR_COMP_CORE)
+SRC_TEST_STRINGPOOL = $(DIR_TESTS_UNIT)/strings.c $(DIR_COMP_CORE)
+SRC_TEST_HASHTABLE = $(DIR_TESTS_UNIT)/hashmap.c $(DIR_COMP_CORE)
+SRC_TEST_DIAGNOSTIC = $(DIR_TESTS_UNIT)/diagnostic.c $(DIR_COMP_CORE)
 ###########################################################
 
 ################### COMPILE TO OBJECTS ####################

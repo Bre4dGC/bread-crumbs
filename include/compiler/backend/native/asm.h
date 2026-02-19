@@ -2,10 +2,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "compiler/middle/ir.h"
 #include "core/arena.h"
 #include "core/hashmap.h"
-#include "core/strings.h"
+#include "compiler/middle/ir.h"
 
 typedef struct assembler_t {
     arena_t* arena;

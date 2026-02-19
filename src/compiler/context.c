@@ -1,13 +1,10 @@
 #include <stdlib.h>
-#include <string.h>
 
 #include "compiler/context.h"
-#include "core/diagnostic.h"
-#include "compiler/frontend/semantic.h"
 
 compiler_memory_t* new_compiler_memory(void)
 {
-    compiler_memory_t* mem = (compiler_memory_t*)malloc(sizeof(compiler_memory_t));
+    compiler_memory_t* mem = malloc(sizeof(compiler_memory_t));
     if(!mem) return NULL;
 
     return mem;
@@ -20,7 +17,7 @@ void free_compiler_memory(compiler_memory_t* mem)
 
 compiler_context_t* new_compiler_context(void)
 {
-    compiler_context_t* ctx = (compiler_context_t*)malloc(sizeof(compiler_context_t));
+    compiler_context_t* ctx = malloc(sizeof(compiler_context_t));
     if(!ctx) return NULL;
 
     return ctx;

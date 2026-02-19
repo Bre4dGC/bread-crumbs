@@ -1,15 +1,10 @@
 #pragma once
 
 #include <windows.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <fcntl.h>
 #include <io.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <errno.h>
-#include <time.h>
 #include <signal.h>
 
 #define PATH_SEPARATOR '\\'

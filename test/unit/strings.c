@@ -1,13 +1,11 @@
-#include <stdio.h>
-
 #include "core/arena.h"
 #include "core/strings.h"
 #include "core/common/source.h"
-#include "core/common/benchmark.h"
+#include "../utils/benchmark.h"
 
 int main(void)
 {
-    bench_start();
+    bm_start();
 
     string_pool_t pool = new_string_pool(ARENA_DEFAULT_SIZE);
 
@@ -32,8 +30,8 @@ int main(void)
 
     free_string_pool(&pool);
 
-    bench_stop();
-    bench_print("Test string pool");
+    bm_stop();
+    bm_print("Test string pool");
 
     return 0;
 }

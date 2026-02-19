@@ -17,7 +17,7 @@ uint32_t hm_hash(const char* str)
 
 hashmap_t* new_hashmap(void)
 {
-    hashmap_t* map = (hashmap_t*)malloc(sizeof(hashmap_t));
+    hashmap_t* map = malloc(sizeof(hashmap_t));
     if(!map) return NULL;
     map->key = (string_t){NULL, 0, 0};
     map->value = NULL;
@@ -51,7 +51,7 @@ void hm_insert(hashmap_t* map, const char* key, void* value)
         curr = curr->next;
     }
 
-    hashmap_t* new_entry = (hashmap_t*)malloc(sizeof(hashmap_t));
+    hashmap_t* new_entry = malloc(sizeof(hashmap_t));
     if(!new_entry) return;
     new_entry->key = str;
     new_entry->value = value;

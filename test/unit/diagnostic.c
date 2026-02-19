@@ -1,15 +1,13 @@
-#include <stdio.h>
-
 #include "core/diagnostic.h"
 #include "core/common/source.h"
-#include "core/common/benchmark.h"
+#include "../utils/benchmark.h"
 
 int main(void)
 {
-    bench_start();
+    bm_start();
 
-    bench_stop();
-    bench_print("Test diagnostic");
+    bm_stop();
+    bm_print("Test diagnostic");
 
     return 0;
 }

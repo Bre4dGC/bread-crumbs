@@ -2,16 +2,16 @@
 
 #include <stddef.h>
 
-typedef enum gc_color {
+enum gc_color {
     GC_COLOR_WHITE,
     GC_COLOR_GRAY,
     GC_COLOR_BLACK
-} gc_color_t;
+};
 
 typedef struct gc_object {
     void* ptr;
     size_t size;
-    gc_color_t color;
+    enum gc_color color;
     struct gc_object* next;
 } gc_object_t;
 

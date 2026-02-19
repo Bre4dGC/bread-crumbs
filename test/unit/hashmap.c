@@ -1,13 +1,10 @@
-#include <stdio.h>
-#include <sys/time.h>
-
 #include "core/hashmap.h"
 #include "core/common/source.h"
-#include "core/common/benchmark.h"
+#include "../utils/benchmark.h"
 
 int main(void)
 {
-    bench_start();
+    bm_start();
 
     hashmap_t* table = new_hashmap();
 
@@ -21,11 +18,11 @@ int main(void)
     hm_insert(table, s_key, s_val);
     printf("Inserted key %s with value %s\n", s_val, s_val);
 
-    int* lookup_i = (int*)hm_lookup(table, i_key);
+    int* lookup_i = hm_lookup(table, i_key);
     if(lookup_i) printf("Lookup key %s: found value %d\n", i_key, *lookup_i);
     else printf("Lookup key %s: not found\n", i_key);
 
-    char* lookup_s = (char*)hm_lookup(table, s_val);
+    char* lookup_s = hm_lookup(table, s_val);
     if(lookup_s) printf("Lookup key %s: found value %s\n", s_val, lookup_s);
     else printf("Lookup key %s: not found\n", s_val);
 
@@ -34,8 +31,8 @@ int main(void)
 
     free_hashmap(table);
 
-    bench_stop();
-    bench_print("Test hash table");
+    bm_stop();
+    bm_print("Test hash table");
 
     return 0;
 }

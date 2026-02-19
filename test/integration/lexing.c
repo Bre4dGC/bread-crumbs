@@ -1,15 +1,14 @@
 #include "core/arena.h"
 #include "core/diagnostic.h"
 #include "core/strings.h"
-#include "compiler/frontend/lexer.h"
-#include <stdio.h>
 #include "core/common/filesystem.h"
 #include "core/common/source.h"
-#include "core/common/benchmark.h"
+#include "compiler/frontend/lexer.h"
+#include "../utils/benchmark.h"
 
 int main(void)
 {
-    bench_start();
+    bm_start();
 
     arena_t* arena = new_arena(ARENA_DEFAULT_SIZE);
     string_pool_t string_pool = new_string_pool(ARENA_DEFAULT_SIZE);
@@ -39,8 +38,8 @@ int main(void)
     free_string_pool(&string_pool);
     free_arena(arena);
 
-    bench_stop();
-    bench_print("Test new lexer");
+    bm_stop();
+    bm_print("Test new lexer");
 
     return 0;
 }

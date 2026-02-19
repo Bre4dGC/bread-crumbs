@@ -41,7 +41,7 @@ bool add_stmt_block(parser_t* parser, node_t* node, node_t* stmt)
 
     if(node->block->statement.count >= node->block->statement.capacity){
         size_t new_capacity = node->block->statement.capacity == 0 ? 4 : node->block->statement.capacity * 2;
-        node_t** new_statements = (node_t**)arena_alloc_array(parser->ast, sizeof(node_t*), new_capacity, alignof(node_t*));
+        node_t** new_statements = arena_alloc_array(parser->ast, sizeof(node_t*), new_capacity, alignof(node_t*));
         if(!new_statements) return false;
 
         node->block->statement.elems = new_statements;
@@ -399,7 +399,7 @@ node_t* parse_stmt_match(parser_t* parser)
         // grow array if needed
         if(node->match_stmt->block.count >= node->match_stmt->block.capacity){
             size_t new_cap = node->match_stmt->block.capacity == 0 ? 4 : node->match_stmt->block.capacity * 2;
-            node_t** new_cases = (node_t**)arena_alloc_array(parser->ast, sizeof(node_t*), new_cap, alignof(node_t*));
+            node_t** new_cases = arena_alloc_array(parser->ast, sizeof(node_t*), new_cap, alignof(node_t*));
             if(!new_cases) return NULL;
             node->match_stmt->block.elems = new_cases;
             node->match_stmt->block.capacity = new_cap;

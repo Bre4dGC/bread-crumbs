@@ -1,14 +1,13 @@
 #include "core/arena.h"
 #include "core/diagnostic.h"
-#include "compiler/frontend/parser.h"
-#include <stdio.h>
 #include "core/common/filesystem.h"
 #include "core/common/source.h"
-#include "core/common/benchmark.h"
+#include "compiler/frontend/parser.h"
+#include "../utils/benchmark.h"
 
 int main(void)
 {
-    bench_start();
+    bm_start();
 
     arena_t* arena = new_arena(ARENA_DEFAULT_SIZE);
     string_pool_t lexer_pool = new_string_pool(ARENA_DEFAULT_SIZE);
@@ -47,7 +46,7 @@ int main(void)
     free_arena(arena);
     free_tokens();
 
-    bench_stop();
-    bench_print("Test parser");
+    bm_stop();
+    bm_print("Test parser");
     return 0;
 }

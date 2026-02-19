@@ -59,7 +59,7 @@ static inline void print_token(token_t token)
 {
     const char* str_type = token_to_str(token);
     const char* literal = token.literal ? token.literal : "(null)";
-    printf("\033[1m%-*s\033[0m%s\033[0m\033[0m\n", 12, str_type, literal);
+    printf("\033[1m%-12s\033[0m%-10s  \033[0m%-5d%d\033[0m\n", str_type, literal, token.category, token.type);
 }
 
 //
@@ -125,7 +125,7 @@ static inline void print_node(node_t* node, int indent)
         case NODE_VAR:
             if(node->var_decl && node->var_decl->name.data){
                 printf("\033[1mVARIABLE\033[0m ");
-                printf("%s\033[0m \033[90m[modif:%d, type:%d]\033[0m\n", 
+                printf("%s\033[0m \033[90m[modif:%d, type:%d]\033[0m\n",
                        node->var_decl->name.data, node->var_decl->modif, node->var_decl->dtype);
             }
             else {
@@ -134,7 +134,7 @@ static inline void print_node(node_t* node, int indent)
             if(node->var_decl->value) print_node(node->var_decl->value, indent + 1);
             break;
         case NODE_BLOCK:
-            printf("\033[1mBLOCK\033[0m \033[90m(%zu statements)\033[0m\n", 
+            printf("\033[1mBLOCK\033[0m \033[90m(%zu statements)\033[0m\n",
                    node->block ? node->block->statement.count : 0);
             if(node->block && node->block->statement.elems){
                 for(size_t i = 0; i < node->block->statement.count; i++){
@@ -146,7 +146,7 @@ static inline void print_node(node_t* node, int indent)
             break;
         case NODE_UNARYOP:
             printf("\033[1mUNARY_OP\033[0m ");
-            printf("%s\033[0m \033[90m[postfix:%s]\033[0m\n", 
+            printf("%s\033[0m \033[90m[postfix:%s]\033[0m\n",
                    node->unaryop->lit ? node->unaryop->lit : "(null)",
                    node->unaryop->is_postfix ? "true" : "false");
             print_node(node->unaryop->right, indent + 1);
@@ -154,7 +154,7 @@ static inline void print_node(node_t* node, int indent)
         case NODE_CALL:
             if(node->func_call && node->func_call->name.data){
                 printf("\033[1mCALL\033[0m ");
-                printf("%s\033[0m \033[90m(%zu args)\033[0m\n", 
+                printf("%s\033[0m \033[90m(%zu args)\033[0m\n",
                        node->func_call->name.data, node->func_call->args.count);
             }
             else {
@@ -193,7 +193,7 @@ static inline void print_node(node_t* node, int indent)
             printf("\033[1mCONTINUE\033[0m\n");
             break;
         case NODE_ARRAY:
-            printf("\033[1mARRAY\033[0m (%zu elements)\033[0m\n", 
+            printf("\033[1mARRAY\033[0m (%zu elements)\033[0m\n",
                    node->array_decl ? node->array_decl->count : 0);
             if(node->array_decl && node->array_decl->elements){
                 for(size_t i = 0; i < node->array_decl->count; i++){
@@ -261,7 +261,7 @@ static inline void print_node(node_t* node, int indent)
         case NODE_PARAM:
             if(node->param_decl && node->param_decl->name.data){
                 printf("\033[1mPARAMETER\033[0m ");
-                printf("%s\033[0m \033[90m[variadic:%s, type:%d]\033[0m\n", 
+                printf("%s\033[0m \033[90m[variadic:%s, type:%d]\033[0m\n",
                        node->param_decl->name.data,
                        node->param_decl->is_variadic ? "true" : "false",
                        node->param_decl->dtype);
@@ -273,7 +273,7 @@ static inline void print_node(node_t* node, int indent)
         case NODE_FUNC:
             if(node->func_decl && node->func_decl->name.data){
                 printf("\033[1mFUNCTION\033[0m ");
-                printf("%s\033[0m \033[90m(%zu params, return_type:%d)\033[0m\n", 
+                printf("%s\033[0m \033[90m(%zu params, return_type:%d)\033[0m\n",
                        node->func_decl->name.data,
                        node->func_decl->param_decl.count,
                        node->func_decl->return_type);
@@ -297,7 +297,7 @@ static inline void print_node(node_t* node, int indent)
         case NODE_STRUCT:
             if(node->struct_decl && node->struct_decl->name.data){
                 printf("\033[1mSTRUCT\033[0m ");
-                printf("%s\033[0m \033[90m(%zu members)\033[0m\n", 
+                printf("%s\033[0m \033[90m(%zu members)\033[0m\n",
                        node->struct_decl->name.data,
                        node->struct_decl->member.count);
             }
@@ -315,7 +315,7 @@ static inline void print_node(node_t* node, int indent)
         case NODE_ENUM:
             if(node->enum_decl && node->enum_decl->name.data){
                 printf("\033[1mENUM\033[0m ");
-                printf("%s\033[0m \033[90m(%zu members)\033[0m\n", 
+                printf("%s\033[0m \033[90m(%zu members)\033[0m\n",
                        node->enum_decl->name.data,
                        node->enum_decl->member.count);
             }
@@ -324,8 +324,8 @@ static inline void print_node(node_t* node, int indent)
             }
             if(node->enum_decl && node->enum_decl->member.elems){
                 for(size_t i = 0; i < node->enum_decl->member.count; i++){
-                    if(node->enum_decl->member.elems[i] && 
-                       node->enum_decl->member.elems[i]->lit && 
+                    if(node->enum_decl->member.elems[i] &&
+                       node->enum_decl->member.elems[i]->lit &&
                        node->enum_decl->member.elems[i]->lit->value.data){
                         print_indent(indent + 1, "");
                         printf("%s\033[0m\n", node->enum_decl->member.elems[i]->lit->value.data);
@@ -376,7 +376,7 @@ static inline void print_node(node_t* node, int indent)
         case NODE_IMPL:
             if(node->impl_decl && node->impl_decl->trait_name.data){
                 printf("\033[1mIMPL\033[0m ");
-                printf("%s for %s\033[0m\n", 
+                printf("%s for %s\033[0m\n",
                        node->impl_decl->trait_name.data,
                        node->impl_decl->struct_name.data);
             }
@@ -417,7 +417,7 @@ static inline void print_node(node_t* node, int indent)
             }
             break;
         case NODE_IMPORT:
-            printf("\033[1mIMPORT\033[0m (%zu modules)\033[0m\n", 
+            printf("\033[1mIMPORT\033[0m (%zu modules)\033[0m\n",
                    node->import_decl ? node->import_decl->count : 0);
             if(node->import_decl){
                 for(size_t i = 0; i < node->import_decl->count; ++i){
@@ -575,7 +575,7 @@ static inline void print_scope_symbols(scope_t* scope, int indent)
     hashmap_t* entry = scope->symbols;
     for(size_t i = 0; i < scope->symbols->count; i++){
         if(entry->key.data && entry->value){
-            symbol_t* sym = (symbol_t*)entry->value;
+            symbol_t* sym = entry->value;
             print_symbol(sym, indent + 1);
         }
         entry = scope->symbols->next;

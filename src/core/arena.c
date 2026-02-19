@@ -6,9 +6,9 @@
 static arena_block_t* new_arena_block(size_t capacity)
 {
     if(capacity == 0) return NULL;
-    arena_block_t* b = (arena_block_t*)malloc(sizeof(arena_block_t));
+    arena_block_t* b = malloc(sizeof(arena_block_t));
     if(!b) return NULL;
-    b->data = (unsigned char*)malloc(capacity);
+    b->data = malloc(capacity);
     if(!b->data){
         free(b);
         return NULL;
@@ -23,7 +23,7 @@ arena_t* new_arena(size_t capacity)
 {
     if(capacity == 0) return NULL;
 
-    arena_t* arena = (arena_t*)malloc(sizeof(arena_t));
+    arena_t* arena = malloc(sizeof(arena_t));
     if(!arena) return NULL;
 
     arena_block_t* b = new_arena_block(capacity);
@@ -135,7 +135,7 @@ named_arena_t* new_named_arena(const char* name, enum arena_lifetime lifetime, s
 {
     if(!name) return NULL;
 
-    named_arena_t* named = (named_arena_t*)malloc(sizeof(named_arena_t));
+    named_arena_t* named = malloc(sizeof(named_arena_t));
     named->name = name;
     named->arena = new_arena(size);
     named->lifetime = lifetime;
@@ -155,8 +155,8 @@ void add_named_arena(arena_manager_t* manager, named_arena_t* arena)
     if(!manager || !arena) return;
 
     if(manager->count >= manager->capacity){
-        manager->capacity *= 2;;
-        manager->arenas = (named_arena_t**)realloc(manager->arenas, sizeof(named_arena_t*) * manager->capacity);
+        manager->capacity *= 2;
+        manager->arenas = realloc(manager->arenas, sizeof(named_arena_t*) * manager->capacity);
     }
     manager->arenas[manager->count++] = arena;
 }

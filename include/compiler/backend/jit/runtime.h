@@ -1,11 +1,10 @@
 #pragma once
 
-#include "compiler/middle/ir.h"
+#include "compiler/backend/vm/core.h"
+#include "compiler/backend/vm/compiler.h"
 #include "runtime/memory.h"
 #include "runtime/gc.h"
 #include "runtime/ffi.h"
-#include "compiler/backend/vm/core.h"
-#include "compiler/backend/vm/compiler.h"
 
 typedef struct jit_runtime_t {
     memory_t* memory;

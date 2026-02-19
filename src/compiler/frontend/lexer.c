@@ -26,7 +26,7 @@ token_t handle_string(lexer_t* lexer);
 void handle_comment(lexer_t* lexer);
 
 string_t read_ident(lexer_t* lexer);
-string_t read_number(lexer_t* lexer, enum category_literal lit);
+string_t read_number(lexer_t* lexer, enum category_literal* lit);
 string_t read_string(lexer_t* lexer, char quote_char);
 char read_escseq(lexer_t* lexer);
 
@@ -76,11 +76,10 @@ lexer_t* new_lexer(arena_t* arena, string_pool_t* string_pool, report_table_t* r
 {
     if(!input) return NULL;
 
-    lexer_t* lexer = (lexer_t*)arena_alloc(arena, sizeof(lexer_t), alignof(lexer_t));
+    lexer_t* lexer = arena_alloc(arena, sizeof(lexer_t), alignof(lexer_t));
     if(!lexer) return NULL;
 
     lexer->input = input;
-
     lexer->ch = input->data[0];
     lexer->pos = 0;
     lexer->loc = (location_t){1, 1};
@@ -128,6 +127,7 @@ token_t next_token(lexer_t* lexer)
 
         case '"': case '\'':
             token = handle_string(lexer);
+            read_ch(lexer);
             break;
 
         case '\0':
@@ -229,16 +229,13 @@ token_t handle_number(lexer_t* lexer)
             case 'x': lit = LIT_HEX; break;
             case 'b': lit = LIT_BIN; break;
             case 'o': lit = LIT_OCT; break;
-            case '.': break;
         }
     }
-    else lit = LIT_NUMBER;
 
-    string_t num_str = read_number(lexer, lit);
+    string_t num_str = read_number(lexer, &lit);
     if(!num_str.data) return new_token(CAT_SERVICE, SERV_ILLEGAL, "BAD_NUMBER");
 
-    token_t token = new_token(CAT_LITERAL, lit, num_str.data);
-    return token;
+    return new_token(CAT_LITERAL, lit, num_str.data);
 }
 
 token_t handle_paren(lexer_t* lexer)
@@ -287,15 +284,12 @@ token_t handle_string(lexer_t* lexer)
         add_report(lexer->reports, SEV_ERR, ERR_UNCLO_STR, lexer->loc, DEFAULT_LEN, lexer->input->data);
         return new_token(CAT_SERVICE, SERV_ILLEGAL, "UNCLOSED_STRING");
     }
-    if(opening_delim_type == DELIM_SQUOTE && str.length > 2){
-        size_t len = 0;
-        while(str.data[len++] != '\'');
-        add_report(lexer->reports, SEV_ERR, ERR_INVAL_STR, lexer->loc, len, lexer->input->data);
+    if(opening_delim_type == DELIM_SQUOTE && str.length > 1){
+        add_report(lexer->reports, SEV_ERR, ERR_INVAL_STR, (location_t){lexer->loc.line, lexer->loc.column - str.length}, str.length, lexer->input->data);
         return new_token(CAT_SERVICE, SERV_ILLEGAL, "INVALID_STRING");
     }
 
     token_t string_token = new_token(CAT_LITERAL, LIT_STRING, str.data);
-    read_ch(lexer);
 
     return string_token;
 }
@@ -331,7 +325,7 @@ string_t read_ident(lexer_t* lexer)
 
         if(length >= capacity - 1){
             capacity *= 2;
-            char* new_buf = (char*)realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(char));
+            char* new_buf = realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(char));
             if(!new_buf){
                 if(buffer != stack_buffer) free(buffer);
                 return (string_t){0};
@@ -357,7 +351,7 @@ string_t read_ident(lexer_t* lexer)
     return stored;
 }
 
-string_t read_number(lexer_t* lexer, enum category_literal lit)
+string_t read_number(lexer_t* lexer, enum category_literal* lit)
 {
     if(!isdigit(lexer->ch)) return (string_t){0};
 
@@ -371,14 +365,14 @@ string_t read_number(lexer_t* lexer, enum category_literal lit)
         if(ch == '\0') break;
 
         bool accept = false;
-        switch(lit){
+        switch(*lit){
             case LIT_HEX: if(isxdigit(ch)) accept = true; break;
             case LIT_BIN: if(ch == '0' || ch == '1') accept = true; break;
             case LIT_OCT: if(ch >= '0' && ch <= '7') accept = true; break;
             default: break;
         }
-        if(ch == '.' && lit != LIT_FLOAT){
-            lit = LIT_FLOAT;
+        if(ch == '.' && *lit != LIT_FLOAT){
+            *lit = LIT_FLOAT;
             accept = true;
         }
         else if(isdigit(ch)){
@@ -395,7 +389,7 @@ string_t read_number(lexer_t* lexer, enum category_literal lit)
 
         if(length >= capacity - 1){
             capacity *= 2;
-            char* new_buf = (char*)realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(char));
+            char* new_buf = realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(char));
             if(!new_buf){
                 if(buffer != stack_buffer) free(buffer);
                 return (string_t){0};
@@ -408,7 +402,7 @@ string_t read_number(lexer_t* lexer, enum category_literal lit)
         read_ch(lexer);
     }
 
-    if(length > 0 && (lit == LIT_HEX || lit == LIT_BIN || lit == LIT_OCT)){
+    if(length > 0 && (*lit == LIT_HEX || *lit == LIT_BIN || *lit == LIT_OCT)){
         if(isalpha(lexer->ch) || lexer->ch == '_'){
             while(isalnum(lexer->ch) || lexer->ch == '_'){
                 read_ch(lexer);
@@ -474,7 +468,7 @@ string_t read_string(lexer_t* lexer, char quote_char)
             read_ch(lexer);
             if(length >= capacity - 1){
                 capacity *= 2;
-                char* new_buf = (char*)realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(char));
+                char* new_buf = realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(char));
                 if(!new_buf){
                     if(buffer != stack_buffer) free(buffer);
                     return (string_t){0};
@@ -488,7 +482,7 @@ string_t read_string(lexer_t* lexer, char quote_char)
 
         if(length >= capacity - 1){
             capacity *= 2;
-            char* new_buf = (char*)realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(char));
+            char* new_buf = realloc(buffer == stack_buffer ? NULL : buffer, capacity * sizeof(char));
             if(!new_buf){
                 if(buffer != stack_buffer) free(buffer);
                 return (string_t){0};
@@ -503,6 +497,7 @@ string_t read_string(lexer_t* lexer, char quote_char)
 
     buffer[length] = '\0';
 
+    printf("%s\n", buffer);
     string_t stored = new_string(lexer->string_pool, buffer);
     if(!stored.data){
         if(buffer != stack_buffer) free(buffer);

@@ -42,7 +42,7 @@ const size_t PARSE_TABLE_LENGTH = sizeof(parse_table)/sizeof(parse_table[0]);
 
 parser_t* new_parser(arena_t* arena, arena_t* ast, report_table_t* reports, string_pool_t* string_pool, lexer_t* lexer)
 {
-    parser_t* parser = (parser_t*)arena_alloc(arena, sizeof(parser_t), alignof(parser_t));
+    parser_t* parser = arena_alloc(arena, sizeof(parser_t), alignof(parser_t));
     if(!parser) return NULL;
     parser->token.current = next_token(lexer);
     parser->token.next = next_token(lexer);
@@ -57,7 +57,7 @@ ast_t* parse_program(parser_t* parser)
 {
     if(!parser) return NULL;
 
-    ast_t* ast = (ast_t*)arena_alloc(parser->ast, sizeof(ast_t), alignof(ast_t));
+    ast_t* ast = arena_alloc(parser->ast, sizeof(ast_t), alignof(ast_t));
     if (!ast) return NULL;
 
     ast->nodes = new_node(parser->ast, NODE_BLOCK);
@@ -88,9 +88,9 @@ ast_t* parse_program(parser_t* parser)
         ast->count++;
     }
 
-    #ifdef DEBUG
+#ifdef DEBUG
     print_ast(ast->nodes, 0);
-    #endif
+#endif
 
     return ast;
 

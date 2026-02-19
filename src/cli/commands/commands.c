@@ -10,7 +10,7 @@ command_t* new_command(
     command_handler_t handler,
     void* userdata)
 {
-    command_t* cmd = (command_t*)malloc(sizeof(command_t));
+    command_t* cmd = malloc(sizeof(command_t));
     if(!cmd) return NULL;
     cmd->name = name;
     cmd->description = description;

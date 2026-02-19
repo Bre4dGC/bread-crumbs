@@ -3,9 +3,6 @@
 #include <stdint.h>
 
 #include "compiler/middle/ir.h"
-#include "core/arena.h"
-#include "core/hashmap.h"
-#include "core/strings.h"
 
 typedef struct object_t {
     enum {

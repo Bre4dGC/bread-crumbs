@@ -1,13 +1,10 @@
-#include <stdio.h>
-#include <string.h>
-
 #include "core/arena.h"
 #include "core/common/source.h"
-#include "core/common/benchmark.h"
+#include "../utils/benchmark.h"
 
 int main(void)
 {
-    bench_start();
+    bm_start();
 
     arena_t* arena = new_arena(ARENA_DEFAULT_SIZE);
 
@@ -44,7 +41,7 @@ int main(void)
 
     free_arena(arena);
 
-    bench_stop();
-    bench_print("Test arena");
+    bm_stop();
+    bm_print("Test arena");
     return 0;
 }

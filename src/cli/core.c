@@ -6,7 +6,7 @@
 
 cli_t* new_cli(int argc, char **argv)
 {
-    cli_t* cli = (cli_t*)malloc(sizeof(cli_t));
+    cli_t* cli = malloc(sizeof(cli_t));
     if(!cli) return NULL;
     cli->argc = argc;
     cli->argv = argv;

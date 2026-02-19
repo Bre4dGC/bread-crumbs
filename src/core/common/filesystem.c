@@ -23,7 +23,7 @@ string_t fs_read_file(string_pool_t* sp, const char* filepath)
         return (string_t){0};
     }
 
-    char* buffer = (char*)malloc(filesize + 1);
+    char* buffer = malloc(filesize + 1);
     if(!buffer){
         fclose(file);
         return (string_t){0};
