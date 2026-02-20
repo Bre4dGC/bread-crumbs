@@ -365,7 +365,8 @@ node_t* parse_stmt_match(parser_t* parser)
         // each case should start with 'case'
         if(check_token(parser, CAT_KEYWORD, KW_CASE)){
             advance_token(parser);
-        } else {
+        }
+        else {
             add_report(parser->reports, SEV_ERR, ERR_EXPEC_KEYWORD, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
             return NULL;
         }

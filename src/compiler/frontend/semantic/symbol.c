@@ -89,7 +89,8 @@ void pop_scope(symbol_table_t* st)
     if(dead->parent && dead->parent->first_child){
         if(dead->parent->first_child == dead){
             dead->parent->first_child = dead->next_sibling;
-        } else {
+        }
+        else {
             scope_t* sib = dead->parent->first_child;
             while(sib->next_sibling && sib->next_sibling != dead){
                 sib = sib->next_sibling;

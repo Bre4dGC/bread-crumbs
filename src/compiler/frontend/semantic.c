@@ -195,9 +195,6 @@ bool check_function(semantic_t* sem, node_t* node)
             return false;
         }
 
-#ifdef DEBUG
-        print_symbol(func_sym, 0);
-#endif
         return true;
     }
 
@@ -213,10 +210,6 @@ bool check_function(semantic_t* sem, node_t* node)
     // create new function body scope
     scope_t* function_scope = push_scope(sem->symbols, SCOPE_FUNCTION, node);
     if(!function_scope) return false;
-
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
 
     symbol_t* prev_func = sem->current_function;
     sem->current_function = func_sym;
@@ -239,9 +232,6 @@ bool check_function(semantic_t* sem, node_t* node)
     // TODO: check that all paths return if return type is not void
 
     pop_scope(sem->symbols);
-#ifdef DEBUG
-    print_symbol_table(sem->symbols);
-#endif
     sem->current_function = prev_func;
     return success && params_ok;
 }
@@ -267,9 +257,6 @@ bool check_param(semantic_t* sem, node_t* node)
     }
     sym->flags |= SYM_FLAG_ASSIGNED;
 
-#ifdef DEBUG
-    print_symbol(sym, 0);
-#endif
     return true;
 }
 
@@ -328,10 +315,6 @@ bool check_variable(semantic_t* sem, node_t* node)
         return false;
     }
 
-#ifdef DEBUG
-    print_symbol(sym, 0);
-#endif
-
     // mark as initialized if has value
     if(var->value) sym->flags |= SYM_FLAG_ASSIGNED;
 
@@ -354,9 +337,6 @@ bool check_block(semantic_t* sem, node_t* node)
     }
 
     pop_scope(sem->symbols);
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
     return success;
 }
 
@@ -365,11 +345,6 @@ bool check_if(semantic_t* sem, node_t* node)
     if(!sem || !node || node->kind != NODE_IF) return false;
 
     if(!check_node(sem, node->if_stmt->condition)) return false; // check condition
-
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-    // printf("%d", sem.)
-#endif
 
     // check branches
     bool success = true;
@@ -391,9 +366,6 @@ bool check_while(semantic_t* sem, node_t* node)
     if(node->while_stmt->body)      success = check_node(sem, node->while_stmt->body) && success;
 
     sem->loop_depth--;
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
     return success;
 }
 
@@ -414,9 +386,6 @@ bool check_for(semantic_t* sem, node_t* node)
 
     sem->loop_depth--;
     pop_scope(sem->symbols);
-#ifdef DEBUG
-    print_current_scope(sem->symbols);
-#endif
     return success;
 }
 
@@ -429,9 +398,7 @@ bool check_return(semantic_t* sem, node_t* node)
         return false;
     }
 
-    if(node->return_stmt->body){
-        return check_node(sem, node->return_stmt->body);
-    }
+    if(node->return_stmt->body) return check_node(sem, node->return_stmt->body);
 
     return true;
 }
@@ -513,9 +480,6 @@ bool check_func_call(semantic_t* sem, node_t* node)
         return false;
     }
 
-#ifdef DEBUG
-    print_symbol(func_sym, 0);
-#endif
 
     if(func_sym->kind != SYMBOL_FUNC){
         add_report(sem->reports, SEV_ERR, ERR_NOT_A_FUNC, node->loc, DEFAULT_LEN, NULL);
@@ -545,10 +509,6 @@ bool check_var_ref(semantic_t* sem, node_t* node)
         add_report(sem->reports, SEV_ERR, ERR_UNDEC_VAR, node->loc, DEFAULT_LEN, NULL);
         return false;
     }
-
-#ifdef DEBUG
-    print_symbol(sym, 0);
-#endif
 
     sym->flags |= SYM_FLAG_USED;
 
@@ -634,13 +594,15 @@ bool check_struct(semantic_t* sem, node_t* node)
         type_t* member_type = NULL;
         if(var->dtype != DT_VOID){
             member_type = datatype_to_type(var->dtype);
-        } else if(var->value) {
+        }
+        else if(var->value) {
             if(!check_node(sem, var->value)) {
                 success = false;
                 continue;
             }
             member_type = infer_type(sem, var->value);
-        } else {
+        }
+        else {
             add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, member->loc, DEFAULT_LEN, NULL);
             success = false;
             continue;
@@ -726,15 +688,18 @@ bool check_enum(semantic_t* sem, node_t* node)
                 // explicit value assignment
                 if(member->var_decl->value->kind == NODE_LITERAL) {
                     variant_value = atoi(member->var_decl->value->lit->value.data);
-                } else {
+                }
+                else {
                     add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member->var_decl->value->loc, DEFAULT_LEN, NULL);
                     success = false;
                     continue;
                 }
             }
-        } else if(member->kind == NODE_REF && member->var_ref) {
+        }
+        else if(member->kind == NODE_REF && member->var_ref) {
             variant_name = member->var_ref->name.data;
-        } else {
+        }
+        else {
             add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member->loc, DEFAULT_LEN, NULL);
             success = false;
             continue;

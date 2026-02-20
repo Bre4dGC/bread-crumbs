@@ -72,7 +72,8 @@ node_t* parse_decl_type(parser_t* parser)
     if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
         node->type_decl->body = parse_stmt_block(parser);
         if(!node->type_decl->body) return NULL;
-    } else {
+    }
+    else {
         node->type_decl->body = NULL;
     }
 
