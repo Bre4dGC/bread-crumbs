@@ -31,3 +31,23 @@ void free_command(command_t* cmd)
     free_args(&cmd->options);
     free(cmd);
 }
+
+command_list_t* new_command_list(void)
+{
+    // TODO: implement
+}
+
+void free_command_list(command_list_t* cmd_list)
+{
+    // TODO: implement
+}
+
+bool add_command(command_list_t* cmd_list, command_t* cmd)
+{
+    // TODO: implement
+}
+
+command_t* find_command(command_list_t* cmd_list, const char* name)
+{
+    // TODO: implement
+}

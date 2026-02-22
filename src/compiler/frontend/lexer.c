@@ -55,7 +55,6 @@ void skip_whitespace(lexer_t* lexer)
                 read_ch(lexer);
                 lexer->loc.line++;
                 lexer->loc.column = 1;
-                lexer->boln = lexer->pos;
                 break;
 
             default: return;
@@ -83,7 +82,6 @@ lexer_t* new_lexer(arena_t* arena, string_pool_t* string_pool, report_table_t* r
     lexer->ch = input->data[0];
     lexer->pos = 0;
     lexer->loc = (location_t){1, 1};
-    lexer->boln = 0;
     lexer->balance = 0;
     lexer->string_pool = string_pool;
     lexer->reports = reports;

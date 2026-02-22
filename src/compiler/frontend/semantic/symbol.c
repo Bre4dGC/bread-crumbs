@@ -13,7 +13,7 @@ static symbol_t* lookup_in_scope(scope_t* scope, const char* name);
 scope_t* new_scope(arena_t* arena, int kind, node_t* owner)
 {
     if(!arena) return NULL;
-    
+
     scope_t* scope = arena_alloc(arena, sizeof(scope_t), alignof(scope_t));
     if(!scope) return NULL;
 
@@ -40,14 +40,14 @@ symbol_table_t* new_symbol_table(arena_t* arena, string_pool_t* string_pool)
 
     st->arena = arena;
     st->string_pool = string_pool;
-    
+
     st->global = new_scope(st->arena, SCOPE_GLOBAL, NULL);
     if(!st->global) return NULL;
 
     st->current = st->global;
     st->scope_capacity = INITIAL_SCOPE_CAPACITY;
     st->scope_count = 1;
-    
+
     return st;
 }
 
@@ -107,23 +107,21 @@ scope_t* current_scope(symbol_table_t* st)
     return st ? st->current : NULL;
 }
 
-symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_kind kind, type_t* type, node_t* decl_node)
+symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_kind kind, struct type* type, node_t* decl_node)
 {
     if(!st || !name) return NULL;
 
     scope_t* scope = st->current;
     if(!scope) return NULL;
-    if(lookup_in_scope(scope, name) != NULL){
-        return NULL;
-    }
+    if(lookup_in_scope(scope, name) != NULL) return NULL;
 
     symbol_t* sym = arena_alloc(st->arena, sizeof(symbol_t), alignof(symbol_t));
     if(!sym) return NULL;
 
     string_t interned = new_string(st->string_pool, name);
     if(!interned.data) return NULL;
-    sym->name = (char*)interned.data;
 
+    sym->name = (char*)interned.data;
     sym->kind = kind;
     sym->type = type;
     sym->declared_type = NULL;
@@ -136,12 +134,10 @@ symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_
     sym->shadowed_symbol = NULL;
     sym->overload_next = NULL;
 
-    if(scope == st->global){
-        sym->flags |= SYM_FLAG_GLOBAL;
-    }
+    if(scope == st->global) sym->flags |= SYM_FLAG_GLOBAL;
 
     hm_insert(scope->symbols, sym->name, sym);
-    scope->count += 1;
+    scope->count++;
 
     return sym;
 }
@@ -163,7 +159,6 @@ symbol_t* lookup_symbol(symbol_table_t* st, const char* name)
         if(sym) return sym;
         scope = scope->parent;
     }
-
     return NULL;
 }
 
@@ -196,11 +191,11 @@ void free_scope(scope_t* scope)
         child = next_child;
     }
 
-    if(scope->symbols) {
+    if(scope->symbols){
         free_hashmap(scope->symbols);
         scope->symbols = NULL;
     }
-    
+
     scope->parent = NULL;
     scope->first_child = NULL;
     scope->next_sibling = NULL;
@@ -211,11 +206,11 @@ void free_symbol_table(symbol_table_t* st)
 {
     if(!st) return;
 
-    if(st->global && st->global->symbols) {
+    if(st->global && st->global->symbols){
         free_hashmap(st->global->symbols);
         st->global->symbols = NULL;
     }
-    
+
     st->global = NULL;
     st->current = NULL;
 }

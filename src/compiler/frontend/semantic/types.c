@@ -127,9 +127,65 @@ bool types_equal(const type_t* a, const type_t* b)
     }
 }
 
-inline bool is_type(type_t* expected, type_t* actual, enum type_kind kind)
+bool type_is_numeric(const type_t* type)
 {
-    return expected->kind == kind && actual->kind == kind;
+    if(!type) return false;
+    switch(type->kind){
+        case TYPE_INT:
+        case TYPE_UINT:
+        case TYPE_SHORT:
+        case TYPE_USHORT:
+        case TYPE_LONG:
+        case TYPE_ULONG:
+        case TYPE_FLOAT:
+        case TYPE_DECIMAL:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool type_is_integer(const type_t* type)
+{
+    if(!type) return false;
+    switch(type->kind){
+        case TYPE_INT:
+        case TYPE_UINT:
+        case TYPE_SHORT:
+        case TYPE_USHORT:
+        case TYPE_LONG:
+        case TYPE_ULONG:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool type_is_unsigned(const type_t* type)
+{
+    if(!type) return false;
+    switch(type->kind){
+        case TYPE_BYTE:
+        case TYPE_UINT:
+        case TYPE_USHORT:
+        case TYPE_ULONG:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool type_is_signed(const type_t* type)
+{
+    if(!type) return false;
+    switch(type->kind){
+        case TYPE_INT:
+        case TYPE_SHORT:
+        case TYPE_LONG:
+            return true;
+        default:
+            return false;
+    }
 }
 
 bool types_compatible(const type_t* a, const type_t* b)
@@ -163,85 +219,11 @@ bool types_compatible(const type_t* a, const type_t* b)
         }
     }
 
-    // int and uint are compatible
-    if((a->kind == TYPE_INT && b->kind == TYPE_UINT) || (a->kind == TYPE_UINT && b->kind == TYPE_INT)){
-        return true;
-    }
-
-    // unknown type is compatible with any type
-    if(a->kind == TYPE_UNKNOWN || b->kind == TYPE_UNKNOWN){
-        return true;
-    }
+    if(a->kind == TYPE_INT && b->kind == TYPE_SHORT) return true;
+    else if(a->kind == TYPE_LONG  && type_is_signed(b)) return true;
+    else if(a->kind == TYPE_UINT  && b->kind == TYPE_USHORT) return true;
+    else if(a->kind == TYPE_ULONG && type_is_unsigned(b)) return true;
+    else if(a->kind == TYPE_FLOAT && type_is_numeric(b)) return true;
 
     return false;
-}
-
-bool is_numeric_type(const type_t* type)
-{
-    if(!type) return false;
-    return(type->kind == TYPE_INT
-        || type->kind == TYPE_UINT
-        || type->kind == TYPE_SHORT
-        || type->kind == TYPE_USHORT
-        || type->kind == TYPE_LONG
-        || type->kind == TYPE_ULONG
-        || type->kind == TYPE_FLOAT);
-}
-
-bool is_integer_type(const type_t* type)
-{
-    if(!type) return false;
-    return type->kind == TYPE_INT || type->kind == TYPE_UINT;
-}
-
-bool is_signed_type(const type_t* type)
-{
-    if(!type) return false;
-    return type->kind == TYPE_INT
-        || type->kind == TYPE_SHORT
-        || type->kind == TYPE_LONG
-        || type->kind == TYPE_FLOAT;
-}
-
-void free_type(type_t* type)
-{
-    if(!type) return;
-
-    switch(type->kind){
-        case TYPE_ARRAY:
-            if(type->array.elem_type){
-                free_type(type->array.elem_type);
-                type->array.elem_type = NULL;
-            }
-            break;
-
-        case TYPE_FUNC:
-            if(type->func.return_type){
-                free_type(type->func.return_type);
-                type->func.return_type = NULL;
-            }
-            if(type->func.param_types){
-                for(size_t i = 0; i < type->func.param_count; ++i){
-                    if(type->func.param_types[i]){
-                        free_type(type->func.param_types[i]);
-                        type->func.param_types[i] = NULL;
-                    }
-                }
-                free(type->func.param_types);
-                type->func.param_types = NULL;
-            }
-            break;
-
-        case TYPE_STRUCT:
-            if(type->compound.scope){
-                // free_scope(type->compound.scope);
-            }
-            break;
-
-        default: break;
-    }
-
-    type->kind = TYPE_UNKNOWN;
-    type->size = DEF_TYPE_SIZE;
-    type->align = DEF_TYPE_ALIGN;
 }

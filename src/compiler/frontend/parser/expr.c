@@ -289,6 +289,13 @@ node_t* parse_expr_postfix(parser_t* parser)
             postfix->unaryop->right = expr;
             postfix->unaryop->is_postfix = true;
             postfix->unaryop->operator = op;
+#ifdef DEBUG
+            switch(op){
+                case OPER_INCREM: postfix->unaryop->lit = "++"; break;
+                case OPER_DECREM: postfix->unaryop->lit = "--"; break;
+                default:          postfix->unaryop->lit = "?"; break;
+            }
+#endif
 
             advance_token(parser);
             set_node_len(postfix, parser, start_pos);
@@ -316,7 +323,7 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
 
         #ifdef DEBUG
         const char* op_literal;
-        switch(op_type) {
+        switch(op_type){
             case OPER_PLUS:      op_literal = "+"; break;
             case OPER_MINUS:     op_literal = "-"; break;
             case OPER_ASTERISK:  op_literal = "*"; break;
@@ -406,8 +413,7 @@ node_t* parse_expr_unaryop(parser_t* parser)
     node->unaryop->operator = op_type;
     node->unaryop->is_postfix = false;
 #ifdef DEBUG
-    // Use operator string instead of potentially NULL token literal
-    switch(op_type) {
+    switch(op_type){
         case OPER_PLUS:   node->unaryop->lit = "+"; break;
         case OPER_MINUS:  node->unaryop->lit = "-"; break;
         case OPER_NOT:    node->unaryop->lit = "!"; break;
