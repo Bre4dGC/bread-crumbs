@@ -1,8 +1,9 @@
 #[ System library basic usage
 
         === Methods ===
-.exit(code : int)           -- Exit the program with the given exit code.
-.getenv(key : str) : str    -- Get the value of the environment variable with the given key.
+.exit(code : int)               -- Exit the program with the given exit code.
+.getenv(key : str) : str        -- Get the value of the environment variable with the given key.
+.system(command : str) : int    -- Execute the given command in the system shell and return the exit code.
 
 ]#
 

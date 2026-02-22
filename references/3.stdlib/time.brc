@@ -5,6 +5,8 @@
 .utc() : time               -- get UTC time
 .localtime() : time         -- get local time
 .sleep(duration : float)    -- sleep for duration seconds
+.format(format : str) : str  -- format time as string using the given format
+.parse(time_str : str, format : str) : time  -- parse time from string using the given format
 
         === Properties ===
 .year : int

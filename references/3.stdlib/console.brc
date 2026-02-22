@@ -5,9 +5,10 @@
 .pause()    -- Pause the console until a key is pressed.
 
         === Methods ===
-.title(title : str)         -- Set the console window title.
-.color(fg : int, bg : int)  -- Set the console text foreground and background.
-.cursor(x : int, y : int)   -- Set the console cursor position.
+.title(title : str)                 -- Set the console window title.
+.color(fg : int, bg : int)          -- Set the console text foreground and background.
+.cursor(x : int, y : int)           -- Set the console cursor position.
+.size(width : int, height : int)    -- Set the console window size.
 
 ]#
 
