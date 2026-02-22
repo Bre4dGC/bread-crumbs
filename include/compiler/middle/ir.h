@@ -2,6 +2,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "core/arena.h"
+#include "core/strings.h"
+#include "compiler/frontend/semantic/types.h"
+
 enum op_code {
     /* base */
     OP_PUSH,        // push <value>
@@ -37,6 +41,7 @@ enum op_code {
     OP_FREE,        // free <address>
 
     /* stream control */
+    OP_LABEL,       // label <name>
     OP_JUMP,        // jmp <label>
     OP_CALL,        // func_call <func_id>
     OP_RETURN,      // return
@@ -44,34 +49,41 @@ enum op_code {
     OP_JUMP_IFNOT,  // jmp_ifnot <label>
 };
 
-
 typedef union {
-    int64_t ival;
-    char* sval;
-    float fval;
+    int64_t int_value;
+    string_t str_value;
+    double float_value;
+    size_t size_value;
+    int64_t addr_value;
+    int64_t var_id;
+    int64_t func_id;
 } ir_data_t;
 
 typedef struct {
     enum op_code op;
     ir_data_t data;
+    location_t loc;
 } ir_instr_t;
 
 typedef struct {
     ir_instr_t* instrs;
     size_t count;
     size_t capacity;
+    arena_t* arena;
 } ir_t;
 
 typedef struct {
     char* name;
-    size_t param_count;
-    size_t local_count;
-    ir_t* body;
+    ir_t body;
+    type_t* return_type;
+    size_t locals_count;
 } ir_func_t;
 
-ir_t* new_ir(void);
-void free_ir(ir_t* ir);
-
+ir_t* new_ir(arena_t* arena);
 void ir_add_instr(ir_t* ir, enum op_code op, ir_data_t value);
-
-// ir code generation
+void ir_add_op(ir_t* ir, enum op_code op, int64_t value);
+void ir_add_jump(ir_t* ir, int64_t target);
+void ir_add_call(ir_t* ir, int64_t func_id);
+void ir_add_return(ir_t* ir);
+void ir_add_jump_if(ir_t* ir, int64_t target);
+void ir_add_jump_ifnot(ir_t* ir, int64_t target);

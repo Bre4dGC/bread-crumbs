@@ -4,9 +4,7 @@
 #include <stdint.h>
 
 typedef struct {
-    uint8_t* code;
-    size_t length;
-    size_t capacity;
+    // TODO: define
 } bytecode_t;
 
 bytecode_t* new_bytecode(size_t length);

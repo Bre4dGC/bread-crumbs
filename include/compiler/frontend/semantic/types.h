@@ -14,6 +14,7 @@ enum type_kind {
     TYPE_VOID,
     TYPE_ANY,
     TYPE_BOOL,
+    TYPE_BYTE,
     TYPE_INT,
     TYPE_UINT,
     TYPE_SHORT,
@@ -54,6 +55,10 @@ typedef struct type {
             struct symbol* scope; // members are symbols in this scope
             size_t member_count;
         } compound;
+
+        struct {
+            struct type* base_type;
+        } pointer;
     };
 } type_t;
 
@@ -62,6 +67,7 @@ extern type_t* type_error;
 extern type_t* type_void;
 extern type_t* type_any;
 extern type_t* type_bool;
+extern type_t* type_byte;
 extern type_t* type_int;
 extern type_t* type_uint;
 extern type_t* type_short;
@@ -74,7 +80,6 @@ extern type_t* type_str;
 extern type_t* type_char;
 
 void init_types(arena_t* arena);
-void free_type(type_t* type);
 
 type_t* new_type(arena_t* arena, enum type_kind kind, size_t size, size_t align);
 type_t* new_type_array(arena_t* arena, type_t* elem_type, const size_t length);

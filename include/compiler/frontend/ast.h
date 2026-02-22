@@ -225,6 +225,7 @@ struct node {
 typedef struct {
     node_t* nodes;
     size_t count;
+    size_t capacity;
 } ast_t;
 
 node_t* new_node(arena_t* arena, enum node_kind kind);

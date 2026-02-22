@@ -1,17 +1,13 @@
 #pragma once
 
 #include "compiler/middle/ir.h"
-#include "compiler/backend/vm/compiler.h"
+#include "compiler/backend/vm/core.h"
 #include "runtime/memory.h"
 #include "runtime/gc.h"
 #include "runtime/ffi.h"
 
 typedef struct {
-    ir_t* ir;
-    compiler_t* compiler;
-    memory_t* memory;
-    garbage_collector_t* gc;
-    ffi_registry_t* ffi;
+    // TODO: define
 } jit_compiler_t;
 
 jit_compiler_t* new_jit_compiler(void);

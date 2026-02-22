@@ -4,19 +4,21 @@
 
 #include "compiler/middle/ir.h"
 
-typedef struct object_t {
-    enum {
-        OBJECT_STRING,
-        OBJECT_ARRAY,
-        OBJECT_FUNCTION,
-    } type;
+enum obj_type {
+    OBJ_STRING,
+    OBJ_ARRAY,
+    OBJ_FUNCTION,
+};
+
+typedef struct object {
+    enum obj_type type;
     union {
         struct {
             char* value;
             size_t length;
         } string;
         struct {
-            struct object_t** items;
+            struct object** items;
             size_t length;
             size_t capacity;
         } array;
