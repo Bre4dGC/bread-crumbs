@@ -38,24 +38,18 @@ bool is_unreachable_code(node_t* node);
 
 semantic_t* new_semantic(arena_t* arena, string_pool_t* string_pool, report_table_t* reports)
 {
-    if(!arena || !string_pool || !reports) {
+    if(!arena || !string_pool || !reports){
         return NULL;
     }
 
     semantic_t* sem = arena_alloc(arena, sizeof(semantic_t), alignof(semantic_t));
-    if(!sem) {
-        return NULL;
-    }
+    if(!sem) return NULL;
 
     // init if not already done
-    if(!type_int) {
-        init_types(arena);
-    }
+    if(!type_int) init_types(arena);
 
     sem->symbols = new_symbol_table(arena, string_pool);
-    if(!sem->symbols) {
-        return NULL;
-    }
+    if(!sem->symbols) return NULL;
 
     sem->current_function = NULL;
     sem->loop_depth = 0;
@@ -71,6 +65,8 @@ bool analyze_ast(semantic_t* sem, node_t* root)
 {
     if(!sem || !root) return false;
 
+    bool ok = true;
+
     // declare top-level symbols
     sem->phase = PHASE_DECLARE;
     if(root->kind == NODE_BLOCK){
@@ -78,20 +74,19 @@ bool analyze_ast(semantic_t* sem, node_t* root)
             node_t* stmt = root->block->statement.elems[i];
             if(!stmt) continue;
             if(stmt->kind == NODE_FUNC || stmt->kind == NODE_STRUCT || stmt->kind == NODE_ENUM){
-                (void)check_node(sem, stmt);
+                ok = check_node(sem, stmt) && ok;
             }
         }
     }
     else {
         if(root->kind == NODE_FUNC || root->kind == NODE_STRUCT || root->kind == NODE_ENUM){
-            (void)check_node(sem, root);
+            ok = check_node(sem, root) && ok;
         }
     }
 
     // full semantic checks.
     sem->phase = PHASE_CHECK;
     if(root->kind == NODE_BLOCK){
-        bool ok = true;
         for(size_t i = 0; i < root->block->statement.count; i++){
             ok = check_node(sem, root->block->statement.elems[i]) && ok;
         }
@@ -147,9 +142,14 @@ type_t* datatype_to_type(int dtype)
         case DT_VOID:   return type_void;
         case DT_ANY:    return type_any;
         case DT_BOOL:   return type_bool;
+        case DT_SHORT:  return type_short;
+        case DT_USHORT: return type_ushort;
         case DT_INT:    return type_int;
         case DT_UINT:   return type_uint;
+        case DT_LONG:   return type_long;
+        case DT_ULONG:  return type_ulong;
         case DT_FLOAT:  return type_float;
+        case DT_DECIMAL:return type_decimal;
         case DT_STR:    return type_str;
         default:        return type_unknown;
     }
@@ -225,11 +225,9 @@ bool check_function(semantic_t* sem, node_t* node)
 
     // check function body
     bool success = true;
-    if(params_ok && func->body){
-        success = check_node(sem, func->body);
-    }
+    if(params_ok && func->body) success = check_node(sem, func->body);
 
-    // TODO: check that all paths return if return type is not void
+    all_paths_return(func->body);
 
     pop_scope(sem->symbols);
     sem->current_function = prev_func;
@@ -332,7 +330,6 @@ bool check_block(semantic_t* sem, node_t* node)
     for(size_t i = 0; i < node->block->statement.count; i++){
         if(!check_node(sem, node->block->statement.elems[i])){
             success = false;
-            // TODO: continue checking other statements
         }
     }
 
@@ -346,7 +343,6 @@ bool check_if(semantic_t* sem, node_t* node)
 
     if(!check_node(sem, node->if_stmt->condition)) return false; // check condition
 
-    // check branches
     bool success = true;
     if(node->if_stmt->then_block)  success = check_node(sem, node->if_stmt->then_block)  && success;
     if(node->if_stmt->elif_blocks) success = check_node(sem, node->if_stmt->elif_blocks) && success;
@@ -363,7 +359,7 @@ bool check_while(semantic_t* sem, node_t* node)
 
     bool success = true;
     if(node->while_stmt->condition) success = check_node(sem, node->while_stmt->condition) && success;
-    if(node->while_stmt->body)      success = check_node(sem, node->while_stmt->body) && success;
+    if(node->while_stmt->body)      success = check_node(sem, node->while_stmt->body)      && success;
 
     sem->loop_depth--;
     return success;
@@ -379,10 +375,10 @@ bool check_for(semantic_t* sem, node_t* node)
     sem->loop_depth++;
 
     bool success = true;
-    if(node->for_stmt->init)      success = check_node(sem, node->for_stmt->init) && success;
+    if(node->for_stmt->init)      success = check_node(sem, node->for_stmt->init)      && success;
     if(node->for_stmt->condition) success = check_node(sem, node->for_stmt->condition) && success;
-    if(node->for_stmt->update)    success = check_node(sem, node->for_stmt->update) && success;
-    if(node->for_stmt->body)      success = check_node(sem, node->for_stmt->body) && success;
+    if(node->for_stmt->update)    success = check_node(sem, node->for_stmt->update)    && success;
+    if(node->for_stmt->body)      success = check_node(sem, node->for_stmt->body)      && success;
 
     sem->loop_depth--;
     pop_scope(sem->symbols);
@@ -538,7 +534,7 @@ bool check_array(semantic_t* sem, node_t* node)
 bool check_struct(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_STRUCT) return false;
-    
+
     struct node_struct* struct_decl = node->struct_decl;
     if(!struct_decl || !struct_decl->name.data) return false;
 
@@ -565,20 +561,20 @@ bool check_struct(semantic_t* sem, node_t* node)
 
     scope_t* struct_scope = push_scope(sem->symbols, SCOPE_STRUCT, node);
     if(!struct_scope) return false;
-    
+
     bool success = true;
     size_t member_count = 0;
-    
+
     for(size_t i = 0; i < struct_decl->member.count; i++){
         node_t* member = struct_decl->member.elems[i];
-        if(!member || member->kind != NODE_VAR) {
+        if(!member || member->kind != NODE_VAR){
             add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member ? member->loc : node->loc, DEFAULT_LEN, NULL);
             success = false;
             continue;
         }
 
         struct node_var* var = member->var_decl;
-        if(!var || !var->name.data) {
+        if(!var || !var->name.data){
             success = false;
             continue;
         }
@@ -595,8 +591,8 @@ bool check_struct(semantic_t* sem, node_t* node)
         if(var->dtype != DT_VOID){
             member_type = datatype_to_type(var->dtype);
         }
-        else if(var->value) {
-            if(!check_node(sem, var->value)) {
+        else if(var->value){
+            if(!check_node(sem, var->value)){
                 success = false;
                 continue;
             }
@@ -608,7 +604,7 @@ bool check_struct(semantic_t* sem, node_t* node)
             continue;
         }
 
-        if(!member_type || member_type == type_error) {
+        if(!member_type || member_type == type_error){
             add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, member->loc, DEFAULT_LEN, NULL);
             success = false;
             continue;
@@ -616,7 +612,7 @@ bool check_struct(semantic_t* sem, node_t* node)
 
         // create member symbol
         symbol_t* member_sym = define_symbol(sem->symbols, var->name.data, SYMBOL_VAR, member_type, member);
-        if(!member_sym) {
+        if(!member_sym){
             add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc, DEFAULT_LEN, NULL);
             success = false;
             continue;
@@ -631,7 +627,7 @@ bool check_struct(semantic_t* sem, node_t* node)
         struct_sym->type->compound.scope = struct_scope->symbols ? (struct symbol*)struct_scope : NULL;
         struct_sym->type->compound.member_count = member_count;
     }
-    
+
     pop_scope(sem->symbols);
     return success;
 }
@@ -639,10 +635,10 @@ bool check_struct(semantic_t* sem, node_t* node)
 bool check_enum(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_ENUM) return false;
-    
+
     struct node_enum* enum_decl = node->enum_decl;
     if(!enum_decl || !enum_decl->name.data) return false;
-    
+
     // register enum symbol in declare phase
     if(sem->phase == PHASE_DECLARE){
         if(is_scope_symbol_exist(sem->symbols, enum_decl->name.data)){
@@ -666,14 +662,14 @@ bool check_enum(semantic_t* sem, node_t* node)
 
     scope_t* enum_scope = push_scope(sem->symbols, SCOPE_ENUM, node);
     if(!enum_scope) return false;
-    
+
     bool success = true;
     size_t variant_count = 0;
     int next_value = 0; // auto-increment values
-    
+
     for(size_t i = 0; i < enum_decl->member.count; i++){
         node_t* member = enum_decl->member.elems[i];
-        if(!member) {
+        if(!member){
             success = false;
             continue;
         }
@@ -682,11 +678,11 @@ bool check_enum(semantic_t* sem, node_t* node)
         int variant_value = next_value;
 
         // handle different enum member formats
-        if(member->kind == NODE_VAR && member->var_decl) {
+        if(member->kind == NODE_VAR && member->var_decl){
             variant_name = member->var_decl->name.data;
-            if(member->var_decl->value) {
+            if(member->var_decl->value){
                 // explicit value assignment
-                if(member->var_decl->value->kind == NODE_LITERAL) {
+                if(member->var_decl->value->kind == NODE_LITERAL){
                     variant_value = atoi(member->var_decl->value->lit->value.data);
                 }
                 else {
@@ -696,7 +692,7 @@ bool check_enum(semantic_t* sem, node_t* node)
                 }
             }
         }
-        else if(member->kind == NODE_REF && member->var_ref) {
+        else if(member->kind == NODE_REF && member->var_ref){
             variant_name = member->var_ref->name.data;
         }
         else {
@@ -705,7 +701,7 @@ bool check_enum(semantic_t* sem, node_t* node)
             continue;
         }
 
-        if(!variant_name) {
+        if(!variant_name){
             success = false;
             continue;
         }
@@ -719,7 +715,7 @@ bool check_enum(semantic_t* sem, node_t* node)
 
         // create variant symbol with int type
         symbol_t* variant_sym = define_symbol(sem->symbols, variant_name, SYMBOL_ENUM_VARIANT, type_int, member);
-        if(!variant_sym) {
+        if(!variant_sym){
             add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc, DEFAULT_LEN, NULL);
             success = false;
             continue;
@@ -735,7 +731,7 @@ bool check_enum(semantic_t* sem, node_t* node)
         enum_sym->type->compound.scope = enum_scope->symbols ? (struct symbol*)enum_scope : NULL;
         enum_sym->type->compound.member_count = variant_count;
     }
-    
+
     pop_scope(sem->symbols);
     return success;
 }
@@ -751,6 +747,7 @@ type_t* infer_type(semantic_t* sem, node_t* node)
                 case LIT_NUMBER:
                 case LIT_BIN:
                 case LIT_HEX:
+                case LIT_OCT:
                     return type_int;
                 case LIT_FLOAT:
                     return type_float;

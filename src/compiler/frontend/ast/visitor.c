@@ -1,6 +1,6 @@
 #include "compiler/frontend/ast/visitor.h"
 
-ast_visitor_t* new_ast_visitor(void) {
+ast_visitor_t* new_ast_visitor(void){
     ast_visitor_t* visitor = malloc(sizeof(ast_visitor_t));
     visitor->arena = arena_create();
     visitor->string_table = hashmap_create();

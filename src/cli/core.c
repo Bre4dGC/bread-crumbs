@@ -15,18 +15,6 @@ cli_t* new_cli(int argc, char **argv)
     return cli;
 }
 
-command_t find_command(cli_t* cli, const char* name)
-{
-    if(!cli || !name) return (command_t){0};
-
-    for(size_t i = 0; i < cli->commands.count; ++i){
-        if(cli->commands.items[i].name && strcmp(name, cli->commands.items[i].name) == 0){
-            return cli->commands.items[i];
-        }
-    }
-    return (command_t){0};
-}
-
 void free_cli(cli_t* cli)
 {
     if(!cli) return;
@@ -38,4 +26,9 @@ void free_cli(cli_t* cli)
         free(cli->commands.items);
     }
     free(cli);
+}
+
+int cli_run(cli_t* cli)
+{
+
 }

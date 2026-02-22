@@ -4,7 +4,9 @@
 #include "core/diagnostic.h"
 
 #include "compiler/frontend/semantic.h"
+#include "compiler/middle/ir.h"
 #include "compiler/backend/codegen.h"
+#include "core/common/source.h"
 
 enum compile_phase {
     COMPILE_PHASE_LEXING,
@@ -13,11 +15,6 @@ enum compile_phase {
     COMPILE_PHASE_CODEGEN,
     COMPILE_PHASE_EXECUTION
 };
-
-typedef struct {
-    string_t filename;
-    string_t source;
-} compiler_input_t;
 
 typedef struct {
     bool debug;
@@ -38,7 +35,7 @@ typedef struct {
 typedef struct {
     enum compile_phase phase;
 
-    compiler_input_t input;
+    source_t* source;
     compiler_option_t options;
     compiler_memory_t memory;
 

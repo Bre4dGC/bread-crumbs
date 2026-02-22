@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/arena.h"
 #include "cli/commands.h"
 
 typedef struct {
@@ -9,5 +10,5 @@ typedef struct {
 } cli_t;
 
 cli_t* new_cli(int argc, char** argv);
-command_t find_command(cli_t* cli, const char* name);
 void free_cli(cli_t* cli);
+int cli_run(cli_t* cli);

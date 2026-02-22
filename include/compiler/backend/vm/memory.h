@@ -3,9 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct memory_t {
-    uint8_t* data;
-    size_t capacity;
+typedef struct {
+    // TODO: define
 } vm_memory_t;
 
 vm_memory_t* new_vm_memory(size_t capacity);

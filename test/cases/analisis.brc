@@ -2,13 +2,13 @@ func main() : int
 {
     const PI : float = 3.14159
 
-    if(true){
-        if(false){
+    if(true) {
+        if(false) {
             final x = 42
         }
     }
-    else{
-        
+    else {
+        PI = 5
     }
-    return 0
+    return 0.1
 }

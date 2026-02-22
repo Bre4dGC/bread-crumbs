@@ -29,3 +29,7 @@ command_t* new_command(
     void* userdata
 );
 void free_command(command_t* cmd);
+command_list_t* new_command_list(void);
+void free_command_list(command_list_t* cmd_list);
+bool add_command(command_list_t* cmd_list, command_t* cmd);
+command_t* find_command(command_list_t* cmd_list, const char* name);
