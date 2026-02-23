@@ -29,7 +29,7 @@ node_t* parse_decl_var(parser_t* parser)
     if(check_token(parser, CAT_OPERATOR, OPER_COLON)){
         advance_token(parser);
         if(parser->token.current.category != CAT_DATATYPE && !check_token(parser, CAT_LITERAL, LIT_IDENT)){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, node->loc, node->length, parser->lexer->input->data);
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, (location_t){node->loc.line, node->loc.column+1}, DEFAULT_LEN, parser->lexer->input->data);
             return NULL;
         }
         node->var_decl->dtype = parser->token.current.type;
@@ -68,13 +68,22 @@ node_t* parse_decl_type(parser_t* parser)
     if(!node->type_decl->name.data) return NULL;
     advance_token(parser);
 
-    // optional body
-    if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
-        node->type_decl->body = parse_stmt_block(parser);
-        if(!node->type_decl->body) return NULL;
+    // expect ':'
+    if(!consume_token(parser, CAT_OPERATOR, OPER_COLON, ERR_EXPEC_OPER)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, node->loc, node->length, parser->lexer->input->data);
+        return NULL;
+    }
+
+    // expect type body (currently only struct or enum)
+    if(check_token(parser, CAT_KEYWORD, KW_STRUCT)){
+        node->type_decl->body = parse_decl_struct(parser);
+    }
+    else if(check_token(parser, CAT_KEYWORD, KW_ENUM)){
+        node->type_decl->body = parse_decl_enum(parser);
     }
     else {
-        node->type_decl->body = NULL;
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_TYPE, node->loc, node->length, parser->lexer->input->data);
+        return NULL;
     }
 
     set_node_len(node, parser, start_pos);
@@ -113,6 +122,7 @@ node_t* parse_decl_array(parser_t* parser)
 
     // expect ']'
     if(!consume_token(parser, CAT_PAREN, PAR_RBRACKET, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -138,6 +148,7 @@ node_t* parse_decl_param(parser_t* parser)
 
     // expect ':'
     if(!consume_token(parser, CAT_OPERATOR, OPER_COLON, ERR_EXPEC_OPER)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -174,6 +185,7 @@ node_t* parse_decl_func(parser_t* parser)
 
     // expect '('
     if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -242,17 +254,9 @@ node_t* parse_decl_struct(parser_t* parser)
 
     advance_token(parser); // skip 'struct'
 
-    // expect struct name
-    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
-        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
-        return NULL;
-    }
-    node->struct_decl->name = new_string(parser->string_pool, parser->token.current.literal);
-    if(!node->struct_decl->name.data) return NULL;
-    advance_token(parser);
-
     // expect '{'
     if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -287,7 +291,41 @@ node_t* parse_decl_struct(parser_t* parser)
 
     // expect '}'
     if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
+    }
+
+    set_node_len(node, parser, start_pos);
+    return node;
+}
+
+node_t* parse_decl_member(parser_t* parser)
+{
+    size_t start_pos = get_lexer_pos(parser);
+    node_t* node = new_node(parser->ast, NODE_MEMBER);
+    if(!node) return NULL;
+    set_node_loc(node, parser);
+
+    // expect member name
+    if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        return NULL;
+    }
+    node->member_decl->name = new_string(parser->string_pool, parser->token.current.literal);
+    if(!node->member_decl->name.data) return NULL;
+    advance_token(parser);
+
+    // optional value assignment
+    if(check_token(parser, CAT_OPERATOR, OPER_ASSIGN)){
+        advance_token(parser);
+        node->member_decl->value = parse_expr(parser);
+        if(!node->member_decl->value){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_EXPR, node->loc, node->length, parser->lexer->input->data);
+            return NULL;
+        }
+    }
+    else {
+        node->member_decl->value = NULL;
     }
 
     set_node_len(node, parser, start_pos);
@@ -315,6 +353,7 @@ node_t* parse_decl_enum(parser_t* parser)
 
     // expect '{'
     if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -331,26 +370,9 @@ node_t* parse_decl_enum(parser_t* parser)
             add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
             return NULL;
         }
-
-        // create enum member node
-        node_t* member = new_node(parser->ast, NODE_MEMBER);
+        
+        node_t* member = parse_decl_member(parser);
         if(!member) return NULL;
-
-        member->member_decl = (struct node_member*)arena_alloc(parser->ast, sizeof(struct node_member), alignof(struct node_member));
-        if(!member->member_decl) return NULL;
-
-        member->member_decl->name = new_string(parser->string_pool, parser->token.current.literal);
-        if(!member->member_decl->name.data) return NULL;
-        member->member_decl->value = NULL;
-
-        advance_token(parser);
-
-        // optional value assignment
-        if(check_token(parser, CAT_OPERATOR, OPER_ASSIGN)){
-            advance_token(parser);
-            member->member_decl->value = parse_expr(parser);
-            if(!member->member_decl->value) return NULL;
-        }
 
         // grow array if needed
         if(node->enum_decl->member.count >= node->enum_decl->member.capacity){
@@ -370,6 +392,7 @@ node_t* parse_decl_enum(parser_t* parser)
 
     // expect '}'
     if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -491,6 +514,7 @@ node_t* parse_decl_impl(parser_t* parser)
 
     // expect '{'
     if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 

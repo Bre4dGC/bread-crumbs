@@ -95,6 +95,7 @@ node_t* parse_stmt_block(parser_t* parser)
 
     // expect '}'
     if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -146,6 +147,7 @@ node_t* parse_stmt_if(parser_t* parser){
 
     // expect '('
     if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -154,6 +156,7 @@ node_t* parse_stmt_if(parser_t* parser){
 
     // expect ')'
     if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -178,6 +181,7 @@ node_t* parse_stmt_if(parser_t* parser){
 
             // expect '('
             if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
                 return NULL;
             }
 
@@ -186,6 +190,7 @@ node_t* parse_stmt_if(parser_t* parser){
 
             // expect ')'
             if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
                 return NULL;
             }
 
@@ -255,6 +260,7 @@ node_t* parse_stmt_while(parser_t* parser)
 
     // expect '('
     if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -263,6 +269,7 @@ node_t* parse_stmt_while(parser_t* parser)
 
     // expect ')'
     if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -291,6 +298,7 @@ node_t* parse_stmt_for(parser_t* parser)
 
     // expect '('
     if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -302,6 +310,7 @@ node_t* parse_stmt_for(parser_t* parser)
 
     // expect ';'
     if(!consume_token(parser, CAT_OPERATOR, OPER_SEMICOLON, ERR_EXPEC_DELIM)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_DELIM, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -313,6 +322,7 @@ node_t* parse_stmt_for(parser_t* parser)
 
     // expect ';'
     if(!consume_token(parser, CAT_OPERATOR, OPER_SEMICOLON, ERR_EXPEC_DELIM)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_DELIM, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -324,6 +334,7 @@ node_t* parse_stmt_for(parser_t* parser)
 
     // expect ')'
     if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -336,6 +347,38 @@ node_t* parse_stmt_for(parser_t* parser)
     }
 
     if(!node->for_stmt->body) return NULL;
+
+    set_node_len(node, parser, start_pos);
+    return node;
+}
+
+node_t* parse_stmt_case(parser_t* parser)
+{
+    size_t start_pos = get_lexer_pos(parser);
+    node_t* node = new_node(parser->ast, NODE_CASE);
+    if(!node) return NULL;
+    set_node_loc(node, parser);
+
+    advance_token(parser); // skip 'case'
+
+    node->case_stmt->condition = parse_expr(parser);
+    if(!node->case_stmt->condition) return NULL;
+
+    // expect '->'
+    if(!consume_token(parser, CAT_OPERATOR, OPER_ARROW, ERR_EXPEC_OPER)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_OPER, node->loc, node->length, parser->lexer->input->data);
+        return NULL;
+    }
+
+    // parse body (can be a block or a single statement)
+    if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
+        node->case_stmt->body = parse_stmt_block(parser);
+    }
+    else {
+        node->case_stmt->body = parse_stmt(parser);
+    }
+
+    if(!node->case_stmt->body) return NULL;
 
     set_node_len(node, parser, start_pos);
     return node;
@@ -356,60 +399,53 @@ node_t* parse_stmt_match(parser_t* parser)
 
     // expect '{'
     if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
     // parse cases until '}'
     while(!check_token(parser, CAT_PAREN, PAR_RBRACE))
     {
-        // each case should start with 'case'
-        if(check_token(parser, CAT_KEYWORD, KW_CASE)){
-            advance_token(parser);
-        }
-        else {
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_KEYWORD, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
-            return NULL;
-        }
         // check for EOF
         if(is_eof(parser->token.current) || is_eof(parser->token.next)){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, DEFAULT_LEN, parser->lexer->input->data);
             return NULL;
         }
 
-        // create new case node
-        node_t* case_node = new_node(parser->ast, NODE_CASE);
-        if(!case_node) return NULL;
-
-        // create case struct
-        case_node->case_stmt = (struct node_case*)arena_alloc(parser->ast, sizeof(struct node_case), alignof(struct node_case));
-        if(!case_node->case_stmt) return NULL;
-
-        // parse case condition
-        case_node->case_stmt->condition = parse_expr(parser);
-        if(!case_node->case_stmt->condition) return NULL;
-
-        // expect '->'
-        if(!consume_token(parser, CAT_OPERATOR, OPER_ARROW, ERR_EXPEC_OPER)){
-            return NULL;
+        node_t* case_node = parse_stmt_case(parser);
+        if(!case_node){
+            if(parser->token.current.category == CAT_OPERATOR && parser->token.current.type == OPER_ARROW){
+                advance_token(parser);
+            }
+            else {
+                advance_token(parser);
+            }
+            continue;
         }
 
-        // parse case body (can be a block or a single statement)
-        case_node->case_stmt->body = parse_stmt(parser);
-        if(!case_node->case_stmt->body) return NULL;
-
-        // grow array if needed
-        if(node->match_stmt->block.count >= node->match_stmt->block.capacity){
-            size_t new_cap = node->match_stmt->block.capacity == 0 ? 4 : node->match_stmt->block.capacity * 2;
-            node_t** new_cases = arena_alloc_array(parser->ast, sizeof(node_t*), new_cap, alignof(node_t*));
+        // add to match statement
+        if(!node->match_stmt->block.elems){
+            node->match_stmt->block.elems = arena_alloc_array(parser->ast, sizeof(node_t*), 4, alignof(node_t*));
+            if(!node->match_stmt->block.elems) return NULL;
+            node->match_stmt->block.capacity = 4;
+        }
+        else if(node->match_stmt->block.count >= node->match_stmt->block.capacity){
+            size_t new_capacity = node->match_stmt->block.capacity * 2;
+            node_t** new_cases = arena_alloc_array(parser->ast, sizeof(node_t*), new_capacity, alignof(node_t*));
             if(!new_cases) return NULL;
+
+            for(size_t i = 0; i < node->match_stmt->block.count; i++){
+                new_cases[i] = node->match_stmt->block.elems[i];
+            }
             node->match_stmt->block.elems = new_cases;
-            node->match_stmt->block.capacity = new_cap;
+            node->match_stmt->block.capacity = new_capacity;
         }
         node->match_stmt->block.elems[node->match_stmt->block.count++] = case_node;
     }
 
     // expect '}'
     if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -437,6 +473,7 @@ node_t* parse_decl_trait(parser_t* parser)
 
     // expect '{'
     if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -446,6 +483,7 @@ node_t* parse_decl_trait(parser_t* parser)
 
     // expect '}'
     if(!consume_token(parser, CAT_PAREN, PAR_RBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -464,6 +502,7 @@ node_t* parse_stmt_trycatch(parser_t* parser)
 
     // expect '{'
     if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -473,11 +512,13 @@ node_t* parse_stmt_trycatch(parser_t* parser)
 
     // expect 'catch'
     if(!consume_token(parser, CAT_KEYWORD, KW_CATCH, ERR_EXPEC_KEYWORD)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_KEYWORD, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
     // expect '('
     if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -489,11 +530,13 @@ node_t* parse_stmt_trycatch(parser_t* parser)
 
     // expect ')'
     if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
     // expect '{'
     if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
 
@@ -507,6 +550,7 @@ node_t* parse_stmt_trycatch(parser_t* parser)
 
         // expect '{'
         if(!consume_token(parser, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
             return NULL;
         }
 
@@ -515,45 +559,6 @@ node_t* parse_stmt_trycatch(parser_t* parser)
     }
     else {
         node->trycatch_stmt->finally_block = NULL;
-    }
-
-    set_node_len(node, parser, start_pos);
-    return node;
-}
-
-node_t* parse_stmt_special(parser_t* parser)
-{
-    size_t start_pos = get_lexer_pos(parser);
-    int spec_kind = parser->token.current.type;
-    enum node_kind node_kind = (spec_kind == KW_NAMEOF) ? NODE_NAMEOF : NODE_TYPEOF;
-
-    node_t* node = new_node(parser->ast, node_kind);
-    if(!node) return NULL;
-    set_node_loc(node, parser);
-
-    advance_token(parser); // skip special keyword
-
-    // expect '('
-    if(!consume_token(parser, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)){
-        return NULL;
-    }
-
-    // parse the expression inside
-    node_t* expr = parse_expr(parser);
-    if(!expr){
-        add_report(parser->reports, SEV_ERR, ERR_EXPEC_EXPR, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
-        return NULL;
-    }
-
-    // store expression as string representation (for now)
-    // TODO: This should store the actual expression node
-    node->special_stmt->content = new_string(parser->string_pool, "");
-    if(!node->special_stmt->content.data) return NULL;
-    node->special_stmt->type = spec_kind;
-
-    // expect ')'
-    if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
-        return NULL;
     }
 
     set_node_len(node, parser, start_pos);

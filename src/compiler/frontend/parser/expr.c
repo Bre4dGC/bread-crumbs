@@ -23,6 +23,7 @@ node_t* parse_expr_keyword(parser_t* parser)
     const int kw = parser->token.current.type;
 
     if(kw < 0 || (size_t)kw >= PARSE_TABLE_LENGTH){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_KEYWORD, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
         return NULL;
     }
 
@@ -45,6 +46,7 @@ node_t* parse_expr_paren(parser_t* parser)
             if(!node) return NULL;
 
             if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+                add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
                 return NULL;
             }
             return node;
@@ -85,6 +87,7 @@ node_t* parse_expr_func_call(parser_t* parser)
 
     // extract function name before consuming token
     if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
+        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, node->loc, node->length, parser->lexer->input->data);
         return NULL;
     }
     node->func_call->name = new_string(parser->string_pool, parser->token.current.literal);
@@ -121,6 +124,7 @@ node_t* parse_expr_func_call(parser_t* parser)
 
         // expect closing ')'
         if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
             return NULL;
         }
     }
@@ -178,6 +182,7 @@ node_t* parse_expr_primary(parser_t* parser)
                 node_t* expr = parse_expr(parser);
                 if(!expr) return NULL;
                 if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+                    add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, expr->loc, expr->length, parser->lexer->input->data);
                     return NULL;
                 }
                 return expr;
@@ -429,4 +434,19 @@ node_t* parse_expr_unaryop(parser_t* parser)
 
     set_node_len(node, parser, start_pos);
     return node;
+}
+
+node_t* parse_expr_array_access(parser_t* parser)
+{
+    // TODO: implement
+}
+
+node_t* parse_expr_field_access(parser_t* parser)
+{
+    // TODO: implement
+}
+
+node_t* parse_expr_lambda(parser_t* parser)
+{
+    // TODO: implement
 }

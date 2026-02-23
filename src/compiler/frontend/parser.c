@@ -25,8 +25,6 @@ parse_func_t parse_table[] = {
     [KW_BREAK]    = parse_stmt_jump,
     [KW_CONTINUE] = parse_stmt_jump,
     [KW_RETURN]   = parse_stmt_jump,
-    [KW_TYPEOF]   = parse_stmt_special,
-    [KW_NAMEOF]   = parse_stmt_special,
 
     [KW_FUNC]     = parse_decl_func,
     [KW_STRUCT]   = parse_decl_struct,
