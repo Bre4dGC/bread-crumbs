@@ -4,11 +4,22 @@
     <img src="logo.png" alt="Bread Crumbs Logo" width="300"/>
 </div>
 
-Bread Crumbs is a modern programming language designed for
+Bread Crumbs is a modern high-level programming language designed for simplicity, performance, and safety. It combines the best features of existing languages while introducing innovative concepts to make programming more enjoyable and efficient. Whether you're a beginner or an experienced developer, Bread Crumbs offers a powerful and flexible environment to bring your ideas to life.
 
 ## Features
 
--- todo
+- **Simplicity**: Clean and intuitive syntax that is easy to learn and use.
+- **Performance**: Compiled to efficient machine code for high performance.
+- **Safety**: Strong type system and memory safety features to prevent common programming errors.
+- **Concurrency**: Built-in support for concurrent programming to take advantage of multi-core processors.
+- **Cross-Platform**: Runs on Windows, macOS, and Linux.
+- **Extensible**: Easily extendable with libraries and modules.
+- **Tooling**: Comes with a powerful compiler, package manager, and integrated development environment (IDE) support.
+- **Community-Driven**: Open-source and actively developed with contributions from a vibrant community.
+- **Documentation**: Comprehensive documentation and tutorials to help you get started quickly.
+- **Interoperability**: Seamless interoperability with C and other languages for maximum flexibility.
+- **Garbage Collection**: Efficient garbage collection to manage memory automatically.
+- **Error Handling**: Robust error handling mechanisms to write reliable code.
 
 ## Installation
 
@@ -41,12 +52,6 @@ Bread Crumbs is a modern programming language designed for
    ```bash
    crum version
    ```
-
-## Getting Started
-
-Try this simple example to explore Bread Crumbs:
-
-For more examples, check the [documentation](https://bread-crumbs.org/docs).
 
 ## Contributing
 

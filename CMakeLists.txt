@@ -26,8 +26,14 @@ set(FRONTEND_SRC
 )
 
 set(BACKEND_SRC
-    src/compiler/backend/aot/compiler.c
-    src/compiler/backend/aot/asm.c
+    src/compiler/backend/vm/core.c
+    src/compiler/backend/vm/bytecode.c
+    src/compiler/backend/vm/runtime.c
+    src/compiler/backend/vm/memory.c
+    src/compiler/backend/jit/core.c
+    src/compiler/backend/jit/runtime.c
+    src/compiler/backend/native/core.c
+    src/compiler/backend/native/object.c
 )
 
 set(MIDDLE_SRC
