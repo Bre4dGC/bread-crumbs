@@ -1,5 +1,7 @@
 #[ Raw pointers basic usage
 
+
+        === Syntax ===
 *       - Pointer declaration
 @       - Get address of variable
 <name>  - Dereference pointer to access value

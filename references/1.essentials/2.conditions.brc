@@ -1,5 +1,15 @@
 ## Base conditions usage
 
+== - Equality operator
+!= - Inequality operator
+>  - Greater than operator
+<  - Less than operator
+>= - Greater than or equal to operator
+<= - Less than or equal to operator
+|| - Logical OR operator
+&& - Logical AND operator
+!  - Logical NOT operator
+
 if(<condition>) {
     ...
 }
@@ -12,22 +22,41 @@ else {
 
 if(<condition>) <value_if_true> elif(<condition>) else <value_if_false>
 
+match <value> {
+    <pattern1> -> <result1>,
+    <pattern2> -> <result2>,
+    ...
+    _ -> <default_result>
+}
+
 ##
 
-var condition         : bool = true
-var another_condition : bool = false
+var a : int = 10
+var b : int = 20
 
-if(condition) {
-    print("message from the if statement")
+if(a < b) {
+    println("a is less than b")
 }
-elif(another_condition) {
-    print("message from the elif statement")
+elif(a > b) {
+    println("a is greater than b")
 }
 else {
-    print("message from the else statement")
+    println("a is equal to b")
 }
 
 #Output: message from the if statement
 
 #   === Ternary Operator ===
-var result : str = if(condition) "condition is true" else "condition is false"
+var result : str = if(a < b) "a is less than b" else "a is not less than b"
+
+if(a, b > 15) {
+    println("Both a and b are greater than 15")
+}
+
+var value : int = 5
+match(value) {
+    1 -> println("Value is 1"),
+    2 -> println("Value is 2"),
+    3 -> println("Value is 3"),
+    _ -> println("Value is something else")
+}
