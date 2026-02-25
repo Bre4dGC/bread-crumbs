@@ -1,5 +1,6 @@
 #[ Function definitions
 
+        === Function Syntax ===
 func <name>(<parameters>) : <return-type>
 {
     ...

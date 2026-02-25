@@ -11,12 +11,7 @@ for(<var || start>..<iterator>) {   -- range-based for loop
     ...
 }
 
-loop {                              -- infinite loop
-    ...
-}
-
-var array : type[] = {...}          -- array declaration
-array[0..array.len] {               -- inline array iteration
+[<iterator>..<iterator>] {                 -- inline array iteration
     ...
 }
 

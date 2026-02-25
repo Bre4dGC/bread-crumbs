@@ -10,6 +10,9 @@ more text
 It can span multiple lines.
 Used for generating markdown documentation in IDE.
 
+'--'                Documentation comment for a single line.
+'=== <title> ==='   Section title for documentation.
+
 ]#
 
 #   === Top-level statement ===

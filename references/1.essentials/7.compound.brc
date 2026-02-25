@@ -1,0 +1,57 @@
+#[ Compound types base usage
+
+        === Structure syntax ===
+type <name> {
+    <mod> <name> : <type> = <optional_value>
+    <mod> <name> : <type> = <optional_value>
+    ...
+}
+
+        === Enum syntax ===
+type <name> {
+    <variant1>,
+    <variant2>,
+    ...
+}
+
+<name>.<member>     -- Accessing structure member or enum variant
+
+        === Method syntax ===
+func <compound_name>.<method_name>()
+{
+    ...
+}
+
+<instance_name>.<method_name>() -- Calling a method on a compound type instance
+
+]#
+
+type Direction {
+    North,
+    East,
+    South,
+    West
+}
+
+type Person {
+    var name   : str
+    var age    : int
+    var height : int
+}
+
+func Person.display()
+{
+    println("name: ", self.name, ", age: ", self.age, ", height: ", self.height)
+}
+
+func Person.greet()
+{
+    println("Hello, my name is ", self.name)
+}
+
+func main()
+{
+    var person : Person = {"Bread", 16, 170}
+    person.display() # name: Bread, age: 16, height: 170
+    person.greet()   # Hello, my name is Bread
+}

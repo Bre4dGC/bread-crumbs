@@ -1,5 +1,6 @@
 ## Base conditions usage
 
+        === logical Operators ===
 == - Equality operator
 != - Inequality operator
 >  - Greater than operator
@@ -9,7 +10,9 @@
 || - Logical OR operator
 && - Logical AND operator
 !  - Logical NOT operator
+|  - Alternative operator
 
+        === If-Else Statements ===
 if(<condition>) {
     ...
 }
@@ -20,13 +23,14 @@ else {
     ...
 }
 
+        === Ternary Operator ===
 if(<condition>) <value_if_true> elif(<condition>) else <value_if_false>
 
+        === Match Statement ===
 match <value> {
-    <pattern1> -> <result1>,
-    <pattern2> -> <result2>,
+    <pattern> -> <result>,
     ...
-    _ -> <default_result>
+    default -> <default_result>
 }
 
 ##
@@ -34,6 +38,7 @@ match <value> {
 var a : int = 10
 var b : int = 20
 
+#   === If-Else Statements ===
 if(a < b) {
     println("a is less than b")
 }
@@ -44,19 +49,18 @@ else {
     println("a is equal to b")
 }
 
-#Output: message from the if statement
-
 #   === Ternary Operator ===
 var result : str = if(a < b) "a is less than b" else "a is not less than b"
 
-if(a, b > 15) {
+# 
+if(a | b > 15) {
     println("Both a and b are greater than 15")
 }
 
 var value : int = 5
 match(value) {
-    1 -> println("Value is 1"),
-    2 -> println("Value is 2"),
-    3 -> println("Value is 3"),
-    _ -> println("Value is something else")
+    case 1 -> println("Value is 1"),
+    case 2 -> println("Value is 2"),
+    case 3 -> println("Value is 3"),
+    default -> println("Value is something else")
 }

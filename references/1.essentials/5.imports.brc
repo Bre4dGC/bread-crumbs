@@ -1,17 +1,39 @@
-#[ Standard library
-    inout           -- input/output operations
-    system          -- system-related functions
-    format          -- string formatting utilities
-    collection      -- data structures and collections
-    math            -- mathematical functions and constants
-    thread          -- threading and concurrency
-    network         -- network-related functionalities
-    time            -- time and date utilities
-    console         -- console input/output operations
-    memory          -- memory management and operations
-    pointer         -- pointer manipulations
-    debug           -- debug utilities
-    benchmark       -- benchmarking utilities
+#[ Imports and Modules
+
+        === Import syntax ===
+import <module-name>                -- simple import
+
+import <module-name>.<sub-module>   -- sub-module import
+
+import {                            -- multiline import
+    <module-name>,
+    <module-name>,
+    <module-name>
+}
+
+        === Module syntax ===
+module <module-name>                -- module declaration
+
+module <module-name>                -- module declaration with scope
+{
+    ...
+}
+
+        === Standard library ===
+inout           -- input/output operations
+system          -- system-related functions
+format          -- string formatting utilities
+collection      -- data structures and collections
+math            -- mathematical functions and constants
+thread          -- threading and concurrency
+network         -- network-related functionalities
+time            -- time and date utilities
+console         -- console input/output operations
+memory          -- memory management and operations
+pointer         -- pointer manipulations
+debug           -- debug utilities
+benchmark       -- benchmarking utilities
+
 ]#
 
 #   === Import recursevly ===
