@@ -19,20 +19,24 @@ module <module-name>                -- module declaration with scope
     ...
 }
 
+        === Module types ===
+std         -- Standard library modules
+pkg         -- External packages installed via package manager
+
         === Standard library ===
-inout           -- input/output operations
-system          -- system-related functions
-format          -- string formatting utilities
-collection      -- data structures and collections
-math            -- mathematical functions and constants
-thread          -- threading and concurrency
-network         -- network-related functionalities
-time            -- time and date utilities
-console         -- console input/output operations
-memory          -- memory management and operations
-pointer         -- pointer manipulations
-debug           -- debug utilities
-benchmark       -- benchmarking utilities
+inout       -- input/output operations
+system      -- system-related functions
+format      -- string formatting utilities
+collection  -- data structures and collections
+math        -- mathematical functions and constants
+thread      -- threading and concurrency
+network     -- network-related functionalities
+time        -- time and date utilities
+console     -- console input/output operations
+memory      -- memory management and operations
+pointer     -- pointer manipulations
+debug       -- debug utilities
+benchmark   -- benchmarking utilities
 
 ]#
 
@@ -65,15 +69,20 @@ import std {
 }
 
 #   === Importing external packages installed via package manager ===
-import package.raylib
-import package.box2d
-import package.sqlite
-import package.zlib
+import pkg.raylib
+import pkg.sqlite
+import pkg.sdl3
+import pkg.opengl
 
-module example
+module my_module
 {
-
+    func main()
+    {
+        println("This is an my_module module.")
+    }
 }
 
 #   === Importing user-defined modules ===
 import my_module
+my_module.main() # Full import, can be used with module name prefix
+main()           # Short import, can be used if there are no name conflicts with other modules

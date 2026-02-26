@@ -1,10 +1,10 @@
 #[ Raw pointers basic usage
 
-
         === Syntax ===
-*       - Pointer declaration
-@       - Get address of variable
+*<type> - Pointer declaration
+@<name> - Get address of variable
 <name>  - Dereference pointer to access value
+<type>  - Gets size of the specified type in bytes
 
         === Functions ===
 alloc(size : int) : *any                 -- Allocates memory for the specified type and returns a raw pointer.

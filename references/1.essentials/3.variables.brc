@@ -51,6 +51,9 @@ var name = "Bread"      # -- str
 var age        : int = 16
 var height     : float = 175.5
 var is_student : bool = true
+var grade      : char = 'A'
+var data       : byte = 0xFF
+var dec_num    : decimal = 123.4567890123456789
 
 #   === Multiple declarations ===
 var a, b   : int = 10, 20     # -- a = 10, b = 20

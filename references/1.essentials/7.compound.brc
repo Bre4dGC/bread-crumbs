@@ -51,7 +51,7 @@ func Person.greet()
 
 func main()
 {
-    var person : Person = {"Bread", 16, 170}
+    var person = Person{"Bread", 16, 170}
     person.display() # name: Bread, age: 16, height: 170
     person.greet()   # Hello, my name is Bread
 }

@@ -1,4 +1,5 @@
 #[ Basic loop constructs
+
 while(<condition>) {                -- standard while loop
     ...
 }
@@ -32,11 +33,16 @@ for(var i = 0..3) {
 }
 
 #   === Inline array iteration ===
-var array : int[] = {1..5}
-println(array[0..array.len]) #12345
-
-array[0..array.len] = 0 # [0] - 0, [1] - 0, ...
+var array : int[] = {1..5}  # -- array = {1, 2, 3, 4, 5}
 
 array[0..array.len] {
     println("array element: ", self)
 }
+
+## Output:
+array element: 1
+array element: 2
+array element: 3
+array element: 4
+array element: 5
+##
