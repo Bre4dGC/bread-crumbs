@@ -191,14 +191,6 @@ node_t* new_node(arena_t* arena, enum node_kind kind)
             node->module_decl->body = NULL;
             node->module_decl->name = (string_t){0};
             break;
-        case NODE_NAMEOF:
-        case NODE_TYPEOF:
-            node->special_stmt = arena_alloc(arena, sizeof(struct node_special), alignof(struct node_special));
-            if(!node->special_stmt) return NULL;
-            node->special_stmt->type = 0;
-            node->special_stmt->content = (string_t){0};
-            break;
-        default: break;
     }
     return node;
 }

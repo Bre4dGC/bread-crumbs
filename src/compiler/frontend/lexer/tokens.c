@@ -67,9 +67,6 @@ void init_tokens(void)
         /* literals */
         {"true",    LIT_TRUE,   C_LT}, {"false",    LIT_FALSE,    C_LT},
         {"null",    LIT_NULL,   C_LT}, {"infinity", LIT_INFINITY, C_LT},
-
-        /* specials */
-        {"nameof",  KW_NAMEOF,  C_KW}, {"typeof",   KW_TYPEOF,    C_KW},
     };
 
     const size_t tokens_count = sizeof(tokens) / sizeof(tokens[0]);

@@ -137,12 +137,12 @@ void advance_token(parser_t* parser)
     parser->token.next = next_token(parser->lexer);
 }
 
-bool consume_token(parser_t* parser, const enum category_tag expec_category, const int expec_type, const enum report_code err)
+bool consume_token(parser_t* parser, node_t* node, const enum category_tag expec_category, const int expec_type, const enum report_code err)
 {
     if(!parser) return false;
 
     if(parser->token.current.category != expec_category){
-        add_report(parser->reports, SEV_ERR, err, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        add_report(parser->reports, SEV_ERR, err, node->loc, node->length, parser->lexer->input->data);
         return false;
     }
 
@@ -150,7 +150,7 @@ bool consume_token(parser_t* parser, const enum category_tag expec_category, con
         int actual_type = parser->token.current.type;
 
         if(actual_type != expec_type){
-            add_report(parser->reports, SEV_ERR, ERR_UNEXP_TOKEN, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            add_report(parser->reports, SEV_ERR, err, node->loc, node->length, parser->lexer->input->data);
             return false;
         }
     }

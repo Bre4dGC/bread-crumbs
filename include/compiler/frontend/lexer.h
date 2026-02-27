@@ -11,9 +11,7 @@ typedef struct {
     char ch;
     size_t pos;
     location_t loc;
-
     size_t balance;
-    size_t boln;
 
     string_pool_t* string_pool;
     report_table_t* reports;

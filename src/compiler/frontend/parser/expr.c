@@ -45,8 +45,7 @@ node_t* parse_expr_paren(parser_t* parser)
             node_t* node = parse_expr(parser);
             if(!node) return NULL;
 
-            if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
-                add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
+            if(!consume_token(parser, node, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
                 return NULL;
             }
             return node;
@@ -123,7 +122,7 @@ node_t* parse_expr_func_call(parser_t* parser)
         }
 
         // expect closing ')'
-        if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
+        if(!consume_token(parser, node, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
             add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
             return NULL;
         }
@@ -181,8 +180,7 @@ node_t* parse_expr_primary(parser_t* parser)
                 advance_token(parser);
                 node_t* expr = parse_expr(parser);
                 if(!expr) return NULL;
-                if(!consume_token(parser, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
-                    add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, expr->loc, expr->length, parser->lexer->input->data);
+                if(!consume_token(parser, expr, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
                     return NULL;
                 }
                 return expr;

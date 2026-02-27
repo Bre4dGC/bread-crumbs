@@ -168,16 +168,16 @@ static inline void print_node(node_t* node, int indent)
                 }
             }
             break;
-        case NODE_MEMBER:
-            if(node->member_decl && node->member_decl->name.data){
+        case NODE_VARIANT:
+            if(node->variant_decl && node->variant_decl->name.data){
                 printf("\033[1mMEMBER\033[0m ");
-                printf("%s\033[0m\n", node->member_decl->name.data);
+                printf("%s\033[0m\n", node->variant_decl->name.data);
             }
             else {
                 printf("\033[1mMEMBER\033[0m (null)\033[0m\n");
             }
-            if(node->member_decl && node->member_decl->value){
-                print_node(node->member_decl->value, indent + 1);
+            if(node->variant_decl && node->variant_decl->value){
+                print_node(node->variant_decl->value, indent + 1);
             }
             break;
         case NODE_RETURN:
@@ -436,24 +436,6 @@ static inline void print_node(node_t* node, int indent)
             }
             if(node->module_decl && node->module_decl->body){
                 print_node(node->module_decl->body, indent + 1);
-            }
-            break;
-        case NODE_NAMEOF:
-            printf("\033[1mNAMEOF\033[0m ");
-            if(node->special_stmt && node->special_stmt->content.data){
-                printf("\"%s\"\033[0m\n", node->special_stmt->content.data);
-            }
-            else {
-                printf("(null)\033[0m\n");
-            }
-            break;
-        case NODE_TYPEOF:
-            printf("\033[1mTYPEOF\033[0m ");
-            if(node->special_stmt && node->special_stmt->content.data){
-                printf("\"%s\"\033[0m\n", node->special_stmt->content.data);
-            }
-            else {
-                printf("(null)\033[0m\n");
             }
             break;
     }

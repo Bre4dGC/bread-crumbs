@@ -119,7 +119,7 @@ struct node_struct {
     nodes_t member;
 };
 
-struct node_member {
+struct node_variant {
     string_t name;
     node_t* value;
 };
@@ -162,16 +162,11 @@ struct node_import {
     size_t capacity;
 };
 
-struct node_special {
-    int type;
-    string_t content;
-};
-
 enum node_kind {
     NODE_LITERAL, NODE_BINOP,   NODE_EXPR,
     NODE_BLOCK,   NODE_UNARYOP, NODE_VAR,
     NODE_CALL,    NODE_ASSIGN,  NODE_REF,
-    NODE_MEMBER,  NODE_PARAM,
+    NODE_VARIANT,  NODE_PARAM,
 
     NODE_IF,      NODE_WHILE,   NODE_FOR,
     NODE_FUNC,    NODE_MATCH,   NODE_CASE,
@@ -180,8 +175,6 @@ enum node_kind {
 
     NODE_TYPE,    NODE_IMPORT,  NODE_MODULE,
     NODE_TRAIT,   NODE_IMPL,    NODE_TRYCATCH,
-
-    NODE_NAMEOF,  NODE_TYPEOF,
 };
 
 struct node {
@@ -201,7 +194,7 @@ struct node {
         struct node_var*    var_decl;
         struct node_array*  array_decl;
         struct node_param*  param_decl;
-        struct node_member* member_decl;
+        struct node_variant*variant_decl;
         struct node_func*   func_decl;
         struct node_type*   type_decl;
         struct node_struct* struct_decl;
@@ -217,7 +210,6 @@ struct node {
         struct node_case*     case_stmt;
         struct node_match*    match_stmt;
         struct node_trycatch* trycatch_stmt;
-        struct node_special*  special_stmt;
         struct node_return*   return_stmt;
     };
 };

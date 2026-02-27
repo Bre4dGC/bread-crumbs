@@ -30,7 +30,7 @@ parser_t* new_parser(arena_t* arena, arena_t* ast, report_table_t* reports, stri
 ast_t* parse_program(parser_t* parser);
 
 void advance_token(parser_t* parser);
-bool consume_token(parser_t* parser, const enum category_tag expec_category, const int expec_type, const enum report_code err);
+bool consume_token(parser_t* parser, node_t* node, const enum category_tag expec_category, const int expec_type, const enum report_code err);
 bool check_token(parser_t* parser, enum category_tag category, int type);
 bool is_eof(const token_t token);
 
