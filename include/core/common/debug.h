@@ -89,7 +89,6 @@ static inline void print_node(node_t* node, int indent)
     print_indent(indent, NULL);
 
     switch(node->kind){
-        case NODE_EXPR:
         case NODE_ASSIGN:
             printf("\033[90mEXPRESSION/ASSIGN\033[0m (unhandled display)\033[0m\n");
             break;
@@ -102,7 +101,7 @@ static inline void print_node(node_t* node, int indent)
                 printf("\033[1mLITERAL\033[0m (null)\033[0m\n");
             }
             break;
-        case NODE_REF:
+        case NODE_REFERENCE:
             if(node->var_ref && node->var_ref->name.data){
                 printf("\033[1mREFERENCE\033[0m ");
                 printf("%s\033[0m\n", node->var_ref->name.data);
@@ -122,7 +121,7 @@ static inline void print_node(node_t* node, int indent)
             if(node->binop->left) print_node(node->binop->left, indent + 1);
             if(node->binop->right) print_node(node->binop->right, indent + 1);
             break;
-        case NODE_VAR:
+        case NODE_VARIABLE:
             if(node->var_decl && node->var_decl->name.data){
                 printf("\033[1mVARIABLE\033[0m ");
                 printf("%s\033[0m \033[90m[modif:%d, type:%d]\033[0m\n",

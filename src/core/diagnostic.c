@@ -31,7 +31,6 @@ void add_report(
     const char* input)
 {
     if(!rt) return;
-    const char* safe_input = input ? input : "";
 
     if(!arena_has_space(rt->arena, sizeof(report_t), alignof(report_t))){
         size_t cur = rt->arena->current ? rt->arena->current->capacity : 0;
@@ -51,10 +50,10 @@ void add_report(
         .code = code,
         .loc = loc,
         .length = length,
-        .input = new_string(&rt->string_pool, safe_input),
+        .input = new_string(&rt->string_pool, input ? input : ""),
         .filepath = new_string(&rt->string_pool, "unknown")
     };
-    rt->count += 1;
+    rt->count++;
 }
 
 void print_report(const report_t* report)

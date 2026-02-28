@@ -20,15 +20,10 @@ int main(void)
     string_pool_t symbol_pool = new_string_pool(ARENA_DEFAULT_SIZE);
     report_table_t* reports = new_report_table(arena);
 
-    if(!arena || !ast_arena || !reports){
-        fprintf(stderr, "Failed to initialize core components\n");
-        goto cleanup;
-    }
-
     string_t input = fs_read_file(&lexer_pool, "test/cases/analisis.brc");
     if(!input.data){
         fprintf(stderr, "Failed to read input file\n");
-        goto cleanup;
+        return 1;
     }
 
     init_tokens();
@@ -36,7 +31,7 @@ int main(void)
     lexer_t* lexer = new_lexer(arena, &lexer_pool, reports, &input);
     if(!lexer){
         fprintf(stderr, "Failed to create lexer\n");
-        goto cleanup;
+        return 1;
     }
 
     semantic_t* sem = NULL;
@@ -44,26 +39,25 @@ int main(void)
     parser_t* parser = new_parser(arena, ast_arena, reports, &parser_pool, lexer);
     if(!parser){
         fprintf(stderr, "Failed to create parser\n");
-        goto cleanup;
+        return 1;
     }
 
     ast = parse_program(parser);
     if(!ast || !ast->nodes){
         fprintf(stderr, "Failed to parse program\n");
         print_report_table(reports);
-        goto cleanup;
+        return 1;
     }
 
     sem = new_semantic(arena, &symbol_pool, reports);
     if(!sem){
         fprintf(stderr, "Failed to create semantic analyzer\n");
-        goto cleanup;
+        return 1;
     }
 
     analyze_ast(sem, ast->nodes);
     print_report_table(reports);
 
-cleanup:
     if(sem) free_semantic(sem);
     if(ast) free_ast(ast_arena);
     if(reports) free_report_table(reports);

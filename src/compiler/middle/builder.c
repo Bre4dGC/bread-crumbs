@@ -3,6 +3,7 @@
 builder_t* new_builder(void)
 {
     // TODO: implement
+    return NULL;
 }
 
 void free_builder(builder_t* builder)
@@ -13,4 +14,5 @@ void free_builder(builder_t* builder)
 ir_t* build_ir(builder_t* builder)
 {
     // TODO: implement
+    return NULL;
 }

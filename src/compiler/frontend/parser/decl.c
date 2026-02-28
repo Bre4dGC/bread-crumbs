@@ -5,7 +5,7 @@
 node_t* parse_decl_var(parser_t* parser)
 {
     size_t start_pos = get_lexer_pos(parser);
-    node_t* node = new_node(parser->ast, NODE_VAR);
+    node_t* node = new_node(parser->ast, NODE_VARIABLE);
     if(!node) return NULL;
     set_node_loc(node, parser);
 
@@ -131,7 +131,7 @@ node_t* parse_decl_array(parser_t* parser)
 node_t* parse_decl_param(parser_t* parser)
 {
     size_t start_pos = get_lexer_pos(parser);
-    node_t* node = new_node(parser->ast, NODE_VAR);
+    node_t* node = new_node(parser->ast, NODE_VARIABLE);
     if(!node) return NULL;
     set_node_loc(node, parser);
 
@@ -192,7 +192,7 @@ node_t* parse_decl_func(parser_t* parser)
             if(!param_decl) return NULL;
 
             // ensure parameter node is a variable
-            if(param_decl->kind != NODE_VAR){
+            if(param_decl->kind != NODE_VARIABLE){
                 add_report(parser->reports, SEV_ERR, ERR_EXPEC_PARAM, node->loc, node->length, parser->lexer->input->data);
                 return NULL;
             }
@@ -293,7 +293,7 @@ node_t* parse_decl_struct(parser_t* parser)
     return node;
 }
 
-node_t* parse_decl_member(parser_t* parser)
+node_t* parse_decl_variant(parser_t* parser)
 {
     size_t start_pos = get_lexer_pos(parser);
     node_t* node = new_node(parser->ast, NODE_VARIANT);
@@ -364,7 +364,7 @@ node_t* parse_decl_enum(parser_t* parser)
             return NULL;
         }
         
-        node_t* member = parse_decl_member(parser);
+        node_t* member = parse_decl_variant(parser);
         if(!member) return NULL;
 
         // grow array if needed

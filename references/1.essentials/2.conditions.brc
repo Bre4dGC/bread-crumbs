@@ -59,16 +59,16 @@ if(a | b > 15) {
 
 var value : int = 5
 match(value) {
-    case 1 {
+    case 1 -> {
         println("Value is 1")
     }
-    case 2 {
+    case 2 -> {
         println("Value is 2")
     }
-    case 3 {
+    case 3 -> {
         println("Value is 3")
     }
-    default {
+    default -> {
         println("Value is something else")
     }
 }

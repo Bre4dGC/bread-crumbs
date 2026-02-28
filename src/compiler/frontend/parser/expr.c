@@ -135,7 +135,7 @@ node_t* parse_expr_func_call(parser_t* parser)
 node_t* parse_expr_var_ref(parser_t* parser)
 {
     size_t start_pos = get_lexer_pos(parser);
-    node_t* node = new_node(parser->ast, NODE_REF);
+    node_t* node = new_node(parser->ast, NODE_REFERENCE);
     if(!node) return NULL;
     set_node_loc(node, parser);
 
@@ -437,14 +437,17 @@ node_t* parse_expr_unaryop(parser_t* parser)
 node_t* parse_expr_array_access(parser_t* parser)
 {
     // TODO: implement
+    return NULL;
 }
 
 node_t* parse_expr_field_access(parser_t* parser)
 {
     // TODO: implement
+    return NULL;
 }
 
 node_t* parse_expr_lambda(parser_t* parser)
 {
     // TODO: implement
+    return NULL;
 }

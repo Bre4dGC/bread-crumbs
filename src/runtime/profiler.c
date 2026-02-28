@@ -3,6 +3,7 @@
 profiler_t* new_profiler(void)
 {
     // TODO: Implement
+    return NULL;
 }
 
 void profiler_start(profiler_t* profiler, const char* name)

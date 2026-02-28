@@ -296,7 +296,7 @@ node_t* parse_stmt_for(parser_t* parser)
 
     // parse init statement
     if(!check_token(parser, CAT_OPERATOR, OPER_SEMICOLON)){
-        node->for_stmt->init = parse_expr(parser);
+        node->for_stmt->init = parse_decl_var(parser);
         if(!node->for_stmt->init) return NULL;
     }
 

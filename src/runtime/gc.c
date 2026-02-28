@@ -3,6 +3,7 @@
 garbage_collector_t* new_gc(size_t threshold)
 {
     // TODO: Implement
+    return NULL;
 }
 
 void gc_mark(garbage_collector_t* gc, void* ptr)

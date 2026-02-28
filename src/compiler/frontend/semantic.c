@@ -118,8 +118,8 @@ bool check_node(semantic_t* sem, node_t* node)
     if(!sem || !node) return false;
 
     switch(node->kind){
-        case NODE_VAR:      return check_variable(sem, node);
-        case NODE_REF:      return check_var_ref(sem, node);
+        case NODE_VARIABLE:      return check_variable(sem, node);
+        case NODE_REFERENCE:      return check_var_ref(sem, node);
         case NODE_LITERAL:  return check_literal(sem, node);
         case NODE_BINOP:    return check_binop(sem, node);
         case NODE_UNARYOP:  return check_unaryop(sem, node);
@@ -178,7 +178,7 @@ bool check_function(semantic_t* sem, node_t* node)
             if(!param_types) return false;
             for(size_t i = 0; i < param_count; i++){
                 node_t* p = func->param_decl.elems[i];
-                if(p && p->kind == NODE_VAR && p->var_decl){
+                if(p && p->kind == NODE_VARIABLE && p->var_decl){
                     int dt = p->var_decl->dtype;
                     param_types[i] = (dt == DT_VOID) ? type_any : datatype_to_type(dt);
                 }
@@ -238,9 +238,9 @@ bool check_function(semantic_t* sem, node_t* node)
 
 bool check_param(semantic_t* sem, node_t* node)
 {
-    if(!sem || !node || node->kind != NODE_VAR || !node->var_decl) return false;
+    if(!sem || !node || node->kind != NODE_VARIABLE || !node->var_decl) return false;
 
-    struct node_var* var = node->var_decl;
+    struct node_variable* var = node->var_decl;
     if(!var->name.data) return false;
 
     if(is_scope_symbol_exist(sem->symbols, var->name.data)){
@@ -262,9 +262,9 @@ bool check_param(semantic_t* sem, node_t* node)
 
 bool check_variable(semantic_t* sem, node_t* node)
 {
-    if(!sem || !node || node->kind != NODE_VAR) return false;
+    if(!sem || !node || node->kind != NODE_VARIABLE) return false;
 
-    struct node_var* var = node->var_decl;
+    struct node_variable* var = node->var_decl;
     if(!var || !var->name.data) return false;
 
     if(is_scope_symbol_exist(sem->symbols, var->name.data)){
@@ -429,7 +429,7 @@ bool check_continue(semantic_t* sem, node_t* node)
 
 bool check_expr(semantic_t* sem, node_t* node)
 {
-    if(!sem || !node || node->kind != NODE_EXPR) return false;
+    if(!sem || !node) return false;
     // TODO: implement expression checking
     return true;
 }
@@ -498,7 +498,7 @@ bool check_func_call(semantic_t* sem, node_t* node)
 
 bool check_var_ref(semantic_t* sem, node_t* node)
 {
-    if(!sem || !node || node->kind != NODE_REF) return false;
+    if(!sem || !node || node->kind != NODE_REFERENCE) return false;
 
     const char* name = node->var_ref->name.data;
     if(!name) return false;
@@ -571,13 +571,13 @@ bool check_struct(semantic_t* sem, node_t* node)
     
     for(size_t i = 0; i < struct_decl->member.count; i++){
         node_t* member = struct_decl->member.elems[i];
-        if(!member || member->kind != NODE_VAR) {
+        if(!member || member->kind != NODE_VARIABLE) {
             add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member ? member->loc : node->loc, DEFAULT_LEN, NULL);
             success = false;
             continue;
         }
 
-        struct node_var* var = member->var_decl;
+        struct node_variable* var = member->var_decl;
         if(!var || !var->name.data) {
             success = false;
             continue;
@@ -682,7 +682,7 @@ bool check_enum(semantic_t* sem, node_t* node)
         int variant_value = next_value;
 
         // handle different enum member formats
-        if(member->kind == NODE_VAR && member->var_decl) {
+        if(member->kind == NODE_VARIABLE && member->var_decl) {
             variant_name = member->var_decl->name.data;
             if(member->var_decl->value) {
                 // explicit value assignment
@@ -696,7 +696,7 @@ bool check_enum(semantic_t* sem, node_t* node)
                 }
             }
         }
-        else if(member->kind == NODE_REF && member->var_ref) {
+        else if(member->kind == NODE_REFERENCE && member->var_ref) {
             variant_name = member->var_ref->name.data;
         }
         else {
@@ -765,7 +765,7 @@ type_t* infer_type(semantic_t* sem, node_t* node)
                     return type_unknown;
             }
 
-        case NODE_REF: {
+        case NODE_REFERENCE: {
             symbol_t* sym = lookup_symbol(sem->symbols, node->var_ref->name.data);
             return sym ? sym->type : type_error;
         }

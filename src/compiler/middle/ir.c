@@ -7,6 +7,7 @@
 ir_t* new_ir(void)
 {
     // TODO: implement
+    return NULL;
 }
 
 void free_ir(ir_t* ir)
