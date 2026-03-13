@@ -11,6 +11,7 @@
 && - Logical AND operator
 !  - Logical NOT operator
 |  - Alternative operator
+-> - Arrow operator
 
         === If-Else Statements ===
 if(<condition>) {
@@ -27,10 +28,11 @@ else {
 if(<condition>) <value_if_true> elif(<condition>) else <value_if_false>
 
         === Match Statement ===
-match <value> {
-    <pattern> -> <result>,
+match(<value>) {
+    case(<pattern>) <result>,      -- Single line pattern
+    case(<pattern>) {<result>},       -- Multi line pattern
     ...
-    default -> <default_result>
+    default <default_result> -- Default pattern
 }
 
 ##
@@ -59,16 +61,12 @@ if(a | b > 15) {
 
 var value : int = 5
 match(value) {
-    case 1 -> {
-        println("Value is 1")
-    }
-    case 2 -> {
-        println("Value is 2")
-    }
-    case 3 -> {
+    case(1) println("Value is 1")
+    case(2) println("Value is 2")
+    case(3) {
         println("Value is 3")
     }
-    default -> {
+    default {
         println("Value is something else")
     }
 }

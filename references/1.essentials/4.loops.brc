@@ -1,18 +1,20 @@
 #[ Basic loop constructs
 
-while(<condition>) {                -- standard while loop
+<start>..<end>          -- range
+
+while(<condition>) {    -- standard while loop
     ...
 }
 
-for(<init>; <condition>; <update>) {-- standard for loop
+for(<init>; <condition>; <update>) {    -- standard for loop
     ...
 }
 
-for(<var || start>..<iterator>) {   -- range-based for loop
+for(<var || start>..<iterator>) {       -- range-based for loop
     ...
 }
 
-[<iterator>..<iterator>] {                 -- inline array iteration
+<array>[<range>] {      -- inline array iteration
     ...
 }
 
