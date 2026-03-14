@@ -19,9 +19,10 @@ var pointer : *int = null
 
 @pointer = @value  # Get the address of 'value' and assign to 'pointer'
 
-println("Value: ", value)       # Output: Value: 42
-println("Pointer: ", @pointer)  # Output: Pointer: 0x7ffeedc3a4b0
-println("Derefer: ", pointer)   # Output: Dereferenced: 42
+println("Value: ", value)           # Output: Value: 42
+println("Value address: ", @value)  # Output: Value address: 0x7ffeedc3a4b0
+println("Derefer: ", pointer)       # Output: Dereferenced: 42
+println("Pointer: ", @pointer)      # Output: Pointer: 0x7ffeedc3a4b0
 
 var dynamic : *int = alloc(int * 5) # Allocate memory for 5 integers
 

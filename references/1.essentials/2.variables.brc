@@ -37,7 +37,6 @@ Boolean: true, false
         === Array ===
 <type>[]            -- Dynamic array of <type>.
 <type>[<size>]      -- Static array of <type> with fixed <size>.
-[<iterator>..<end>] -- Iterable array from <iterator> to <end> (exclusive).
 .len                -- Property to get the length of an array.
 .size               -- Property to get the size of an array in bytes.
 

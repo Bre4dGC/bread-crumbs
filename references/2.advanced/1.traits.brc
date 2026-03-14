@@ -2,18 +2,13 @@
 
 trait <trait_name>
 {
-    func method1(<parameters>) : <return-type>
-    {
-        // default implementation (optional)
-    }
-
+    <function>
     ...
 }
 
 interface <interface_name>
 {
-    func method1(<parameters>) : <return-type>
-
+    <function>
     ...
 }
 
@@ -28,13 +23,13 @@ trait Printable
 {
     func print()
     {
-        # default implementation (optional)
         println("This is a printable object.")
     }
 }
 
-interface Serializable
+interface Encodable
 {
     func serialize() : str
+    func deserialize(str) : void
 }
 

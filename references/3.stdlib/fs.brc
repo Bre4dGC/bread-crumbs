@@ -1,8 +1,11 @@
 #[ File system library basic usage
 
+        === Modes ===
+Open, Write, Read, Append
+
         === Methods ===
-.create(path : str, mode : str) : file
-.open(path : str, mode : str) : file
+.create(path : str, mode : Mode) : file
+.open(path : str, mode : Mode) : file
 .close(file : file)
 .read(file : file) : str
 .write(file : file, data : str)
@@ -19,8 +22,15 @@
 
         === Properties ===
 .path : str
-.mode : str
+.mode : Mode
 
 ]#
 
 import std.filesystem
+
+var file : file = fs.create("test.txt", Mode.Write)
+fs.write(file, "Hello, World!")
+fs.close(file)
+
+var content : str = fs.read(file)
+print(content)

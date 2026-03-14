@@ -1,3 +1,11 @@
 #[ Error handling
 
+    === Error handling ===
+try {
+    ...
+}
+catch (err) {
+    ...
+}
+
 ]#

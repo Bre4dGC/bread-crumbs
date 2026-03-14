@@ -1,20 +1,27 @@
 #[ Basic loop constructs
 
-<start>..<end>          -- range
+        === Range ===
+=   -- inclusive
+<   -- exclusive
 
-while(<condition>) {    -- standard while loop
+<start>..<end>
+
+        === Array iteration ===
+<array>[<range>] {
     ...
 }
 
-for(<init>; <condition>; <update>) {    -- standard for loop
+        === While loop ===
+while(<condition>) {
     ...
 }
 
-for(<var || start>..<iterator>) {       -- range-based for loop
+        === For loop ===
+for(<init>; <condition>; <update>) {    -- standard
     ...
 }
 
-<array>[<range>] {      -- inline array iteration
+for(<iterator || start>..<iterator>) {       -- range-based
     ...
 }
 
@@ -34,7 +41,6 @@ for(var i = 0..3) {
     println("range-based for loop index: ", i)
 }
 
-#   === Inline array iteration ===
 var array : int[] = {1..5}  # -- array = {1, 2, 3, 4, 5}
 
 array[0..array.len] {

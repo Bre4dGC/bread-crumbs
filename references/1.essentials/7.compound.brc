@@ -1,7 +1,7 @@
 #[ Compound types base usage
 
         === Structure syntax ===
-type <name> : <base_type> {
+type <name>[<generic_type>] [: <base_type>] {
     <mod> <name> : <type> = <optional_value>
     <mod> <name> : <type> = <optional_value>
     ...
@@ -9,8 +9,8 @@ type <name> : <base_type> {
 
         === Enum syntax ===
 type <name> {
-    <variant1>,
-    <variant2>[(<associated_type>)],
+    <variant>,
+    <variant>[(<associated_type>)],
     ...
 }
 

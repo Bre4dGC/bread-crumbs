@@ -4,7 +4,6 @@
 .print(format : str, args : ..any)     -- prints formatted string
 .println(format : str, args : ..any)   -- prints formatted string with newline
 .scan(format : str, args : ..any)      -- scans formatted input
-.
 
 ]#
 
