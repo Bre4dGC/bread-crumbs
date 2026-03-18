@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stddef.h>     // size_t
+#include <stdint.h>     // uint8_t
 
 void optimize_bytecode(uint8_t* bytecode, size_t length);
 void eliminate_dead_code(uint8_t* bytecode, size_t length);

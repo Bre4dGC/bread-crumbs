@@ -1,6 +1,7 @@
 #pragma once
-#include <stddef.h>
-#include <stdint.h>
+
+#include <stddef.h>     // size_t
+#include <stdint.h>     // int64_t
 
 enum op_code {
     /* base */
@@ -44,7 +45,6 @@ enum op_code {
     OP_JUMP_IFNOT,  // jmp_ifnot <label>
 };
 
-
 typedef union {
     int64_t ival;
     char* sval;
@@ -73,5 +73,3 @@ ir_t* new_ir(void);
 void free_ir(ir_t* ir);
 
 void ir_add_instr(ir_t* ir, enum op_code op, ir_data_t value);
-
-// ir code generation
