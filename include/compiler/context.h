@@ -1,10 +1,14 @@
-#include "core/arena.h"
-#include "core/strings.h"
-#include "core/hashmap.h"
-#include "core/diagnostic.h"
+#pragma once
 
-#include "compiler/frontend/semantic.h"
-#include "compiler/backend/codegen.h"
+#include "core/ds/arena.h"      // arena_manager_t
+#include "core/ds/strings.h"    // string_pool_t
+#include "core/ds/hashmap.h"    // hashmap_t
+
+#include "core/lang/diagnostic.h"   // report_table_t
+#include "core/lang/source.h"       // source_manager_t
+
+#include "compiler/frontend/semantic.h" // ast_t, symbol_table_t
+#include "compiler/backend/codegen.h"   // ir_t, codegen_t
 
 enum compile_phase {
     COMPILE_PHASE_LEXING,
@@ -13,11 +17,6 @@ enum compile_phase {
     COMPILE_PHASE_CODEGEN,
     COMPILE_PHASE_EXECUTION
 };
-
-typedef struct {
-    string_t filename;
-    string_t source;
-} compiler_input_t;
 
 typedef struct {
     bool debug;
@@ -38,7 +37,7 @@ typedef struct {
 typedef struct {
     enum compile_phase phase;
 
-    compiler_input_t input;
+    source_manager_t src_manager;
     compiler_option_t options;
     compiler_memory_t memory;
 
@@ -51,4 +50,4 @@ typedef struct {
 } compiler_context_t;
 
 compiler_context_t* new_compiler_context(void);
-void free_compiler_context(compiler_context_t* context);
+void free_compiler_context(compiler_context_t* ctx);
