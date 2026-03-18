@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stddef.h>     // size_t
+#include <stdint.h>     // uint8_t
 
 typedef struct memory_t {
     uint8_t* data;

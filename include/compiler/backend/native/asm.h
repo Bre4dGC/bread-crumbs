@@ -1,10 +1,11 @@
 #pragma once
-#include <stddef.h>
-#include <stdint.h>
 
-#include "core/arena.h"
-#include "core/hashmap.h"
-#include "compiler/middle/ir.h"
+#include <stddef.h>     // size_t
+#include <stdint.h>     // int64_t
+
+#include "core/ds/arena.h"      // arena_t
+#include "core/ds/hashmap.h"    // hashmap_t
+#include "compiler/middle/ir.h" // ir_t
 
 typedef struct assembler_t {
     arena_t* arena;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/arena.h"
-#include "core/hashmap.h"
-#include "compiler/middle/ir.h"
+#include "core/ds/arena.h"      // arena_t
+#include "core/ds/hashmap.h"    // hashmap_t
+#include "compiler/middle/ir.h" // ir_t
 
 typedef struct compiler_t {
     arena_t* arena;

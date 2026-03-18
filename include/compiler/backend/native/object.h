@@ -1,8 +1,9 @@
 #pragma once
-#include <stddef.h>
-#include <stdint.h>
 
-#include "compiler/middle/ir.h"
+#include <stddef.h>     // size_t
+#include <stdint.h>     // int64_t
+
+#include "compiler/middle/ir.h" // ir_t
 
 typedef struct object_t {
     enum {

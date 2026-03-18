@@ -1,11 +1,11 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stddef.h>     // size_t
+#include <stdint.h>     // int64_t
 
-#include "compiler/middle/ir.h"
-#include "runtime/memory.h"
-#include "runtime/gc.h"
+#include "compiler/middle/ir.h"     // ir_t
+#include "runtime/memory.h"         // memory_t
+#include "runtime/gc.h"             // garbage_collector_t
 
 typedef struct {
     ir_t* ir;
