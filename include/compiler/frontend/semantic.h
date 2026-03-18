@@ -1,11 +1,11 @@
 #pragma once
-#include <stdbool.h>
-#include <stddef.h>
 
-#include "core/arena.h"
-#include "core/diagnostic.h"
-#include "compiler/frontend/ast.h"
-#include "compiler/frontend/semantic/symbol.h"
+#include <stdbool.h>    // bool
+#include <stddef.h>     // size_t
+
+#include "compiler/context.h"       // compiler_context_t
+#include "compiler/frontend/ast.h"  // node_t
+#include "compiler/frontend/semantic/symbol.h"  // symbol_table_t, symbol_t
 
 enum semantic_phase {
     PHASE_DECLARE, // register symbols
@@ -19,10 +19,9 @@ typedef struct {
     symbol_t* current_function;
     int loop_depth;
 
-    arena_t* arena;
-    report_table_t* reports;
+    compiler_context_t* ctx;
 } semantic_t;
 
-semantic_t* new_semantic(arena_t* arena, string_pool_t* string_pool, report_table_t* reports);
+semantic_t* new_semantic(compiler_context_t* ctx);
 bool analyze_ast(semantic_t* ctx, node_t* ast);
 void free_semantic(semantic_t* ctx);

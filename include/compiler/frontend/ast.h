@@ -1,10 +1,11 @@
 #pragma once
-#include <stddef.h>
-#include <stdbool.h>
 
-#include "core/arena.h"
-#include "core/strings.h"
-#include "core/diagnostic.h"
+#include <stddef.h>     // size_t
+#include <stdbool.h>    // bool
+
+#include "core/ds/arena.h"          // arena_t
+#include "core/ds/strings.h"        // string_t
+#include "core/lang/diagnostic.h"   // location_t
 
 typedef struct node node_t;
 
@@ -57,6 +58,11 @@ struct node_return {
 struct node_literal {
     int type;
     string_t value;
+};
+
+struct node_range {
+    node_t* start;
+    node_t* end;
 };
 
 struct node_variable {
@@ -166,7 +172,7 @@ enum node_kind {
     NODE_BINOP, NODE_UNARYOP,  NODE_LITERAL,
     NODE_CALL,  NODE_ASSIGN,   NODE_REFERENCE,
     NODE_PARAM, NODE_VARIABLE, NODE_VARIANT,
-    NODE_BLOCK,
+    NODE_BLOCK, NODE_RANGE,
 
     NODE_IF,      NODE_WHILE,   NODE_FOR,
     NODE_FUNC,    NODE_MATCH,   NODE_CASE,
@@ -190,6 +196,7 @@ struct node {
         struct node_block*      block;
         struct node_func_call*  func_call;
         struct node_literal*    lit;
+        struct node_range*      range;
 
         struct node_variable* var_decl;
         struct node_array*    array_decl;
@@ -216,6 +223,7 @@ struct node {
 
 typedef struct {
     node_t* nodes;
+    arena_t arena;
     size_t count;
 } ast_t;
 

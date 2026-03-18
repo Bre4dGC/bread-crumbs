@@ -1,5 +1,6 @@
 #pragma once
-#include <stddef.h>
+
+#include <stddef.h> // size_t
 
 enum category_service {
 	SERV_ILLEGAL, SERV_COMMENT, SERV_EOF
@@ -61,9 +62,6 @@ enum category_keyword {
     KW_IMPORT,   KW_MODULE,   KW_TYPE,
     KW_TRY,      KW_CATCH,    KW_FINALLY,
     KW_ASYNC,    KW_AWAIT,    KW_YIELD,
-
-    // special
-    KW_NAMEOF,   KW_TYPEOF,
 };
 
 enum category_paren {

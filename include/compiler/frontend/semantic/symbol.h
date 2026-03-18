@@ -1,13 +1,11 @@
 #pragma once
-#include <stdint.h>
-#include <stdbool.h>
 
-#include "core/arena.h"
-#include "core/diagnostic.h"
-#include "core/hashmap.h"
-#include "core/strings.h"
-#include "compiler/frontend/ast.h"
-#include "compiler/frontend/semantic/types.h"
+#include <stdint.h>     // uint8_t, bool
+#include <stdbool.h>    // bool
+
+#include "compiler/context.h"       // compiler_context_t
+#include "compiler/frontend/ast.h"  // node_t
+#include "compiler/frontend/semantic/types.h"   // type_t
 
 enum symbol_kind {
     SYMBOL_VAR,
@@ -87,11 +85,11 @@ typedef struct {
     scope_t* current;
     size_t scope_count;
     size_t scope_capacity;
-    arena_t* arena;
-    string_pool_t* string_pool;
+
+    compiler_context_t* ctx;
 } symbol_table_t;
 
-symbol_table_t* new_symbol_table(arena_t* arena, string_pool_t* string_pool);
+symbol_table_t* new_symbol_table(compiler_context_t* ctx);
 symbol_t* lookup_symbol(symbol_table_t* st, const char* name);
 symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_kind kind, struct type* type, node_t* decl_node);
 scope_t* push_scope(symbol_table_t* st, int scope_kind, node_t* owner);

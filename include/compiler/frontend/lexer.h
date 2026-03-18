@@ -1,21 +1,19 @@
 #pragma once
-#include <stddef.h>
 
-#include "core/diagnostic.h"
-#include "core/strings.h"
-#include "compiler/frontend/lexer/tokens.h"
+#include <stddef.h>     // size_t
+
+#include "compiler/context.h"               // compiler_context_t
+#include "core/lang/diagnostic.h"           // location_t
+#include "compiler/frontend/lexer/tokens.h" // token_t
 
 typedef struct {
-    string_t* input;
-
     char ch;
     size_t pos;
     location_t loc;
     size_t balance;
 
-    string_pool_t* string_pool;
-    report_table_t* reports;
+    compiler_context_t* ctx;
 } lexer_t;
 
-lexer_t* new_lexer(arena_t* arena, string_pool_t* string_pool, report_table_t* reports, string_t* input);
+lexer_t* new_lexer(compiler_context_t* ctx);
 token_t next_token(lexer_t* lexer);

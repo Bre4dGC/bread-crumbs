@@ -1,11 +1,11 @@
 #pragma once
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
 
-#include "core/arena.h"
-#include "compiler/frontend/ast.h"
-#include "compiler/frontend/lexer.h"
+#include <stdint.h>     // uint8_t, bool
+#include <stdbool.h>    // bool
+#include <stddef.h>     // size_t
+
+#include "compiler/context.h"           // compiler_context_t
+#include "compiler/frontend/lexer.h"    // lexer_t
 
 typedef struct parser parser_t;
 typedef node_t* (*parse_func_t)(parser_t*);
@@ -18,15 +18,13 @@ struct parser {
         token_t next;
     } token;
 
-    arena_t* ast;
-    report_table_t* reports;
-    string_pool_t* string_pool;
+    compiler_context_t* ctx;
 };
 
 extern parse_func_t parse_table[];
 extern const size_t PARSE_TABLE_LENGTH;
 
-parser_t* new_parser(arena_t* arena, arena_t* ast, report_table_t* reports, string_pool_t* string_pool, lexer_t* lexer);
+parser_t* new_parser(compiler_context_t* ctx, lexer_t* lexer);
 ast_t* parse_program(parser_t* parser);
 
 void advance_token(parser_t* parser);

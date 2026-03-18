@@ -1,7 +1,7 @@
 #pragma once
 
-#include "compiler/frontend/ast.h"
-#include "compiler/frontend/parser.h"
+#include "compiler/frontend/ast.h"      // node_t
+#include "compiler/frontend/parser.h"   // parser_t
 
 node_t* parse_stmt(parser_t* parser);
 node_t* parse_stmt_keyword(parser_t* parser);

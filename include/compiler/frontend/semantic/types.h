@@ -1,9 +1,10 @@
 #pragma once
-#include <stddef.h>
-#include <stdbool.h>
 
-#include "core/arena.h"
-#include "compiler/frontend/semantic/symbol.h"
+#include <stddef.h>     // size_t
+#include <stdbool.h>    // bool
+
+#include "core/ds/arena.h"      // arena_t
+#include "compiler/frontend/semantic/symbol.h"  // symbol_t
 
 enum type_kind {
     // service types
@@ -28,8 +29,7 @@ enum type_kind {
     // composite types
     TYPE_ARRAY,
     TYPE_FUNC,
-    TYPE_STRUCT,
-    TYPE_ENUM,
+    TYPE_COMPOUND,
 };
 
 typedef struct type {
@@ -49,7 +49,6 @@ typedef struct type {
             size_t param_count;
         } func;
 
-        // struct/enum
         struct {
             struct symbol* scope; // members are symbols in this scope
             size_t member_count;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "compiler/frontend/ast.h"
-#include "compiler/frontend/parser.h"
+#include "compiler/frontend/ast.h"      // node_t
+#include "compiler/frontend/parser.h"   // parser_t
 
 node_t* parse_decl_var(parser_t* parser);
 node_t* parse_decl_array(parser_t* parser);
