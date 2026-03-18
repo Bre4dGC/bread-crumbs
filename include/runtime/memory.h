@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stddef.h>
+#include <stddef.h>     // size_t
 
 enum memory_region {
     MEM_REGION_HEAP,

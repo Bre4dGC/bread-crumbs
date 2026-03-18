@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdbool.h>
+#include <stddef.h>     // size_t
+#include <stdbool.h>    // bool
 
 typedef struct {
     const char* name;

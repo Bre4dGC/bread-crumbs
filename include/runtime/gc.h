@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stddef.h>
+#include <stddef.h>     // size_t
 
 enum gc_color {
     GC_COLOR_WHITE,

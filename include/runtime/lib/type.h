@@ -2,4 +2,4 @@
 
 #include "runtime/object.h"
 
-object_t* os_exit(object_t* args);
+object_t* convert(object_t* args);
