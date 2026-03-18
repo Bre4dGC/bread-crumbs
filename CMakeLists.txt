@@ -9,10 +9,13 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic -std=c11 -g -DDEBUG")
 
 set(CORE_SRC
-    src/core/arena.c
-    src/core/diagnostic.c
-    src/core/hashmap.c
-    src/core/strings.c
+    src/core/ds/arena.c
+    src/core/ds/hashmap.c
+    src/core/ds/strings.c
+    src/core/lang/filesystem.c
+    src/core/lang/source.c
+    src/core/lang/resolver.c
+    src/core/lang/diagnostic.c
 )
 
 set(FRONTEND_SRC

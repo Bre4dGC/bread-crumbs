@@ -18,9 +18,10 @@ DIR_TESTS_UNIT     	  = test/unit
 DIR_TESTS_INTEGRATION = test/integration
 DIR_TESTS_OUTPUT   	  = $(DIR_BIN)/tests
 
-DIR_COMP 		  = src/compiler
-DIR_COMP_CORE 	  = $(wildcard src/core/*.c)
-DIR_COMP_FRONTEND = $(wildcard src/compiler/frontend/*.c)
+DIR_COMP 		  	= src/compiler
+DIR_COMP_CORE_DS 	= $(wildcard src/core/ds/*.c)
+DIR_COMP_CORE_LANG 	= $(wildcard src/core/lang/*.c)
+DIR_COMP_FRONTEND 	= $(wildcard src/compiler/frontend/*.c)
 DIR_COMP_FRONTEND_PARSER   = $(wildcard src/compiler/frontend/parser/*.c)
 DIR_COMP_FRONTEND_LEXER    = $(wildcard src/compiler/frontend/lexer/*.c)
 DIR_COMP_FRONTEND_SEMANTIC = $(wildcard src/compiler/frontend/semantic/*.c)
@@ -43,7 +44,6 @@ TEST_SEMANTIC    = $(EXEC_TEST_SEMANTIC)
 TEST_ARENA       = $(EXEC_TEST_ARENA)
 TEST_STRINGPOOL  = $(EXEC_TEST_STRINGPOOL)
 TEST_HASHTABLE   = $(EXEC_TEST_HASHTABLE)
-TEST_DIAGNOSTIC  = $(EXEC_TEST_DIAGNOSTIC)
 
 # Compiler tests
 EXEC_TEST_LEXER    = $(DIR_TESTS_OUTPUT)/lexing
@@ -55,7 +55,6 @@ EXEC_TEST_CODEGEN  = $(DIR_TESTS_OUTPUT)/codegen
 EXEC_TEST_ARENA   	 = $(DIR_TESTS_OUTPUT)/arena
 EXEC_TEST_STRINGPOOL = $(DIR_TESTS_OUTPUT)/stringpool
 EXEC_TEST_HASHTABLE  = $(DIR_TESTS_OUTPUT)/hashmap
-EXEC_TEST_DIAGNOSTIC = $(DIR_TESTS_OUTPUT)/diagnostic
 ###########################################################
 
 ###################### SOURCE FILES #######################
@@ -74,14 +73,14 @@ SRC_MAIN = $(DIR_SRC)/main.c \
 SRC_TEST_LEXER = \
 	$(DIR_TESTS_INTEGRATION)/lexing.c \
 	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/common/filesystem.c \
+	$(DIR_SRC)/core/lang/filesystem.c \
 	$(DIR_SRC)/compiler/frontend/lexer.c \
 	$(DIR_SRC)/compiler/frontend/lexer/tokens.c
 
 SRC_TEST_PARSER = \
 	$(DIR_TESTS_INTEGRATION)/parsing.c \
 	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/common/filesystem.c \
+	$(DIR_SRC)/core/lang/filesystem.c \
 	$(DIR_SRC)/compiler/frontend/ast.c \
 	$(DIR_SRC)/compiler/frontend/lexer/tokens.c \
 	$(DIR_SRC)/compiler/frontend/lexer.c \
@@ -93,7 +92,7 @@ SRC_TEST_PARSER = \
 SRC_TEST_SEMANTIC = \
 	$(DIR_TESTS_INTEGRATION)/analisis.c \
 	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/common/filesystem.c \
+	$(DIR_SRC)/core/lang/filesystem.c \
 	$(DIR_SRC)/compiler/frontend/ast.c \
 	$(DIR_SRC)/compiler/frontend/lexer/tokens.c \
 	$(DIR_SRC)/compiler/frontend/lexer.c \
@@ -196,10 +195,6 @@ $(EXEC_TEST_STRINGPOOL): $(OBJS_TEST_STRINGPOOL) | $(DIR_TESTS_OUTPUT)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(EXEC_TEST_HASHTABLE): $(OBJS_TEST_HASHTABLE) | $(DIR_TESTS_OUTPUT)
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $^ -o $@
-
-$(EXEC_TEST_DIAGNOSTIC): $(OBJS_TEST_DIAGNOSTIC) | $(DIR_TESTS_OUTPUT)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 ###########################################################
