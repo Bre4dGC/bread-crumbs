@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cli/commands.h"
+#include "cli/commands.h"   // command_list_t, command_t
 
 typedef struct {
     int argc;

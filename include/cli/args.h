@@ -1,8 +1,7 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include <stddef.h>     // size_t
+#include <stdbool.h>    // bool
 
 enum cli_option_kind {
     CLI_OPTION_FLAG,

@@ -1,8 +1,9 @@
 #pragma once
-#include <stddef.h>
-#include <string.h>
 
-#include "cli/args.h"
+#include <stddef.h>     // size_t
+#include <string.h>     // strlen
+
+#include "cli/args.h"   // cli_option_set_t
 
 typedef int (*command_handler_t)(int argc, char** argv, void* userdata);
 
