@@ -1,7 +1,9 @@
 #pragma once
-#include <stdint.h>
 
-#include "core/strings.h"
+#include <stdint.h>     // uint32_t
+#include <stddef.h>     // size_t
+
+#include "core/ds/strings.h"    // string_t
 
 typedef struct hashmap_t {
     string_t key;

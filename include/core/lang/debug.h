@@ -1,18 +1,17 @@
 #pragma once
 #ifdef DEBUG
 
-#include <stdio.h>
-#include <stdbool.h>
+#include <stdio.h>      // printf
+#include <stdbool.h>    // bool
 
-#include "core/hashmap.h"
-#include "compiler/frontend/lexer.h"
-#include "compiler/frontend/ast.h"
-#include "compiler/frontend/semantic.h"
+#include "core/ds/hashmap.h"            // hashmap_t
+#include "compiler/frontend/lexer.h"    // token_t
+#include "compiler/frontend/ast.h"      // node_t
+#include "compiler/frontend/semantic.h" // symbol_table_t
 
 //
 // LEXER
 //
-
 static inline const char* token_to_str(const token_t token)
 {
     switch(token.category){
@@ -495,7 +494,7 @@ static inline const char* type_kind_to_str(enum type_kind kind)
         case TYPE_CHAR: return "CHAR";
         case TYPE_ARRAY: return "ARRAY";
         case TYPE_FUNC: return "FUNC";
-        case TYPE_STRUCT: return "STRUCT";
+        case TYPE_COMPOUND: return "STRUCT";
         case TYPE_ENUM: return "ENUM";
         default: return "UNKNOWN";
     }

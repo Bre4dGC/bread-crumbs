@@ -1,8 +1,9 @@
 #pragma once
-#include <stddef.h>
-#include <stdint.h>
 
-#include "core/arena.h"
+#include <stddef.h>     // size_t
+#include <stdint.h>     // uint32_t
+
+#include "core/ds/arena.h"  // arena_t
 
 typedef struct {
     const char* data;

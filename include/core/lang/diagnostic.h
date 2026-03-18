@@ -1,16 +1,17 @@
 #pragma once
-#include <stddef.h>
 
-#include "core/strings.h"
-#include "core/arena.h"
+#include <stddef.h>     // size_t
+
+#include "core/ds/strings.h"    // string_pool_t
+#include "core/ds/arena.h"      // arena_t
+#include "core/lang/source.h"   // location_t
 
 #define MAX_REPORTS_COUNT        512
 #define DEFAULT_REPORT_POOL_SIZE 32
-#define DEFAULT_LEN              1
+#define DEF_ERR_LEN              1
+#define MAX_ERR_LEN              64
 
-enum report_severity {
-    SEV_NOTE, SEV_WARN, SEV_ERR
-};
+enum report_severity { SEV_NOTE, SEV_WARN, SEV_ERR };
 
 enum report_code {
     // LEXER
@@ -59,19 +60,12 @@ enum report_code {
 };
 
 typedef struct {
-    size_t line;
-    size_t column;
-} location_t;
-
-typedef struct {
     enum report_severity severity;
     enum report_code code;
 
     location_t loc;
-    size_t length;
-
-    string_t input;
-    string_t filepath;
+    string_t filename;
+    string_t line;
 } report_t;
 
 typedef struct {
@@ -85,8 +79,8 @@ void add_report(
     const enum report_severity sev,
     const enum report_code code,
     const location_t loc,
-    const size_t length,
-    const char* input
+    const string_t filename,
+    const string_t line
 );
 report_table_t* new_report_table(arena_t* arena);
 void print_report_table(const report_table_t* table);
