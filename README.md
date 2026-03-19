@@ -1,9 +1,14 @@
 <div align="center">
     <h1>Bread Crumbs</h1>
     <img src="logo.png" alt="Bread Crumbs Logo" width="300"/>
+    <div>
+        <img src="https://m3-markdown-badges.vercel.app/issues/1/1/Bre4dGC/bread-crumbs"/>
+        <img src="https://m3-markdown-badges.vercel.app/stars/8/1/Bre4dGC/bread-crumbs"/>
+        <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/LicenceMIT/licencemit1.svg"/>
+    </div>
 </div>
 
-Bread Crumbs is a modern high-level programming language
+Bread Crumbs is a modern high-level programming language designed for safety, concurrency, and ease of use. It aims to provide developers with a powerful toolset for building efficient and reliable applications.
 
 ## Features
 
