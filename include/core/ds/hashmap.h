@@ -5,11 +5,10 @@
 
 #include "core/ds/strings.h"    // string_t
 
-typedef struct hashmap_t {
+typedef struct hashmap {
     string_t key;
     void* value;
-    struct hashmap_t* next;
-    size_t count;
+    struct hashmap* next;
 } hashmap_t;
 
 uint32_t hm_hash(const char* str);

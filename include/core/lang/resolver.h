@@ -5,7 +5,6 @@
 
 #include "core/ds/strings.h"    // string_pool_t
 #include "core/ds/hashmap.h"    // hashmap_t
-#include "core/lang/source.h"   // location_t
 
 typedef struct {
     string_t filename;

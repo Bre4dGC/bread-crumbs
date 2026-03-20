@@ -1,4 +1,5 @@
 #pragma once
+#include "compiler/frontend/semantic/types.h"
 #ifdef DEBUG
 
 #include <stdio.h>      // printf
@@ -117,8 +118,13 @@ static inline void print_node(node_t* node, int indent)
             else {
                 printf("\033[1mBINARY_OP\033[0m (null)\033[0m\n");
             }
-            if(node->binop->left) print_node(node->binop->left, indent + 1);
+            if(node->binop->left)  print_node(node->binop->left, indent + 1);
             if(node->binop->right) print_node(node->binop->right, indent + 1);
+            break;
+        case NODE_RANGE:
+            if(node->range) printf("\033[1mRANGE\033[0m ");
+            if(node->range->start) print_node(node->range->start, indent + 1);
+            if(node->range->end)   print_node(node->range->end, indent + 1);
             break;
         case NODE_VARIABLE:
             if(node->var_decl && node->var_decl->name.data){
@@ -479,24 +485,24 @@ static inline const char* scope_kind_to_str(enum scope_kind kind)
 static inline const char* type_kind_to_str(enum type_kind kind)
 {
     switch(kind){
-        case TYPE_VOID: return "VOID";
-        case TYPE_ANY: return "ANY";
-        case TYPE_BOOL: return "BOOL";
-        case TYPE_INT: return "INT";
-        case TYPE_UINT: return "UINT";
-        case TYPE_SHORT: return "SHORT";
-        case TYPE_USHORT: return "USHORT";
-        case TYPE_LONG: return "LONG";
-        case TYPE_ULONG: return "ULONG";
-        case TYPE_FLOAT: return "FLOAT";
+        case TYPE_VOID:    return "VOID";
+        case TYPE_ANY:     return "ANY";
+        case TYPE_BOOL:    return "BOOL";
+        case TYPE_INT:     return "INT";
+        case TYPE_UINT:    return "UINT";
+        case TYPE_SHORT:   return "SHORT";
+        case TYPE_USHORT:  return "USHORT";
+        case TYPE_LONG:    return "LONG";
+        case TYPE_ULONG:   return "ULONG";
+        case TYPE_FLOAT:   return "FLOAT";
         case TYPE_DECIMAL: return "DECIMAL";
-        case TYPE_STR: return "STR";
-        case TYPE_CHAR: return "CHAR";
-        case TYPE_ARRAY: return "ARRAY";
-        case TYPE_FUNC: return "FUNC";
-        case TYPE_COMPOUND: return "STRUCT";
-        case TYPE_ENUM: return "ENUM";
-        default: return "UNKNOWN";
+        case TYPE_STR:     return "STR";
+        case TYPE_CHAR:    return "CHAR";
+        case TYPE_ARRAY:   return "ARRAY";
+        case TYPE_FUNC:    return "FUNC";
+        case TYPE_STRUCT:  return "STRUCT";
+        case TYPE_ENUM:    return "ENUM";
+        default:           return "UNKNOWN";
     }
 }
 
@@ -507,14 +513,14 @@ static inline void print_symbol_flags(enum symbol_flags flags)
     }
 
     bool first = true;
-    if(flags & SYM_FLAG_USED){ printf("%sUSED", first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_ASSIGNED){ printf("%sASSIGNED", first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_GLOBAL){ printf("%sGLOBAL", first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_EXTERN){ printf("%sEXTERN", first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_STATIC){ printf("%sSTATIC", first ? "" : "|"); first = false; }
+    if(flags & SYM_FLAG_USED)   { printf("%sUSED",    first ? "" : "|"); first = false; }
+    if(flags & SYM_FLAG_ASSIGNED){printf("%sASSIGNED",first ? "" : "|"); first = false; }
+    if(flags & SYM_FLAG_GLOBAL) { printf("%sGLOBAL",  first ? "" : "|"); first = false; }
+    if(flags & SYM_FLAG_EXTERN) { printf("%sEXTERN",  first ? "" : "|"); first = false; }
+    if(flags & SYM_FLAG_STATIC) { printf("%sSTATIC",  first ? "" : "|"); first = false; }
     if(flags & SYM_FLAG_MUTABLE){ printf("%sMUTABLE", first ? "" : "|"); first = false; }
     if(flags & SYM_FLAG_PRIVATE){ printf("%sPRIVATE", first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_PUBLIC){ printf("%sPUBLIC", first ? "" : "|"); first = false; }
+    if(flags & SYM_FLAG_PUBLIC) { printf("%sPUBLIC",  first ? "" : "|"); first = false; }
 }
 
 static inline void print_symbol(symbol_t* sym, int indent)
@@ -529,7 +535,7 @@ static inline void print_symbol(symbol_t* sym, int indent)
     print_symbol_flags(sym->flags);
     printf("] [loc: %ld:%ld]", sym->loc.line, sym->loc.column);
 
-    if(sym->type) printf(" [type: %s]", type_kind_to_str(sym->type->kind));
+    if(sym->type)  printf(" [type: %s]", type_kind_to_str(sym->type->kind));
     if(sym->scope) printf(" [scope: %s depth:%d]", scope_kind_to_str(sym->scope->kind), sym->scope->depth);
 
     printf("\n");
@@ -553,7 +559,7 @@ static inline void print_scope_symbols(scope_t* scope, int indent)
     printf("\033[32mSymbols (%zu):\033[0m\n", scope->count);
 
     hashmap_t* entry = scope->symbols;
-    for(size_t i = 0; i < scope->symbols->count; i++){
+    while(scope->symbols->next){
         if(entry->key.data && entry->value){
             symbol_t* sym = entry->value;
             print_symbol(sym, indent + 1);

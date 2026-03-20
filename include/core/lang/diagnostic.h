@@ -60,12 +60,13 @@ enum report_code {
 };
 
 typedef struct {
+    string_t* filename;
+    string_t* line;
+
     enum report_severity severity;
     enum report_code code;
 
     location_t loc;
-    string_t filename;
-    string_t line;
 } report_t;
 
 typedef struct {
@@ -76,11 +77,10 @@ typedef struct {
 
 void add_report(
     report_table_t* table,
+    const source_t* src,
     const enum report_severity sev,
     const enum report_code code,
-    const location_t loc,
-    const string_t filename,
-    const string_t line
+    const location_t loc
 );
 report_table_t* new_report_table(arena_t* arena);
 void print_report_table(const report_table_t* table);
