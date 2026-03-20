@@ -4,7 +4,6 @@
 #include <stdint.h>     // uint8_t
 
 #include "compiler/middle/ir.h"     // ir_t
-#include "compiler/frontend/ast.h"  // node_t
 #include "compiler/context.h"       // compiler_context_t
 
 typedef struct {

@@ -3,9 +3,9 @@
 #include <stddef.h>     // size_t
 #include <stdbool.h>    // bool
 
-#include "core/ds/arena.h"          // arena_t
-#include "core/ds/strings.h"        // string_t
-#include "core/lang/diagnostic.h"   // location_t
+#include "core/ds/arena.h"      // arena_t
+#include "core/ds/strings.h"    // string_t
+#include "core/lang/source.h"   // location_t
 
 typedef struct node node_t;
 
@@ -186,7 +186,6 @@ enum node_kind {
 struct node {
     enum node_kind kind;
     location_t loc;
-    size_t length;
 
     union {
         struct node_binop*      binop;

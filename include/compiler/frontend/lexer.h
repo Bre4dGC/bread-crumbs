@@ -2,13 +2,12 @@
 
 #include <stddef.h>     // size_t
 
-#include "compiler/context.h"               // compiler_context_t
-#include "core/lang/diagnostic.h"           // location_t
+#include "compiler/context.h"   // compiler_context_t
+#include "core/lang/source.h"   // location_t
 #include "compiler/frontend/lexer/tokens.h" // token_t
 
 typedef struct {
     char ch;
-    size_t pos;
     location_t loc;
     size_t balance;
 

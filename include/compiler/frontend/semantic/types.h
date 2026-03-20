@@ -29,10 +29,13 @@ enum type_kind {
     // composite types
     TYPE_ARRAY,
     TYPE_FUNC,
-    TYPE_COMPOUND,
+    TYPE_STRUCT,
+    TYPE_ENUM,
 };
 
-typedef struct type {
+typedef struct type type_t;
+
+struct type {
     enum type_kind kind;
     size_t size;
     size_t align;
@@ -54,7 +57,7 @@ typedef struct type {
             size_t member_count;
         } compound;
     };
-} type_t;
+};
 
 extern type_t* type_unknown;
 extern type_t* type_error;

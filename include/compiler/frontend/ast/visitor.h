@@ -1,17 +1,16 @@
 #pragma once
 
-#include <stddef.h>     // size_t
-#include <stdint.h>     // uint8_t
-
 #include "core/ds/arena.h"          // arena_t
 #include "core/ds/hashmap.h"        // hashmap_t
 #include "compiler/frontend/ast.h"  // ast_t, node_t
 
 #define NUM_NODE_KINDS 24
 
+typedef struct ast_visitor ast_visitor_t;
+
 typedef void (*visit_func_t)(ast_visitor_t* visitor, node_t* node);
 
-typedef struct {
+typedef struct ast_visitor {
     arena_t* arena;
     hashmap_t* string_table;
     visit_func_t visit_table[NUM_NODE_KINDS];

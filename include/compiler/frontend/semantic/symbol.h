@@ -3,6 +3,8 @@
 #include <stdint.h>     // uint8_t, bool
 #include <stdbool.h>    // bool
 
+typedef struct symbol_table symbol_table_t;
+
 #include "compiler/context.h"       // compiler_context_t
 #include "compiler/frontend/ast.h"  // node_t
 #include "compiler/frontend/semantic/types.h"   // type_t
@@ -80,14 +82,14 @@ struct symbol {
     scope_t* scope;
 };
 
-typedef struct {
+struct symbol_table {
     scope_t* global;
     scope_t* current;
     size_t scope_count;
     size_t scope_capacity;
 
     compiler_context_t* ctx;
-} symbol_table_t;
+};
 
 symbol_table_t* new_symbol_table(compiler_context_t* ctx);
 symbol_t* lookup_symbol(symbol_table_t* st, const char* name);
