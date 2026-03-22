@@ -12,6 +12,7 @@
 typedef struct compiler_context compiler_context_t;
 
 #include "compiler/frontend/semantic/symbol.h" // symbol_table_t
+#include "compiler/middle/ir.h"     // ir_t
 #include "compiler/backend/codegen.h"   // ir_t, codegen_t
 
 enum compile_phase {
@@ -39,8 +40,8 @@ typedef struct {
     string_pool_t perm_strings;
     string_pool_t temp_strings;
 
-    hashmap_t global_idents;
-    hashmap_t local_idents;
+    hashmap_t* global_idents;
+    hashmap_t* local_idents;
 } compiler_memory_t;
 
 struct compiler_context {
@@ -50,12 +51,12 @@ struct compiler_context {
     compiler_option_t options;
     compiler_memory_t memory;
 
-    report_table_t reports;
+    report_table_t* reports;
 
-    ast_t ast_root;
+    ast_t* ast;
     symbol_table_t* symbols;
-    ir_t ir;
-    codegen_t codegen;
+    ir_t* ir;
+    codegen_t* codegen;
 };
 
 compiler_context_t* new_compiler_context(void);

@@ -16,6 +16,6 @@ typedef struct ast_visitor {
     visit_func_t visit_table[NUM_NODE_KINDS];
 } ast_visitor_t;
 
-ast_visitor_t* new_ast_visitor(void);
+ast_visitor_t* new_ast_visitor(arena_t* arena);
 void free_ast_visitor(ast_visitor_t* visitor);
 void ast_visit(ast_visitor_t* visitor, ast_t* ast);

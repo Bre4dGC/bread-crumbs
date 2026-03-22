@@ -222,9 +222,10 @@ struct node {
 
 typedef struct {
     node_t* nodes;
-    arena_t arena;
+    arena_t* arena;
     size_t count;
 } ast_t;
 
+ast_t* new_ast(arena_t* arena);
+void free_ast(ast_t* ast);
 node_t* new_node(arena_t* arena, enum node_kind kind);
-void free_ast(arena_t* ast);
