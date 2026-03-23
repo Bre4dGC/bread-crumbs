@@ -1,4 +1,4 @@
-#include "compiler/backend/jit/compiler.h"
+#include "compiler/backend/jit/compiler.h"  // jit_compiler_t
 
 jit_compiler_t* new_jit_compiler(void)
 {

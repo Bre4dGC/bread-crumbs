@@ -1,4 +1,4 @@
-#include "compiler/backend/vm/memory.h"
+#include "compiler/backend/vm/memory.h"    // vm_memory_t
 
 vm_memory_t* new_vm_memory(size_t capacity)
 {

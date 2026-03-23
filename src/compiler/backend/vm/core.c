@@ -1,4 +1,4 @@
-#include "compiler/backend/vm/core.h"
+#include "compiler/backend/vm/core.h"    // vm_core_t
 
 void vm_execute(vm_core_t* vm)
 {

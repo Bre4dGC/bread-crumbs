@@ -1,4 +1,4 @@
-#include "compiler/backend/jit/runtime.h"
+#include "compiler/backend/jit/runtime.h"  // jit_runtime_t
 
 jit_runtime_t* new_runtime(void)
 {

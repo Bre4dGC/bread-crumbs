@@ -1,4 +1,4 @@
-#include "compiler/backend/vm/runtime.h"
+#include "compiler/backend/vm/runtime.h"    // vm_runtime_t
 
 vm_runtime_t* new_vm_runtime(void)
 {

@@ -1,6 +1,6 @@
-#include "compiler/middle/builder.h"
+#include "compiler/middle/builder.h"  // builder_t
 
-builder_t* new_builder(void)
+builder_t* new_builder(compiler_context_t* ctx)
 {
     // TODO: implement
     return NULL;

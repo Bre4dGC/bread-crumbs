@@ -1,8 +1,4 @@
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-
-#include "compiler/middle/ir.h"
+#include "compiler/middle/ir.h" // ir_t, op_code
 
 ir_t* new_ir(void)
 {
