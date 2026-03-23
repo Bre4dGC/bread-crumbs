@@ -1,9 +1,5 @@
-#include <stdlib.h>
-
-#include "core/arena.h"
-#include "core/diagnostic.h"
-#include "core/hashmap.h"
-#include "compiler/frontend/semantic/symbol.h"
+#include "core/lang/source.h"   // location_t
+#include "compiler/frontend/semantic/symbol.h"  // symbol_table_t, scope_t, symbol_t
 
 #define INITIAL_SCOPE_CAPACITY 16
 #define SYMBOL_TABLE_SIZE 64
@@ -13,7 +9,7 @@ static symbol_t* lookup_in_scope(scope_t* scope, const char* name);
 scope_t* new_scope(arena_t* arena, int kind, node_t* owner)
 {
     if(!arena) return NULL;
-    
+
     scope_t* scope = arena_alloc(arena, sizeof(scope_t), alignof(scope_t));
     if(!scope) return NULL;
 
@@ -33,21 +29,18 @@ scope_t* new_scope(arena_t* arena, int kind, node_t* owner)
     return scope;
 }
 
-symbol_table_t* new_symbol_table(arena_t* arena, string_pool_t* string_pool)
+symbol_table_t* new_symbol_table(compiler_context_t* ctx)
 {
-    symbol_table_t* st = arena_alloc(arena, sizeof(symbol_table_t), alignof(symbol_table_t));
+    symbol_table_t* st = arena_alloc(ctx->memory.perm_arena, sizeof(symbol_table_t), alignof(symbol_table_t));
     if(!st) return NULL;
 
-    st->arena = arena;
-    st->string_pool = string_pool;
-    
-    st->global = new_scope(st->arena, SCOPE_GLOBAL, NULL);
+    st->global = new_scope(st->ctx->memory.perm_arena, SCOPE_GLOBAL, NULL);
     if(!st->global) return NULL;
 
     st->current = st->global;
     st->scope_capacity = INITIAL_SCOPE_CAPACITY;
     st->scope_count = 1;
-    
+
     return st;
 }
 
@@ -55,7 +48,7 @@ scope_t* push_scope(symbol_table_t* st, int scope_kind, node_t* owner)
 {
     if(!st) return NULL;
 
-    scope_t* scope = new_scope(st->arena, scope_kind, owner);
+    scope_t* scope = new_scope(st->ctx->memory.perm_arena, scope_kind, owner);
     if(!scope) return NULL;
 
     scope->parent = st->current;
@@ -113,14 +106,12 @@ symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_
 
     scope_t* scope = st->current;
     if(!scope) return NULL;
-    if(lookup_in_scope(scope, name) != NULL){
-        return NULL;
-    }
+    if(lookup_in_scope(scope, name) != NULL) return NULL;
 
-    symbol_t* sym = arena_alloc(st->arena, sizeof(symbol_t), alignof(symbol_t));
+    symbol_t* sym = arena_alloc(st->ctx->memory.perm_arena, sizeof(symbol_t), alignof(symbol_t));
     if(!sym) return NULL;
 
-    string_t interned = new_string(st->string_pool, name);
+    string_t interned = new_string(&st->ctx->memory.perm_strings, name);
     if(!interned.data) return NULL;
     sym->name = (char*)interned.data;
 
@@ -130,7 +121,7 @@ symbol_t* define_symbol(symbol_table_t* st, const char* name, const enum symbol_
     sym->flags = SYM_FLAG_NONE;
     sym->decl_node = decl_node;
     sym->init_node = NULL;
-    sym->loc = decl_node ? decl_node->loc : (location_t){1, 1};
+    sym->loc = decl_node ? decl_node->loc : new_location();
     sym->scope = scope;
     sym->next_in_scope = NULL;
     sym->shadowed_symbol = NULL;
@@ -200,7 +191,7 @@ void free_scope(scope_t* scope)
         free_hashmap(scope->symbols);
         scope->symbols = NULL;
     }
-    
+
     scope->parent = NULL;
     scope->first_child = NULL;
     scope->next_sibling = NULL;
@@ -215,7 +206,7 @@ void free_symbol_table(symbol_table_t* st)
         free_hashmap(st->global->symbols);
         st->global->symbols = NULL;
     }
-    
+
     st->global = NULL;
     st->current = NULL;
 }

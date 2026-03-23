@@ -1,7 +1,4 @@
-#include <stdlib.h>
-#include <stdalign.h>
-
-#include "compiler/frontend/semantic/types.h"
+#include "compiler/frontend/semantic/types.h"   // type_t, enum type_kind
 
 #define DEF_TYPE_SIZE  0
 #define DEF_TYPE_ALIGN 1
@@ -24,7 +21,7 @@ type_t* type_char = NULL;
 
 type_t* new_type(arena_t* arena, const enum type_kind kind, const size_t size, const size_t align)
 {
-    type_t* type = arena_alloc(arena, sizeof(type_t), alignof(type_t));
+    type_t* type = arena_alloc_default(arena, sizeof(type_t));
     if(!type) return NULL;
     type->kind = kind;
     type->size = size;
@@ -209,33 +206,12 @@ void free_type(type_t* type)
 
     switch(type->kind){
         case TYPE_ARRAY:
-            if(type->array.elem_type){
-                free_type(type->array.elem_type);
-                type->array.elem_type = NULL;
-            }
             break;
 
         case TYPE_FUNC:
-            if(type->func.return_type){
-                free_type(type->func.return_type);
-                type->func.return_type = NULL;
-            }
-            if(type->func.param_types){
-                for(size_t i = 0; i < type->func.param_count; ++i){
-                    if(type->func.param_types[i]){
-                        free_type(type->func.param_types[i]);
-                        type->func.param_types[i] = NULL;
-                    }
-                }
-                free(type->func.param_types);
-                type->func.param_types = NULL;
-            }
             break;
 
         case TYPE_STRUCT:
-            if(type->compound.scope){
-                // free_scope(type->compound.scope);
-            }
             break;
 
         default: break;

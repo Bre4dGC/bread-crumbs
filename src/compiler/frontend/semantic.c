@@ -1,11 +1,9 @@
 #include <stdlib.h>
 
-#include "core/arena.h"
-#include "core/diagnostic.h"
-#include "compiler/frontend/lexer/tokens.h"
-#include "compiler/frontend/semantic.h"
+#include "compiler/frontend/lexer/tokens.h" // KW_FUNC, KW_STRUCT, etc.
+#include "compiler/frontend/semantic.h"     // semantic_t, node_t, type_t
 #ifdef DEBUG
-#include "core/common/debug.h"
+#include "core/lang/debug.h"                // print_semantic_table
 #endif
 
 type_t* infer_type(semantic_t* sem, node_t* node);
@@ -36,33 +34,24 @@ bool check_type_compatibility(semantic_t* sem, node_t* node, type_t* expected, t
 bool all_paths_return(node_t* node);
 bool is_unreachable_code(node_t* node);
 
-semantic_t* new_semantic(arena_t* arena, string_pool_t* string_pool, report_table_t* reports)
+semantic_t* new_semantic(compiler_context_t* ctx)
 {
-    if(!arena || !string_pool || !reports) {
-        return NULL;
-    }
+    if(!ctx) return NULL;
 
-    semantic_t* sem = arena_alloc(arena, sizeof(semantic_t), alignof(semantic_t));
-    if(!sem) {
-        return NULL;
-    }
+    semantic_t* sem = arena_alloc(ctx->memory.phase_arena, sizeof(semantic_t), alignof(semantic_t));
+    if(!sem) return NULL;
 
     // init if not already done
-    if(!type_int) {
-        init_types(arena);
-    }
+    if(!type_int) init_types(ctx->memory.phase_arena);
 
-    sem->symbols = new_symbol_table(arena, string_pool);
-    if(!sem->symbols) {
-        return NULL;
-    }
+    sem->symbols = new_symbol_table(ctx);
+    if(!sem->symbols) return NULL;
 
     sem->current_function = NULL;
     sem->loop_depth = 0;
     sem->phase = PHASE_DECLARE;
 
-    sem->arena = arena;
-    sem->reports = reports;
+    sem->ctx = ctx;
 
     return sem;
 }
@@ -136,7 +125,7 @@ bool check_node(semantic_t* sem, node_t* node)
         case NODE_STRUCT:   return check_struct(sem, node);
         case NODE_ENUM:     return check_enum(sem, node);
         default:
-            add_report(sem->reports, SEV_WARN, ERR_UNIMPL_NODE, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_WARN, ERR_UNIMPL_NODE, node->loc);
             return true;
     }
 }
@@ -165,7 +154,7 @@ bool check_function(semantic_t* sem, node_t* node)
     // register the function symbol
     if(sem->phase == PHASE_DECLARE){
         if(is_scope_symbol_exist(sem->symbols, func->name.data)){
-            add_report(sem->reports, SEV_ERR, ERR_FUNC_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FUNC_ALREADY_DECL, node->loc);
             return false;
         }
 
@@ -174,7 +163,7 @@ bool check_function(semantic_t* sem, node_t* node)
         size_t param_count = func->param_decl.count;
         type_t** param_types = NULL;
         if(param_count > 0){
-            param_types = arena_alloc_array(sem->arena, sizeof(type_t*), param_count, alignof(type_t*));
+            param_types = arena_alloc_array(sem->ctx->memory.phase_arena, sizeof(type_t*), param_count, alignof(type_t*));
             if(!param_types) return false;
             for(size_t i = 0; i < param_count; i++){
                 node_t* p = func->param_decl.elems[i];
@@ -187,11 +176,11 @@ bool check_function(semantic_t* sem, node_t* node)
                 }
             }
         }
-        type_t* func_type = new_type_function(sem->arena, return_type, param_types, param_count);
+        type_t* func_type = new_type_function(sem->ctx->memory.phase_arena, return_type, param_types, param_count);
 
         symbol_t* func_sym = define_symbol(sem->symbols, func->name.data, SYMBOL_FUNC, func_type, node);
         if(!func_sym){
-            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_FUNC, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_FUNC, node->loc);
             return false;
         }
 
@@ -202,7 +191,7 @@ bool check_function(semantic_t* sem, node_t* node)
     symbol_t* func_sym = lookup_symbol(sem->symbols, func->name.data);
     if(!func_sym){
         type_t* return_type = datatype_to_type(func->return_type);
-        type_t* func_type = new_type_function(sem->arena, return_type, NULL, 0);
+        type_t* func_type = new_type_function(sem->ctx->memory.phase_arena, return_type, NULL, 0);
         func_sym = define_symbol(sem->symbols, func->name.data, SYMBOL_FUNC, func_type, node);
         if(!func_sym) return false;
     }
@@ -244,7 +233,7 @@ bool check_param(semantic_t* sem, node_t* node)
     if(!var->name.data) return false;
 
     if(is_scope_symbol_exist(sem->symbols, var->name.data)){
-        add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc);
         return false;
     }
 
@@ -252,7 +241,7 @@ bool check_param(semantic_t* sem, node_t* node)
     type_t* param_type = (var->dtype == DT_VOID) ? type_any : datatype_to_type(var->dtype);
     symbol_t* sym = define_symbol(sem->symbols, var->name.data, SYMBOL_PARAM, param_type, node);
     if(!sym){
-        add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc);
         return false;
     }
     sym->flags |= SYM_FLAG_ASSIGNED;
@@ -268,7 +257,7 @@ bool check_variable(semantic_t* sem, node_t* node)
     if(!var || !var->name.data) return false;
 
     if(is_scope_symbol_exist(sem->symbols, var->name.data)){
-        add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc);
         return false;
     }
 
@@ -284,12 +273,12 @@ bool check_variable(semantic_t* sem, node_t* node)
     }
     else {
         // no type and no initializer
-        add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc);
         return false;
     }
 
     if(!var_type || var_type == type_error){
-        add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, node->loc);
         return false;
     }
 
@@ -297,7 +286,7 @@ bool check_variable(semantic_t* sem, node_t* node)
     if(var->dtype != DT_VOID && var->value){
         type_t* init_type = infer_type(sem, var->value);
         if(!check_type_compatibility(sem, node, var_type, init_type)){
-            add_report(sem->reports, SEV_ERR, ERR_TYPE_MISMATCH, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_TYPE_MISMATCH, node->loc);
             return false;
         }
     }
@@ -311,7 +300,7 @@ bool check_variable(semantic_t* sem, node_t* node)
     // add to symbol table
     symbol_t* sym = define_symbol(sem->symbols, var->name.data, kind, var_type, node);
     if(!sym){
-        add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc);
         return false;
     }
 
@@ -394,7 +383,7 @@ bool check_return(semantic_t* sem, node_t* node)
     if(!sem || !node || node->kind != NODE_RETURN) return false;
 
     if(!sem->current_function){
-        add_report(sem->reports, SEV_ERR, ERR_RET_OUTSIDE_FUNC, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_RET_OUTSIDE_FUNC, node->loc);
         return false;
     }
 
@@ -408,7 +397,7 @@ bool check_break(semantic_t* sem, node_t* node)
     if(!sem || !node) return false;
 
     if(sem->loop_depth == 0){
-        add_report(sem->reports, SEV_ERR, ERR_BREAK_OUTSIDE_LOOP, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_BREAK_OUTSIDE_LOOP, node->loc);
         return false;
     }
 
@@ -420,7 +409,7 @@ bool check_continue(semantic_t* sem, node_t* node)
     if(!sem || !node) return false;
 
     if(sem->loop_depth == 0){
-        add_report(sem->reports, SEV_ERR, ERR_CONTINUE_OUTSIDE_LOOP, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_CONTINUE_OUTSIDE_LOOP, node->loc);
         return false;
     }
 
@@ -455,7 +444,7 @@ bool check_binop(semantic_t* sem, node_t* node)
     // (void)op;  // TODO: use for operator-specific checks
 
     if(!types_compatible(left_type, right_type)){
-        add_report(sem->reports, SEV_ERR, ERR_TYPE_MISMATCH, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_TYPE_MISMATCH, node->loc);
         return false;
     }
 
@@ -476,13 +465,13 @@ bool check_func_call(semantic_t* sem, node_t* node)
     // lookup function
     symbol_t* func_sym = lookup_symbol(sem->symbols, node->func_call->name.data);
     if(!func_sym){
-        add_report(sem->reports, SEV_ERR, ERR_UNDEC_FUNC, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_UNDEC_FUNC, node->loc);
         return false;
     }
 
 
     if(func_sym->kind != SYMBOL_FUNC){
-        add_report(sem->reports, SEV_ERR, ERR_NOT_A_FUNC, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_NOT_A_FUNC, node->loc);
         return false;
     }
 
@@ -506,7 +495,7 @@ bool check_var_ref(semantic_t* sem, node_t* node)
     // lookup variable
     symbol_t* sym = lookup_symbol(sem->symbols, name);
     if(!sym){
-        add_report(sem->reports, SEV_ERR, ERR_UNDEC_VAR, node->loc, DEFAULT_LEN, NULL);
+        add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_UNDEC_VAR, node->loc);
         return false;
     }
 
@@ -538,22 +527,22 @@ bool check_array(semantic_t* sem, node_t* node)
 bool check_struct(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_STRUCT) return false;
-    
+
     struct node_struct* struct_decl = node->struct_decl;
     if(!struct_decl || !struct_decl->name.data) return false;
 
     // register struct symbol in declare phase
     if(sem->phase == PHASE_DECLARE){
         if(is_scope_symbol_exist(sem->symbols, struct_decl->name.data)){
-            add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc);
             return false;
         }
 
         // create struct type (will be populated in check phase)
-        type_t* struct_type = new_type_compound(sem->arena, TYPE_STRUCT, NULL, 0);
+        type_t* struct_type = new_type_compound(sem->ctx->memory.phase_arena, TYPE_STRUCT, NULL, 0);
         symbol_t* struct_sym = define_symbol(sem->symbols, struct_decl->name.data, SYMBOL_STRUCT, struct_type, node);
         if(!struct_sym){
-            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc);
             return false;
         }
         return true;
@@ -565,14 +554,14 @@ bool check_struct(semantic_t* sem, node_t* node)
 
     scope_t* struct_scope = push_scope(sem->symbols, SCOPE_STRUCT, node);
     if(!struct_scope) return false;
-    
+
     bool success = true;
     size_t member_count = 0;
-    
+
     for(size_t i = 0; i < struct_decl->member.count; i++){
         node_t* member = struct_decl->member.elems[i];
         if(!member || member->kind != NODE_VARIABLE) {
-            add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member ? member->loc : node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_INVAL_EXPR, member ? member->loc : node->loc);
             success = false;
             continue;
         }
@@ -585,7 +574,7 @@ bool check_struct(semantic_t* sem, node_t* node)
 
         // check for duplicate member names
         if(is_scope_symbol_exist(sem->symbols, var->name.data)){
-            add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, member->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_ALREADY_DECL, member->loc);
             success = false;
             continue;
         }
@@ -603,13 +592,13 @@ bool check_struct(semantic_t* sem, node_t* node)
             member_type = infer_type(sem, var->value);
         }
         else {
-            add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, member->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, member->loc);
             success = false;
             continue;
         }
 
         if(!member_type || member_type == type_error) {
-            add_report(sem->reports, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, member->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, member->loc);
             success = false;
             continue;
         }
@@ -617,7 +606,7 @@ bool check_struct(semantic_t* sem, node_t* node)
         // create member symbol
         symbol_t* member_sym = define_symbol(sem->symbols, var->name.data, SYMBOL_VAR, member_type, member);
         if(!member_sym) {
-            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc);
             success = false;
             continue;
         }
@@ -631,7 +620,7 @@ bool check_struct(semantic_t* sem, node_t* node)
         struct_sym->type->compound.scope = struct_scope->symbols ? (struct symbol*)struct_scope : NULL;
         struct_sym->type->compound.member_count = member_count;
     }
-    
+
     pop_scope(sem->symbols);
     return success;
 }
@@ -639,22 +628,22 @@ bool check_struct(semantic_t* sem, node_t* node)
 bool check_enum(semantic_t* sem, node_t* node)
 {
     if(!sem || !node || node->kind != NODE_ENUM) return false;
-    
+
     struct node_enum* enum_decl = node->enum_decl;
     if(!enum_decl || !enum_decl->name.data) return false;
-    
+
     // register enum symbol in declare phase
     if(sem->phase == PHASE_DECLARE){
         if(is_scope_symbol_exist(sem->symbols, enum_decl->name.data)){
-            add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_ALREADY_DECL, node->loc);
             return false;
         }
 
         // create enum type
-        type_t* enum_type = new_type_compound(sem->arena, TYPE_ENUM, NULL, 0);
+        type_t* enum_type = new_type_compound(sem->ctx->memory.phase_arena, TYPE_ENUM, NULL, 0);
         symbol_t* enum_sym = define_symbol(sem->symbols, enum_decl->name.data, SYMBOL_ENUM, enum_type, node);
         if(!enum_sym){
-            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc);
             return false;
         }
         return true;
@@ -666,11 +655,11 @@ bool check_enum(semantic_t* sem, node_t* node)
 
     scope_t* enum_scope = push_scope(sem->symbols, SCOPE_ENUM, node);
     if(!enum_scope) return false;
-    
+
     bool success = true;
     size_t variant_count = 0;
     int next_value = 0; // auto-increment values
-    
+
     for(size_t i = 0; i < enum_decl->member.count; i++){
         node_t* member = enum_decl->member.elems[i];
         if(!member) {
@@ -690,7 +679,7 @@ bool check_enum(semantic_t* sem, node_t* node)
                     variant_value = atoi(member->var_decl->value->lit->value.data);
                 }
                 else {
-                    add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member->var_decl->value->loc, DEFAULT_LEN, NULL);
+                    add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_INVAL_EXPR, member->var_decl->value->loc);
                     success = false;
                     continue;
                 }
@@ -700,7 +689,7 @@ bool check_enum(semantic_t* sem, node_t* node)
             variant_name = member->var_ref->name.data;
         }
         else {
-            add_report(sem->reports, SEV_ERR, ERR_INVAL_EXPR, member->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_INVAL_EXPR, member->loc);
             success = false;
             continue;
         }
@@ -712,7 +701,7 @@ bool check_enum(semantic_t* sem, node_t* node)
 
         // check for duplicate variant names
         if(is_scope_symbol_exist(sem->symbols, variant_name)){
-            add_report(sem->reports, SEV_ERR, ERR_VAR_ALREADY_DECL, member->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_ALREADY_DECL, member->loc);
             success = false;
             continue;
         }
@@ -720,7 +709,7 @@ bool check_enum(semantic_t* sem, node_t* node)
         // create variant symbol with int type
         symbol_t* variant_sym = define_symbol(sem->symbols, variant_name, SYMBOL_ENUM_VARIANT, type_int, member);
         if(!variant_sym) {
-            add_report(sem->reports, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc, DEFAULT_LEN, NULL);
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc);
             success = false;
             continue;
         }
@@ -735,7 +724,7 @@ bool check_enum(semantic_t* sem, node_t* node)
         enum_sym->type->compound.scope = enum_scope->symbols ? (struct symbol*)enum_scope : NULL;
         enum_sym->type->compound.member_count = variant_count;
     }
-    
+
     pop_scope(sem->symbols);
     return success;
 }
