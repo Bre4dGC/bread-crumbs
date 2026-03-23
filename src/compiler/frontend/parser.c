@@ -1,19 +1,15 @@
-#include <stddef.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
+#include <stddef.h>     // size_t
 
-#include "core/arena.h"
-#include "core/diagnostic.h"
-#include "core/strings.h"
-#include "compiler/frontend/parser.h"
-#include "compiler/frontend/ast.h"
-#include "compiler/frontend/parser/decl.h"
-#include "compiler/frontend/parser/stmt.h"
+#include "core/ds/arena.h"              // arena_t
+#include "core/lang/diagnostic.h"       // diagnostic_t
+
+#include "compiler/frontend/ast.h"      // ast_t, node_t
+#include "compiler/frontend/parser.h"   // parser_t
+#include "compiler/frontend/parser/decl.h"  // parse_decl_func, parse_decl_struct, etc.
+#include "compiler/frontend/parser/stmt.h"  // parse_stmt_if, parse_stmt_while, etc.
 
 #ifdef DEBUG
-#include "core/common/debug.h"
+#include "core/lang/debug.h"    // print_ast
 #endif
 
 parse_func_t parse_table[] = {
@@ -38,16 +34,14 @@ parse_func_t parse_table[] = {
 
 const size_t PARSE_TABLE_LENGTH = sizeof(parse_table)/sizeof(parse_table[0]);
 
-parser_t* new_parser(arena_t* arena, arena_t* ast, report_table_t* reports, string_pool_t* string_pool, lexer_t* lexer)
+parser_t* new_parser(compiler_context_t* ctx, lexer_t* lexer)
 {
-    parser_t* parser = arena_alloc(arena, sizeof(parser_t), alignof(parser_t));
+    parser_t* parser = arena_alloc(ctx->memory.phase_arena, sizeof(parser_t), alignof(parser_t));
     if(!parser) return NULL;
     parser->token.current = next_token(lexer);
     parser->token.next = next_token(lexer);
     parser->lexer = lexer;
-    parser->ast = ast;
-    parser->reports = reports;
-    parser->string_pool = string_pool;
+    parser->ctx = ctx;
     return parser;
 }
 
@@ -55,11 +49,8 @@ ast_t* parse_program(parser_t* parser)
 {
     if(!parser) return NULL;
 
-    ast_t* ast = arena_alloc(parser->ast, sizeof(ast_t), alignof(ast_t));
-    if (!ast) return NULL;
-
-    ast->nodes = new_node(parser->ast, NODE_BLOCK);
-    ast->count = 0;
+    parser->ctx->ast = arena_alloc_default(parser->ctx->memory.perm_arena, sizeof(ast_t));
+    if(!parser->ctx->ast) return NULL;
 
     while(!is_eof(parser->token.next)){
         token_t prev_token = parser->token.current;
@@ -76,24 +67,24 @@ ast_t* parse_program(parser_t* parser)
             continue;
         }
 
-        if(!add_stmt_block(parser, ast->nodes, stmt)) goto cleanup;
+        if(!add_stmt_block(parser, parser->ctx->ast->nodes, stmt)) goto cleanup;
 
         // optionally consume ';'
         if(check_token(parser, CAT_OPERATOR, OPER_SEMICOLON)){
             advance_token(parser);
         }
 
-        ast->count++;
+        parser->ctx->ast->count++;
     }
 
 #ifdef DEBUG
-    print_ast(ast->nodes, 0);
+    print_ast(parser->ctx->ast->nodes, 0);
 #endif
 
-    return ast;
+    return parser->ctx->ast;
 
 cleanup:
-    free_ast(parser->ast);
+    free_ast(parser->ctx->ast);
     return NULL;
 }
 
@@ -116,18 +107,18 @@ void set_node_loc(node_t* node, parser_t* parser)
 void set_node_len(node_t* node, parser_t* parser, size_t start_pos)
 {
     if(!node || !parser) return;
-    size_t end_pos = parser->lexer->pos;
+    size_t end_pos = parser->lexer->loc.offset;
     if(end_pos > start_pos){
-        node->length = end_pos - start_pos;
+        node->loc.length = end_pos - start_pos;
     }
     else {
-        node->length = 1;
+        node->loc.length = 1;
     }
 }
 
 size_t get_lexer_pos(parser_t* parser)
 {
-    return parser ? parser->lexer->pos : 0;
+    return parser ? parser->lexer->loc.offset : 0;
 }
 
 void advance_token(parser_t* parser)
@@ -142,7 +133,7 @@ bool consume_token(parser_t* parser, node_t* node, const enum category_tag expec
     if(!parser) return false;
 
     if(parser->token.current.category != expec_category){
-        add_report(parser->reports, SEV_ERR, err, node->loc, node->length, parser->lexer->input->data);
+        add_report(parser->ctx->reports, parser->ctx->src_manager.current, SEV_ERR, err, node->loc);
         return false;
     }
 
@@ -150,7 +141,7 @@ bool consume_token(parser_t* parser, node_t* node, const enum category_tag expec
         int actual_type = parser->token.current.type;
 
         if(actual_type != expec_type){
-            add_report(parser->reports, SEV_ERR, err, node->loc, node->length, parser->lexer->input->data);
+            add_report(parser->ctx->reports, parser->ctx->src_manager.current, SEV_ERR, err, node->loc);
             return false;
         }
     }

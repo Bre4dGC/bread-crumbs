@@ -1,6 +1,6 @@
-#include "compiler/frontend/parser/expr.h"
-#include "compiler/frontend/parser/decl.h"
-#include "compiler/frontend/parser/stmt.h"
+#include "compiler/frontend/parser/expr.h"  // parse_expr, parse_expr_keyword, parse_expr_paren, parse_expr_literal, parse_expr_operator, parse_expr_func_call
+#include "compiler/frontend/parser/decl.h"  // parse_decl_var, parse_decl_array
+#include "compiler/frontend/parser/stmt.h"  // parse_stmt_block
 
 node_t* parse_expr(parser_t* parser)
 {
@@ -23,7 +23,7 @@ node_t* parse_expr_keyword(parser_t* parser)
     const int kw = parser->token.current.type;
 
     if(kw < 0 || (size_t)kw >= PARSE_TABLE_LENGTH){
-        add_report(parser->reports, SEV_ERR, ERR_EXPEC_KEYWORD, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        add_report(parser->ctx->reports, parser->ctx->src_manager.current, SEV_ERR, ERR_EXPEC_KEYWORD, parser->lexer->loc);
         return NULL;
     }
 
@@ -45,9 +45,8 @@ node_t* parse_expr_paren(parser_t* parser)
             node_t* node = parse_expr(parser);
             if(!node) return NULL;
 
-            if(!consume_token(parser, node, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
-                return NULL;
-            }
+            // expect ')'
+            if(!consume_token(parser, node, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)) return NULL;
             return node;
         default: return NULL;
     }
@@ -55,10 +54,10 @@ node_t* parse_expr_paren(parser_t* parser)
 
 node_t* parse_expr_literal(parser_t* parser)
 {
-    node_t* node = new_node(parser->ast, NODE_LITERAL);
+    node_t* node = new_node(parser->ctx->ast->arena, NODE_LITERAL);
     if(!node) return NULL;
 
-    node->lit->value = new_string(parser->string_pool, parser->token.current.literal);
+    node->lit->value = new_string(&parser->ctx->memory.perm_strings, parser->token.current.literal);
     if(!node->lit->value.data) return NULL;
     node->lit->type = parser->token.current.type;
 
@@ -80,16 +79,16 @@ node_t* parse_expr_operator(parser_t* parser)
 node_t* parse_expr_func_call(parser_t* parser)
 {
     size_t start_pos = get_lexer_pos(parser);
-    node_t* node = new_node(parser->ast, NODE_CALL);
+    node_t* node = new_node(parser->ctx->ast->arena, NODE_CALL);
     if(!node) return NULL;
     set_node_loc(node, parser);
 
     // extract function name before consuming token
     if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
-        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, node->loc, node->length, parser->lexer->input->data);
+        add_report(parser->ctx->reports, parser->ctx->src_manager.current, SEV_ERR, ERR_EXPEC_IDENT, node->loc);
         return NULL;
     }
-    node->func_call->name = new_string(parser->string_pool, parser->token.current.literal);
+    node->func_call->name = new_string(&parser->ctx->memory.perm_strings, parser->token.current.literal);
     if(!node->func_call->name.data) return NULL;
     advance_token(parser);
 
@@ -105,7 +104,7 @@ node_t* parse_expr_func_call(parser_t* parser)
             // grow array if needed
             if(node->func_call->args.count >= node->func_call->args.capacity){
                 size_t new_capacity = node->func_call->args.capacity == 0 ? 4 : node->func_call->args.capacity * 2;
-                node_t** new_args = arena_alloc_array(parser->ast, sizeof(node_t*), new_capacity, alignof(node_t*));
+                node_t** new_args = arena_alloc_array(parser->ctx->ast->arena, sizeof(node_t*), new_capacity, alignof(node_t*));
                 if(!new_args) return NULL;
                 node->func_call->args.elems = new_args;
                 node->func_call->args.capacity = new_capacity;
@@ -123,7 +122,7 @@ node_t* parse_expr_func_call(parser_t* parser)
 
         // expect closing ')'
         if(!consume_token(parser, node, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_PAREN, node->loc, node->length, parser->lexer->input->data);
+            add_report(parser->ctx->reports, parser->ctx->src_manager.current, SEV_ERR, ERR_EXPEC_PAREN, node->loc);
             return NULL;
         }
     }
@@ -135,16 +134,16 @@ node_t* parse_expr_func_call(parser_t* parser)
 node_t* parse_expr_var_ref(parser_t* parser)
 {
     size_t start_pos = get_lexer_pos(parser);
-    node_t* node = new_node(parser->ast, NODE_REFERENCE);
+    node_t* node = new_node(parser->ctx->ast->arena, NODE_REFERENCE);
     if(!node) return NULL;
     set_node_loc(node, parser);
 
     if(!check_token(parser, CAT_LITERAL, LIT_IDENT)){
-        add_report(parser->reports, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+        add_report(parser->ctx->reports, parser->ctx->src_manager.current, SEV_ERR, ERR_EXPEC_IDENT, parser->lexer->loc);
         return NULL;
     }
 
-    node->var_ref->name = new_string(parser->string_pool, parser->token.current.literal);
+    node->var_ref->name = new_string(&parser->ctx->memory.perm_strings, parser->token.current.literal);
     if(!node->var_ref->name.data) return NULL;
 
     advance_token(parser);
@@ -165,10 +164,10 @@ node_t* parse_expr_primary(parser_t* parser)
             }
             else {
                 size_t start_pos = get_lexer_pos(parser);
-                node_t* node = new_node(parser->ast, NODE_LITERAL);
+                node_t* node = new_node(parser->ctx->ast->arena, NODE_LITERAL);
                 if(!node) return NULL;
                 set_node_loc(node, parser);
-                node->lit->value = new_string(parser->string_pool, parser->token.current.literal);
+                node->lit->value = new_string(&parser->ctx->memory.perm_strings, parser->token.current.literal);
                 node->lit->type = parser->token.current.type;
                 advance_token(parser);
                 set_node_len(node, parser, start_pos);
@@ -180,9 +179,9 @@ node_t* parse_expr_primary(parser_t* parser)
                 advance_token(parser);
                 node_t* expr = parse_expr(parser);
                 if(!expr) return NULL;
-                if(!consume_token(parser, expr, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)){
-                    return NULL;
-                }
+
+                // expect ')'
+                if(!consume_token(parser, expr, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)) return NULL;
                 return expr;
             }
             else if(parser->token.current.type == PAR_LBRACKET){
@@ -284,8 +283,8 @@ node_t* parse_expr_postfix(parser_t* parser)
         enum category_operator op = parser->token.current.type;
 
         if(op == OPER_INCREM || op == OPER_DECREM){
-            size_t start_pos = get_lexer_pos(parser) - expr->length;
-            node_t* postfix = new_node(parser->ast, NODE_UNARYOP);
+            size_t start_pos = get_lexer_pos(parser) - expr->loc.length;
+            node_t* postfix = new_node(parser->ctx->ast->arena, NODE_UNARYOP);
             if(!postfix) return NULL;
 
             postfix->loc = expr->loc;
@@ -308,7 +307,7 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
     node_t* left = parse_expr_postfix(parser);
     if(!left) return NULL;
 
-    size_t expr_start_pos = get_lexer_pos(parser) - left->length;
+    size_t expr_start_pos = get_lexer_pos(parser) - left->loc.length;
 
     while(parser->token.current.category == CAT_OPERATOR){
         enum category_operator op_type = parser->token.current.type;
@@ -359,11 +358,11 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
 
         node_t* right = parse_expr_binop(parser, next_min_prec);
         if(!right){
-            add_report(parser->reports, SEV_ERR, ERR_EXPEC_EXPR, parser->lexer->loc, DEFAULT_LEN, parser->lexer->input->data);
+            add_report(parser->ctx->reports, parser->ctx->src_manager.current, SEV_ERR, ERR_EXPEC_EXPR, parser->lexer->loc);
             return NULL;
         }
 
-        node_t* node = new_node(parser->ast, NODE_BINOP);
+        node_t* node = new_node(parser->ctx->ast->arena, NODE_BINOP);
         if(!node) return NULL;
 
         node->binop->left = left;
@@ -382,7 +381,7 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
     if(left){
         size_t current_pos = get_lexer_pos(parser);
         if(current_pos > expr_start_pos){
-            left->length = current_pos - expr_start_pos;
+            left->loc.length = current_pos - expr_start_pos;
         }
     }
     return left;
@@ -391,7 +390,7 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
 node_t* parse_expr_unaryop(parser_t* parser)
 {
     size_t start_pos = get_lexer_pos(parser);
-    node_t* node = new_node(parser->ast, NODE_UNARYOP);
+    node_t* node = new_node(parser->ctx->ast->arena, NODE_UNARYOP);
     if(!node) return NULL;
     set_node_loc(node, parser);
 
