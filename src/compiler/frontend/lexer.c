@@ -1,14 +1,13 @@
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <ctype.h>
+#include <ctype.h>   // isalpha, isdigit
+#include <stdbool.h> // bool
+#include <stddef.h>  // size_t
+#include <stdlib.h>  // realloc, free
+#include <string.h>  // strlen, strncmp
 
-#include "core/arena.h"
-#include "core/diagnostic.h"
-#include "core/strings.h"
-#include "compiler/frontend/lexer.h"
+#include "core/ds/arena.h"        // arena_t
+#include "core/ds/strings.h"      // string_t
+#include "core/lang/diagnostic.h" // diagnostic_t
+#include "compiler/frontend/lexer.h" // lexer_t, token_t
 
 #define IDENT_SIZE 16
 #define NUM_SIZE 32
@@ -32,13 +31,13 @@ char read_escseq(lexer_t* lexer);
 
 void read_ch(lexer_t* lexer)
 {
-    if(!lexer || !lexer->input->data) return;
+    if(!lexer || !lexer->ctx->src_manager.current) return;
 
-    if(lexer->pos++ >= lexer->input->length){
+    if(lexer->loc.offset++ >= lexer->ctx->src_manager.current->content->length){
         lexer->ch = 0;
     }
     else {
-        lexer->ch = lexer->input->data[lexer->pos];
+        lexer->ch = lexer->ctx->src_manager.current->content->data[lexer->loc.offset];
         lexer->loc.column++;
     }
 }
@@ -64,27 +63,28 @@ void skip_whitespace(lexer_t* lexer)
 
 char peek_ch(const lexer_t* lexer)
 {
-    if(!lexer || !lexer->input->data) return '\0';
+    if(!lexer || !lexer->ctx->src_manager.current){
+        return '\0';
+    }
 
-    size_t npos = lexer->pos + 1;
-    if(npos < lexer->input->length) return lexer->input->data[npos];
+    size_t npos = lexer->loc.offset + 1;
+    if(npos < lexer->ctx->src_manager.current->content->length){
+        return lexer->ctx->src_manager.current->content->data[npos];
+    }
     return '\0';
 }
 
-lexer_t* new_lexer(arena_t* arena, string_pool_t* string_pool, report_table_t* reports, string_t* input)
+lexer_t* new_lexer(compiler_context_t* ctx)
 {
-    if(!input) return NULL;
+    if(!ctx->src_manager.current) return NULL;
 
-    lexer_t* lexer = arena_alloc(arena, sizeof(lexer_t), alignof(lexer_t));
+    lexer_t* lexer = arena_alloc(ctx->memory.phase_arena, sizeof(lexer_t), alignof(lexer_t));
     if(!lexer) return NULL;
 
-    lexer->input = input;
-    lexer->ch = input->data[0];
-    lexer->pos = 0;
-    lexer->loc = (location_t){1, 1};
+    lexer->ch = ctx->src_manager.current->content->data[0];
+    lexer->loc = new_location();
     lexer->balance = 0;
-    lexer->string_pool = string_pool;
-    lexer->reports = reports;
+    lexer->ctx = ctx;
 
     return lexer;
 }
@@ -102,7 +102,7 @@ token_t next_token(lexer_t* lexer)
         break;
     }
 
-    const char ch_str[2] ={lexer->ch, '\0'};
+    const char ch_str[2] = {lexer->ch, '\0'};
     token_t token = {0};
 
     switch(lexer->ch){
@@ -130,7 +130,7 @@ token_t next_token(lexer_t* lexer)
 
         case '\0':
             if(lexer->balance != 0){
-                add_report(lexer->reports, SEV_ERR, ERR_UNMAT_PAREN, lexer->loc, DEFAULT_LEN, lexer->input->data);
+                add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_UNMAT_PAREN, lexer->loc);
             }
             token = new_token(CAT_SERVICE, SERV_EOF, "EOF");
             break;
@@ -143,14 +143,13 @@ token_t next_token(lexer_t* lexer)
                 token = handle_number(lexer);
             }
             else {
-                size_t length = 0;
                 while(lexer->ch != '\0' && !isalnum(lexer->ch) && !isspace(lexer->ch)){
                     read_ch(lexer);
-                    length++;
+                    lexer->loc.length++;
                 }
                 token = new_token(CAT_SERVICE, SERV_ILLEGAL, ch_str);
 
-                add_report(lexer->reports, SEV_ERR, ERR_ILLEG_CHAR, (location_t){lexer->loc.line, lexer->loc.column - length}, length, lexer->input->data);
+                add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_ILLEG_CHAR, loc_copy(lexer->loc, -lexer->loc.length));
 
                 read_ch(lexer);
             }
@@ -162,6 +161,7 @@ token_t next_token(lexer_t* lexer)
 token_t handle_operator(lexer_t* lexer)
 {
     if(!lexer) return new_token(CAT_SERVICE, SERV_ILLEGAL, "NULL_LEXER");
+
     const char current = lexer->ch;
     const char next = peek_ch(lexer);
 
@@ -194,11 +194,11 @@ token_t handle_operator(lexer_t* lexer)
         case ';': op_type = OPER_SEMICOLON; break;
         case '?': op_type = OPER_QUESTION;  break;
         default: {
-            string_t stored = new_string(lexer->string_pool, op_char);
+            string_t stored = new_string(&lexer->ctx->memory.temp_strings, op_char);
             return new_token(CAT_SERVICE, SERV_ILLEGAL, stored.data ? stored.data : op_char);
         }
     }
-    string_t stored = new_string(lexer->string_pool, op_char);
+    string_t stored = new_string(&lexer->ctx->memory.temp_strings, op_char);
     return new_token(CAT_OPERATOR, op_type, stored.data ? stored.data : op_char);
 }
 
@@ -239,12 +239,13 @@ token_t handle_number(lexer_t* lexer)
 token_t handle_paren(lexer_t* lexer)
 {
     if(!lexer) return new_token(CAT_SERVICE, SERV_ILLEGAL, "NULL_LEXER");
+
     if(lexer->ch == '(' || lexer->ch == '{' || lexer->ch == '['){
         lexer->balance++;
     }
     else if(lexer->ch == ')' || lexer->ch == '}' || lexer->ch == ']'){
         if(lexer->balance == 0){
-            add_report(lexer->reports, SEV_ERR, ERR_UNMAT_PAREN, lexer->loc, DEFAULT_LEN, lexer->input->data);
+            add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_UNMAT_PAREN, lexer->loc);
         }
         else {
             lexer->balance--;
@@ -261,7 +262,7 @@ token_t handle_paren(lexer_t* lexer)
         case ']': type = PAR_RBRACKET; break;
     }
     char paren_str[2] = {lexer->ch, '\0'};
-    string_t stored = new_string(lexer->string_pool, paren_str);
+    string_t stored = new_string(&lexer->ctx->memory.temp_strings, paren_str);
     const token_t token = new_token(CAT_PAREN, type, stored.data ? stored.data : paren_str);
     read_ch(lexer);
     return token;
@@ -275,15 +276,15 @@ token_t handle_string(lexer_t* lexer)
 
     string_t str = read_string(lexer, quote_char);
     if(!str.data){
-        add_report(lexer->reports, SEV_ERR, ERR_INVAL_STR, lexer->loc, DEFAULT_LEN, lexer->input->data);
+        add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_INVAL_STR, lexer->loc);
         return new_token(CAT_SERVICE, SERV_ILLEGAL, "INVALID_STRING");
     }
     if(lexer->ch != quote_char){
-        add_report(lexer->reports, SEV_ERR, ERR_UNCLO_STR, lexer->loc, DEFAULT_LEN, lexer->input->data);
+        add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_UNCLO_STR, lexer->loc);
         return new_token(CAT_SERVICE, SERV_ILLEGAL, "UNCLOSED_STRING");
     }
     if(opening_delim_type == DELIM_SQUOTE && str.length > 1){
-        add_report(lexer->reports, SEV_ERR, ERR_INVAL_STR, (location_t){lexer->loc.line, lexer->loc.column - str.length}, str.length, lexer->input->data);
+        add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_INVAL_STR, loc_copy(lexer->loc, -lexer->loc.length));
         return new_token(CAT_SERVICE, SERV_ILLEGAL, "INVALID_STRING");
     }
 
@@ -295,6 +296,7 @@ token_t handle_string(lexer_t* lexer)
 void handle_comment(lexer_t* lexer)
 {
     if(!lexer) return;
+
     switch(peek_ch(lexer)){
         case '#': read_ch(lexer); read_ch(lexer); while(lexer->ch != '\n' && lexer->ch != '\0') read_ch(lexer); break;
         case '[': while(lexer->ch != ']' && peek_ch(lexer) != '#') read_ch(lexer); break;
@@ -310,14 +312,14 @@ string_t read_ident(lexer_t* lexer)
     size_t length = 0;
 
     if(isdigit(lexer->ch)){
-        add_report(lexer->reports, SEV_ERR, ERR_INVAL_IDENT, lexer->loc, DEFAULT_LEN, lexer->input->data);
+        add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_INVAL_IDENT, lexer->loc);
         return (string_t){0};
     }
 
     while(isalnum(lexer->ch) || lexer->ch == '_'){
         if(length >= MAX_IDENT_SIZE){
             if(buffer != stack_buffer) free(buffer);
-            add_report(lexer->reports, SEV_ERR, ERR_INVAL_IDENT, lexer->loc, length, lexer->input->data);
+            add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_INVAL_IDENT, lexer->loc);
             return (string_t){0};
         }
 
@@ -338,7 +340,7 @@ string_t read_ident(lexer_t* lexer)
 
     buffer[length] = '\0';
 
-    string_t stored = new_string(lexer->string_pool, buffer);
+    string_t stored = new_string(&lexer->ctx->memory.perm_strings, buffer);
     if(!stored.data){
         if(buffer != stack_buffer) free(buffer);
         return (string_t){0};
@@ -349,7 +351,7 @@ string_t read_ident(lexer_t* lexer)
     return stored;
 }
 
-string_t read_number(lexer_t* lexer, enum category_literal* lit)
+string_t read_number(lexer_t* lexer, enum category_literal *lit)
 {
     if(!isdigit(lexer->ch)) return (string_t){0};
 
@@ -381,7 +383,7 @@ string_t read_number(lexer_t* lexer, enum category_literal* lit)
 
         if(length >= MAX_NUM_SIZE){
             if(buffer != stack_buffer) free(buffer);
-            add_report(lexer->reports, SEV_ERR, ERR_INVAL_NUM, lexer->loc, length, lexer->input->data);
+            add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_INVAL_NUM, lexer->loc);
             return (string_t){0};
         }
 
@@ -407,7 +409,7 @@ string_t read_number(lexer_t* lexer, enum category_literal* lit)
                 length++;
             }
 
-            add_report(lexer->reports, SEV_ERR, ERR_INVAL_LIT, (location_t){lexer->loc.line, lexer->loc.column - length}, length, lexer->input->data);
+            add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_INVAL_LIT, loc_copy(lexer->loc, -lexer->loc.length));
 
             if(buffer != stack_buffer) free(buffer);
             return (string_t){0};
@@ -416,7 +418,7 @@ string_t read_number(lexer_t* lexer, enum category_literal* lit)
 
     buffer[length] = '\0';
 
-    string_t stored = new_string(lexer->string_pool, buffer);
+    string_t stored = new_string(&lexer->ctx->memory.perm_strings, buffer);
     if(!stored.data){
         if(buffer != stack_buffer) free(buffer);
         return (string_t){0};
@@ -441,7 +443,7 @@ char read_escseq(lexer_t* lexer)
         case '\'':esc_seq = '\''; break;
         case '0': esc_seq = '\0'; break;
         default:
-            add_report(lexer->reports, SEV_WARN, ERR_INVAL_ESCSEQ, lexer->loc, DEFAULT_LEN, lexer->input->data);
+            add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_WARN, ERR_INVAL_ESCSEQ, lexer->loc);
             break;
     }
     read_ch(lexer);
@@ -458,7 +460,7 @@ string_t read_string(lexer_t* lexer, char quote_char)
     while(lexer->ch != quote_char && lexer->ch != '\0'){
         if(length >= MAX_STR_SIZE){
             if(buffer != stack_buffer) free(buffer);
-            add_report(lexer->reports, SEV_ERR, ERR_INVAL_STR, lexer->loc, length, lexer->input->data);
+            add_report(lexer->ctx->reports, lexer->ctx->src_manager.current, SEV_ERR, ERR_INVAL_STR, lexer->loc);
             return (string_t){0};
         }
 
@@ -495,8 +497,7 @@ string_t read_string(lexer_t* lexer, char quote_char)
 
     buffer[length] = '\0';
 
-    printf("%s\n", buffer);
-    string_t stored = new_string(lexer->string_pool, buffer);
+    string_t stored = new_string(&lexer->ctx->memory.perm_strings, buffer);
     if(!stored.data){
         if(buffer != stack_buffer) free(buffer);
         return (string_t){0};

@@ -1,12 +1,12 @@
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <stddef.h>     // size_t
+#include <stdlib.h>     // malloc, free
+#include <stdio.h>      // printf
+#include <string.h>     // strlen
 
-#include "core/hashmap.h"
-#include "compiler/frontend/lexer/tokens.h"
+#include "core/ds/hashmap.h"    // hashmap_t
+#include "compiler/frontend/lexer/tokens.h" // token_t, CAT_OPERATOR, CAT_KEYWORD, CAT_DATATYPE, CAT_MODIFIER, CAT_LITERAL, CAT_PAREN, CAT_DELIMITER
 #ifdef DEBUG
-#include "core/common/debug.h"
+#include "core/lang/debug.h"    // print_token
 #endif
 
 #define C_OP (CAT_OPERATOR)
