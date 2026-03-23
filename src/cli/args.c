@@ -1,15 +1,16 @@
-#include "cli/args.h"
+#include <stdlib.h>     // malloc, free
 
-cli_option_set_t* new_args(void)
+#include "cli/args.h"   // cli_option_set_t
+
+cli_option_set_t new_option_list(void)
 {
-    cli_option_set_t* opt_set = malloc(sizeof(cli_option_set_t));
-    if(!opt_set) return NULL;
-    opt_set->items = NULL;
-    opt_set->count = 0;
-    return opt_set;
+    return (cli_option_set_t){
+        .items = NULL,
+        .count = 0
+    };
 }
 
-void free_args(cli_option_set_t* opt_set)
+void free_option_list(cli_option_set_t* opt_set)
 {
     if(!opt_set) return;
 
