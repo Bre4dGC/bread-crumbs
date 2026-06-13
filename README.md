@@ -2,9 +2,9 @@
     <h1>Bread Crumbs</h1>
     <img src="logo.png" alt="Bread Crumbs Logo" width="300"/>
     <div style="margin-bottom: 20px;">
-        <img src="https://m3-markdown-badges.vercel.app/issues/1/1/Bre4dGC/bread-crumbs" width="100"/>
-        <img src="https://m3-markdown-badges.vercel.app/stars/8/1/Bre4dGC/bread-crumbs" width="100"/>
-        <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/LicenceMIT/licencemit1.svg" width="110"/>
+        <img src="https://m3-markdown-badges.vercel.app/issues/1/1/Bre4dGC/bread-crumbs" width="150"/>
+        <img src="https://m3-markdown-badges.vercel.app/stars/8/1/Bre4dGC/bread-crumbs" width="150"/>
+        <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/LicenceMIT/licencemit1.svg" width="160"/>
     </div>
 </div>
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#if defined(__unix__) || defined(__APPLE__) || defined(__linux__)
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -17,3 +18,5 @@
 #define DLL_EXTENSION ".so"
 #define DLL_PREFIX "lib"
 #define EXPORT_SYMBOL __attribute__((visibility("default")))
+
+#endif

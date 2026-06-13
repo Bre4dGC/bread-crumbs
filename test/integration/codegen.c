@@ -1,4 +1,4 @@
-#include "core/common/source.h"
+#include "core/lang/source.h"
 #include "compiler/backend/codegen.h"
 #include "../utils/benchmark.h"
 

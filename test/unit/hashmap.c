@@ -1,5 +1,5 @@
-#include "core/hashmap.h"
-#include "core/common/source.h"
+#include "core/ds/hashmap.h"
+
 #include "../utils/benchmark.h"
 
 int main(void)
@@ -7,27 +7,23 @@ int main(void)
     bm_start();
 
     hashmap_t* table = new_hashmap();
+    
+    char* keys[] = {"apple", "banana", "orange", "grape", "melon"};
+    char* values[] = {"red", "yellow", "orange", "purple", "green"};
 
-    int i_val = 42;
-    const char* i_key = "int_key";
-    hm_insert(table, i_key, &i_val);
-    printf("Inserted key %s with value %d\n", i_key, i_val);
+    for(size_t i = 0; i < sizeof(keys)/sizeof(keys[0]); i++){
+        hm_insert(table, keys[i], values[i]);
+    }
 
-    char s_val[] = "str";
-    const char* s_key = "str_key";
-    hm_insert(table, s_key, s_val);
-    printf("Inserted key %s with value %s\n", s_val, s_val);
-
-    int* lookup_i = hm_lookup(table, i_key);
-    if(lookup_i) printf("Lookup key %s: found value %d\n", i_key, *lookup_i);
-    else printf("Lookup key %s: not found\n", i_key);
-
-    char* lookup_s = hm_lookup(table, s_val);
-    if(lookup_s) printf("Lookup key %s: found value %s\n", s_val, lookup_s);
-    else printf("Lookup key %s: not found\n", s_val);
-
-    hm_delete(table, i_key);
-    printf("Deleted key %s\n", i_key);
+    for(size_t i = 0; i < sizeof(keys)/sizeof(keys[0]); i++){
+        char* value = hm_lookup(table, keys[i]);
+        if(value){
+            printf("%s: %s\n", keys[i], value);
+        }
+        else {
+            printf("%s: not found\n", keys[i]);
+        }
+    }
 
     free_hashmap(table);
 

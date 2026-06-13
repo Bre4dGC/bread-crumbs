@@ -27,4 +27,3 @@ bool rs_add_source_file(resolver_t* rs, const char* filepath);
 bool rs_remove_source(resolver_t* rs, const char* filename);
 resolver_entry_t* rs_get_source(resolver_t* rs, const char* filename);
 bool rs_resolve(resolver_t* rs, const char* filename);
-void free_rs_sources(resolver_t* rs);

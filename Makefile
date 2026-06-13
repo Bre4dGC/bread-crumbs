@@ -18,18 +18,28 @@ DIR_TESTS_UNIT     	  = test/unit
 DIR_TESTS_INTEGRATION = test/integration
 DIR_TESTS_OUTPUT   	  = $(DIR_BIN)/tests
 
-DIR_COMP 		  	= src/compiler
+DIR_COMP 		  	= $(wildcard src/compiler/*.c)
+DIR_COMP_CORE 		= $(wildcard src/core/*.c)
 DIR_COMP_CORE_DS 	= $(wildcard src/core/ds/*.c)
 DIR_COMP_CORE_LANG 	= $(wildcard src/core/lang/*.c)
-DIR_COMP_FRONTEND 	= $(wildcard src/compiler/frontend/*.c)
+DIR_COMP_CORE_PLATFORM = $(wildcard src/core/platform/*.c)
+
+DIR_COMP_FRONTEND 		   = $(wildcard src/compiler/frontend/*.c)
 DIR_COMP_FRONTEND_PARSER   = $(wildcard src/compiler/frontend/parser/*.c)
 DIR_COMP_FRONTEND_LEXER    = $(wildcard src/compiler/frontend/lexer/*.c)
 DIR_COMP_FRONTEND_SEMANTIC = $(wildcard src/compiler/frontend/semantic/*.c)
+
 DIR_COMP_MIDDLE   = $(wildcard src/compiler/middle/*.c)
 DIR_COMP_BACKEND  = $(wildcard src/compiler/backend/*.c)
-DIR_RUNTIME 	  = $(wildcard src/runtime/*.c)
 
-DIR_CLI     = $(wildcard src/cli/*.c)
+DIR_COMPILER = $(DIR_COMP) $(DIR_COMP_CORE) $(DIR_COMP_CORE_DS) $(DIR_COMP_CORE_LANG) \
+			   $(DIR_COMP_CORE_PLATFORM) $(DIR_COMP_FRONTEND) $(DIR_COMP_FRONTEND_PARSER) \
+			   $(DIR_COMP_FRONTEND_LEXER) $(DIR_COMP_FRONTEND_SEMANTIC) $(DIR_COMP_MIDDLE) \
+			   $(DIR_COMP_BACKEND)
+
+DIR_RUNTIME	= $(wildcard src/runtime/*.c)
+
+DIR_CLI     	 = $(wildcard src/cli/*.c)
 DIR_CLI_COMMANDS = $(wildcard src/cli/commands/*.c)
 ###########################################################
 
@@ -37,89 +47,46 @@ DIR_CLI_COMMANDS = $(wildcard src/cli/commands/*.c)
 # Main executable
 EXEC_MAIN = $(DIR_BIN)/crum
 
-# Test runners
-TEST_LEXER       = $(EXEC_TEST_LEXER)
-TEST_PARSER      = $(EXEC_TEST_PARSER)
-TEST_SEMANTIC    = $(EXEC_TEST_SEMANTIC)
-TEST_ARENA       = $(EXEC_TEST_ARENA)
-TEST_STRINGPOOL  = $(EXEC_TEST_STRINGPOOL)
-TEST_HASHTABLE   = $(EXEC_TEST_HASHTABLE)
-
 # Compiler tests
-EXEC_TEST_LEXER    = $(DIR_TESTS_OUTPUT)/lexing
-EXEC_TEST_PARSER   = $(DIR_TESTS_OUTPUT)/parsing
-EXEC_TEST_SEMANTIC = $(DIR_TESTS_OUTPUT)/analisis
-EXEC_TEST_CODEGEN  = $(DIR_TESTS_OUTPUT)/codegen
+TEST_LEXER    = $(DIR_TESTS_OUTPUT)/lexing
+TEST_PARSER   = $(DIR_TESTS_OUTPUT)/parsing
+TEST_SEMANTIC = $(DIR_TESTS_OUTPUT)/analisis
+TEST_CODEGEN  = $(DIR_TESTS_OUTPUT)/codegen
 
 # Other tests
-EXEC_TEST_ARENA   	 = $(DIR_TESTS_OUTPUT)/arena
-EXEC_TEST_STRINGPOOL = $(DIR_TESTS_OUTPUT)/stringpool
-EXEC_TEST_HASHTABLE  = $(DIR_TESTS_OUTPUT)/hashmap
+TEST_ARENA   = $(DIR_TESTS_OUTPUT)/arena
+TEST_STRINGS = $(DIR_TESTS_OUTPUT)/strings
+TEST_HASHMAP = $(DIR_TESTS_OUTPUT)/hashmap
 ###########################################################
 
 ###################### SOURCE FILES #######################
 SRC_MAIN = $(DIR_SRC)/main.c \
-	$(DIR_CLI) \
-	$(DIR_CLI_COMMANDS) \
-	$(DIR_COMP_CORE) \
-	$(DIR_COMP_FRONTEND) \
-	$(DIR_COMP_FRONTEND_PARSER) \
-	$(DIR_COMP_FRONTEND_LEXER) \
-	$(DIR_COMP_FRONTEND_SEMANTIC) \
-	$(DIR_COMP_MIDDLE) \
-	$(DIR_COMP_BACKEND) \
-	$(DIR_RUNTIME)
+		   $(DIR_CLI) \
+		   $(DIR_CLI_COMMANDS) \
+		   $(DIR_COMPILER) \
+		   $(DIR_RUNTIME)
 
-SRC_TEST_LEXER = \
-	$(DIR_TESTS_INTEGRATION)/lexing.c \
-	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/lang/filesystem.c \
-	$(DIR_SRC)/compiler/frontend/lexer.c \
-	$(DIR_SRC)/compiler/frontend/lexer/tokens.c
+TEST_INTEGRATION = $(DIR_TESTS_INTEGRATION)/lexing.c   \
+				   $(DIR_TESTS_INTEGRATION)/parsing.c  \
+				   $(DIR_TESTS_INTEGRATION)/analisis.c \
+				   $(DIR_COMPILER)
 
-SRC_TEST_PARSER = \
-	$(DIR_TESTS_INTEGRATION)/parsing.c \
-	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/lang/filesystem.c \
-	$(DIR_SRC)/compiler/frontend/ast.c \
-	$(DIR_SRC)/compiler/frontend/lexer/tokens.c \
-	$(DIR_SRC)/compiler/frontend/lexer.c \
-	$(DIR_SRC)/compiler/frontend/parser/decl.c \
-	$(DIR_SRC)/compiler/frontend/parser/expr.c \
-	$(DIR_SRC)/compiler/frontend/parser/stmt.c \
-	$(DIR_SRC)/compiler/frontend/parser.c
-
-SRC_TEST_SEMANTIC = \
-	$(DIR_TESTS_INTEGRATION)/analisis.c \
-	$(DIR_COMP_CORE) \
-	$(DIR_SRC)/core/lang/filesystem.c \
-	$(DIR_SRC)/compiler/frontend/ast.c \
-	$(DIR_SRC)/compiler/frontend/lexer/tokens.c \
-	$(DIR_SRC)/compiler/frontend/lexer.c \
-	$(DIR_SRC)/compiler/frontend/parser/decl.c \
-	$(DIR_SRC)/compiler/frontend/parser/expr.c \
-	$(DIR_SRC)/compiler/frontend/parser/stmt.c \
-	$(DIR_SRC)/compiler/frontend/parser.c \
-	$(DIR_SRC)/compiler/frontend/semantic/symbol.c \
-	$(DIR_SRC)/compiler/frontend/semantic/types.c \
-	$(DIR_SRC)/compiler/frontend/semantic.c
-
-SRC_TEST_ARENA = $(DIR_TESTS_UNIT)/arena.c $(DIR_COMP_CORE)
-SRC_TEST_STRINGPOOL = $(DIR_TESTS_UNIT)/strings.c $(DIR_COMP_CORE)
-SRC_TEST_HASHTABLE = $(DIR_TESTS_UNIT)/hashmap.c $(DIR_COMP_CORE)
-SRC_TEST_DIAGNOSTIC = $(DIR_TESTS_UNIT)/diagnostic.c $(DIR_COMP_CORE)
+TEST_UNIT = $(DIR_TESTS_UNIT)/arena.c   \
+			$(DIR_TESTS_UNIT)/strings.c \
+			$(DIR_TESTS_UNIT)/hashmap.c \
+			$(DIR_CORE_DS)
 ###########################################################
 
 ################### COMPILE TO OBJECTS ####################
-OBJS_MAIN = 		 $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_MAIN))
+OBJS_MAIN =	$(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_MAIN))
 
-OBJS_TEST_LEXER = 	 $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_LEXER))
-OBJS_TEST_PARSER = 	 $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_PARSER))
+OBJS_TEST_LEXER    = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_LEXER))
+OBJS_TEST_PARSER   = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_PARSER))
 OBJS_TEST_SEMANTIC = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_SEMANTIC))
 
 OBJS_TEST_ARENA	 	 = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_ARENA))
-OBJS_TEST_STRINGPOOL = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_STRINGPOOL))
-OBJS_TEST_HASHTABLE	 = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_HASHTABLE))
+OBJS_TEST_STRINGS 	 = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_STRINGS))
+OBJS_TEST_HASHMAP	 = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_HASHMAP))
 OBJS_TEST_DIAGNOSTIC = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_DIAGNOSTIC))
 ###########################################################
 
@@ -128,30 +95,29 @@ OBJS_TEST_DIAGNOSTIC = $(patsubst %.c, $(DIR_OBJ)/%.o, $(SRC_TEST_DIAGNOSTIC))
 
 all: build
 
-build: 	$(EXEC_MAIN) 			\
-		$(EXEC_TEST_LEXER) 		\
-		$(EXEC_TEST_PARSER) 	\
-		$(EXEC_TEST_SEMANTIC) 	\
-	 	$(EXEC_TEST_ARENA) 		\
-		$(EXEC_TEST_STRINGPOOL) \
-		$(EXEC_TEST_HASHTABLE) 	\
-		$(EXEC_TEST_DIAGNOSTIC)
+build: 	$(EXEC_MAIN) 		  \
+		$(EXEC_TEST_LEXER) 	  \
+		$(EXEC_TEST_PARSER)   \
+		$(EXEC_TEST_SEMANTIC) \
+	 	$(EXEC_TEST_ARENA) 	  \
+		$(EXEC_TEST_STRINGS)  \
+		$(EXEC_TEST_HASHMAP)
 
 test: build
 	$(TEST_LEXER) 	   | cat
 	$(TEST_PARSER)	   | cat
 	$(TEST_SEMANTIC)   | cat
 	$(TEST_ARENA) 	   | cat
-	$(TEST_STRINGPOOL) | cat
-	$(TEST_HASHTABLE)  | cat
+	$(TEST_STRINGS)    | cat
+	$(TEST_HASHMAP)    | cat
 	$(TEST_DIAGNOSTIC) | cat
 
 run: build
-	$(MAIN)
+	$(EXEC_MAIN)
 
 install:
 	sudo mkdir -p /usr/local/bin/
-	sudo cp $(MAIN) /usr/local/bin/
+	sudo cp $(EXEC_MAIN) /usr/local/bin/
 
 clean:
 	rm -rf $(DIR_BIN) $(DIR_OBJ) $(DIR_TESTS_OUTPUT)
@@ -161,7 +127,7 @@ clean:
 $(DIR_BIN):
 	mkdir -p $(DIR_BIN)
 
-$(DIR_TESTS_OUTPUT): | $(DIR_BIN)
+$(DIR_TESTS_OUTPUT):
 	mkdir -p $(DIR_TESTS_OUTPUT)
 
 $(DIR_OBJ):
@@ -190,11 +156,11 @@ $(EXEC_TEST_ARENA): $(OBJS_TEST_ARENA) | $(DIR_TESTS_OUTPUT)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 
-$(EXEC_TEST_STRINGPOOL): $(OBJS_TEST_STRINGPOOL) | $(DIR_TESTS_OUTPUT)
+$(EXEC_TEST_STRINGS): $(OBJS_TEST_STRINGS) | $(DIR_TESTS_OUTPUT)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 
-$(EXEC_TEST_HASHTABLE): $(OBJS_TEST_HASHTABLE) | $(DIR_TESTS_OUTPUT)
+$(EXEC_TEST_HASHMAP): $(OBJS_TEST_HASHMAP) | $(DIR_TESTS_OUTPUT)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 ###########################################################

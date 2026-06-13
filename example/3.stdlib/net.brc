@@ -1,0 +1,23 @@
+#[ Network library basic usage (at the design planning stage)
+
+        === Methods ===
+.connect(host : str, port : int) : socket   -- connect to host on port
+.listen(port : int) : socket                -- listen on port
+.send(socket : socket, data : str)          -- send data to socket
+.receive(socket : socket) : str                -- receive data from socket
+.close(socket : socket)                     -- close socket
+
+        === Properties ===
+.host : str     -- host address
+.port : int     -- port number
+.connected : bool -- connection status
+
+]#
+
+import std.network
+
+var socket : socket = net.connect("localhost", 8080)
+net.send(socket, "Hello, world!")
+
+var data : str = net.receive(socket)
+net.close(socket)

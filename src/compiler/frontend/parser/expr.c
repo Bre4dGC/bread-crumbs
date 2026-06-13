@@ -247,7 +247,6 @@ int get_operator_precedence(enum category_operator op)
             return 1;
 
         case OPER_DOT:
-        case OPER_ARROW:
         case OPER_SEMICOLON:
         case OPER_COLON:
         case OPER_QUESTION:
@@ -325,11 +324,11 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
             case OPER_SLASH:     op_literal = "/"; break;
             case OPER_PERCENT:   op_literal = "%"; break;
             case OPER_ASSIGN:    op_literal = "="; break;
-            case OPER_ADD:        op_literal = "+="; break;
-            case OPER_SUB:        op_literal = "-="; break;
-            case OPER_MUL:        op_literal = "*="; break;
-            case OPER_DIV:        op_literal = "/="; break;
-            case OPER_MOD:        op_literal = "%="; break;
+            case OPER_ADD:       op_literal = "+="; break;
+            case OPER_SUB:       op_literal = "-="; break;
+            case OPER_MUL:       op_literal = "*="; break;
+            case OPER_DIV:       op_literal = "/="; break;
+            case OPER_MOD:       op_literal = "%="; break;
             case OPER_EQ:        op_literal = "=="; break;
             case OPER_NEQ:       op_literal = "!="; break;
             case OPER_LANGLE:    op_literal = "<"; break;
@@ -342,8 +341,7 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
             case OPER_INCREM:    op_literal = "++"; break;
             case OPER_DECREM:    op_literal = "--"; break;
             case OPER_DOT:       op_literal = "."; break;
-            case OPER_ARROW:     op_literal = "->"; break;
-            case OPER_QUESTION:   op_literal = "?"; break;
+            case OPER_QUESTION:  op_literal = "?"; break;
             case OPER_COLON:     op_literal = ":"; break;
             default:             op_literal = "?"; break;
         }

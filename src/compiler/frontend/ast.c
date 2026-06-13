@@ -118,12 +118,15 @@ node_t* new_node(arena_t* arena, enum node_kind kind)
             node->case_stmt->condition = NULL;
             node->case_stmt->body = NULL;
             break;
-        case NODE_TRYCATCH:
-            node->trycatch_stmt = arena_alloc_default(arena, sizeof(struct node_trycatch));
-            if(!node->trycatch_stmt) return NULL;
-            node->trycatch_stmt->try_block = NULL;
-            node->trycatch_stmt->catch_block = NULL;
-            node->trycatch_stmt->finally_block = NULL;
+        case NODE_TRY:
+            node->try_stmt = arena_alloc_default(arena, sizeof(struct node_try));
+            if(!node->try_stmt) return NULL;
+            node->try_stmt->try_block = NULL;
+            break;
+        case NODE_CATCH:
+            node->catch_stmt = arena_alloc_default(arena, sizeof(struct node_catch));
+            if(!node->catch_stmt) return NULL;
+            node->catch_stmt->catch_block = NULL;
             break;
         case NODE_VARIABLE:
             node->var_decl = arena_alloc_default(arena, sizeof(struct node_variable));
@@ -210,6 +213,8 @@ node_t* new_node(arena_t* arena, enum node_kind kind)
             if(!node->module_decl) return NULL;
             node->module_decl->body = NULL;
             node->module_decl->name = (string_t){0};
+            break;
+        default:
             break;
     }
     return node;

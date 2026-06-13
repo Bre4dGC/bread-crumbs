@@ -117,6 +117,16 @@ void* arena_alloc_array(arena_t* arena, size_t elem_size, size_t count, size_t a
     return arena_alloc(arena, elem_size * count, align);
 }
 
+void arena_clear(arena_t* arena)
+{
+    if(!arena) return;
+
+    arena_block_t* b = arena->head;
+    while(b){
+        b->offset = 0;
+        b = b->next;
+    }
+}
 
 size_t arena_used(arena_t* arena)
 {

@@ -1,5 +1,6 @@
 #include <stddef.h>     // size_t
 
+#include "compiler/frontend/lexer/tokens.h"
 #include "core/ds/arena.h"              // arena_t
 #include "core/lang/diagnostic.h"       // diagnostic_t
 
@@ -17,10 +18,11 @@ parse_func_t parse_table[] = {
     [KW_WHILE]    = parse_stmt_while,
     [KW_FOR]      = parse_stmt_for,
     [KW_MATCH]    = parse_stmt_match,
-    [KW_TRY]      = parse_stmt_trycatch,
-    [KW_BREAK]    = parse_stmt_jump,
-    [KW_CONTINUE] = parse_stmt_jump,
-    [KW_RETURN]   = parse_stmt_jump,
+    [KW_TRY]      = parse_stmt_try,
+    [KW_CATCH]    = parse_stmt_catch,
+    [KW_BREAK]    = parse_stmt_ctrl,
+    [KW_CONTINUE] = parse_stmt_ctrl,
+    [KW_RETURN]   = parse_stmt_ctrl,
 
     [KW_FUNC]     = parse_decl_func,
     [KW_STRUCT]   = parse_decl_struct,
@@ -67,7 +69,7 @@ ast_t* parse_program(parser_t* parser)
             continue;
         }
 
-        if(!add_stmt_block(parser, parser->ctx->ast->nodes, stmt)) goto cleanup;
+        if(!add_stmt_block(parser, parser->ctx->ast->nodes, stmt)) return NULL;
 
         // optionally consume ';'
         if(check_token(parser, CAT_OPERATOR, OPER_SEMICOLON)){
@@ -82,10 +84,6 @@ ast_t* parse_program(parser_t* parser)
 #endif
 
     return parser->ctx->ast;
-
-cleanup:
-    free_ast(parser->ctx->ast);
-    return NULL;
 }
 
 bool check_token(parser_t* parser, enum category_tag category, int type)

@@ -146,10 +146,12 @@ struct node_impl {
     node_t* body;
 };
 
-struct node_trycatch {
+struct node_try {
     node_t* try_block;
+};
+
+struct node_catch {
     node_t* catch_block;
-    node_t* finally_block;
 };
 
 struct node_type {
@@ -180,7 +182,8 @@ enum node_kind {
     NODE_RETURN,  NODE_BREAK,   NODE_CONTINUE,
 
     NODE_TYPE,    NODE_IMPORT,  NODE_MODULE,
-    NODE_TRAIT,   NODE_IMPL,    NODE_TRYCATCH,
+    NODE_TRAIT,   NODE_IMPL,    NODE_TRY,
+    NODE_CATCH
 };
 
 struct node {
@@ -210,13 +213,14 @@ struct node {
         struct node_import*   import_decl;
         struct node_impl*     impl_decl;
 
-        struct node_if*       if_stmt;
-        struct node_while*    while_stmt;
-        struct node_for*      for_stmt;
-        struct node_case*     case_stmt;
-        struct node_match*    match_stmt;
-        struct node_trycatch* trycatch_stmt;
-        struct node_return*   return_stmt;
+        struct node_if*     if_stmt;
+        struct node_while*  while_stmt;
+        struct node_for*    for_stmt;
+        struct node_case*   case_stmt;
+        struct node_match*  match_stmt;
+        struct node_try*    try_stmt;
+        struct node_catch*  catch_stmt;
+        struct node_return* return_stmt;
     };
 };
 

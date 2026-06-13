@@ -22,86 +22,103 @@ static inline void set_error(enum fs_error err)
 static int get_stat(const char* path, struct stat* st)
 {
     // TODO: implement
+    return 0;
 }
 
 string_t fs_read_file(string_pool_t* sp, const char* filepath)
 {
     // TODO: implement
+    return (string_t){0};
 }
 
 bool fs_write_file(const char* filepath, const char* content, size_t length)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_append_file(const char* filepath, const char* content, size_t length)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_delete_file(const char* filepath)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_copy_file(const char* src, const char* dst)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_move_file(const char* src, const char* dst)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_file_exists(const char* filepath)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_dir_exists(const char* dirpath)
 {
     // TODO: implement
+    return true;
 }
 
 enum fs_file_type fs_get_type(const char* path)
 {
     // TODO: implement
+    return FS_TYPE_UNKNOWN;
 }
 
 fs_file_info_t fs_get_info(const char* path)
 {
     // TODO: implement
+    return (fs_file_info_t){0};
 }
 
 size_t fs_get_size(const char* filepath)
 {
     // TODO: implement
+    return 0;
 }
 
 bool fs_create_dir(const char* dirpath)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_create_dir_recursive(const char* dirpath)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_delete_dir(const char* dirpath)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_delete_dir_recursive(const char* dirpath)
 {
     // TODO: implement
+    return true;
 }
 
 fs_dir_list_t* fs_list_dir(const char* dirpath)
 {
     // TODO: implement
+    return NULL;
 }
 
 void fs_free_dir_list(fs_dir_list_t* list)
@@ -142,31 +159,37 @@ void fs_path_without_extension(char* result, const char* path)
 bool fs_path_is_absolute(const char* path)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_path_is_relative(const char* path)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_get_cwd(char* buffer, size_t size)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_set_cwd(const char* path)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_path_resolve(char* result, const char* path)
 {
     // TODO: implement
+    return true;
 }
 
 bool fs_path_absolute(char* result, const char* path)
 {
     // TODO: implement
+    return true;
 }
 
 enum fs_error fs_get_last_error(void)

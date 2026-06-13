@@ -100,7 +100,7 @@ node_t* parse_stmt_block(parser_t* parser)
     return node;
 }
 
-node_t* parse_stmt_jump(parser_t* parser)
+node_t* parse_stmt_ctrl(parser_t* parser)
 {
     size_t start_pos = get_lexer_pos(parser);
     int type = parser->token.current.type;
@@ -331,12 +331,6 @@ node_t* parse_stmt_case(parser_t* parser)
     node->case_stmt->condition = parse_expr(parser);
     if(!node->case_stmt->condition) return NULL;
 
-    // expect '->'
-    if(!consume_token(parser, node, CAT_OPERATOR, OPER_ARROW, ERR_EXPEC_OPER)){
-        add_report(parser->ctx->reports, parser->ctx->src_manager.current, SEV_ERR, ERR_EXPEC_OPER, node->loc);
-        return NULL;
-    }
-
     // parse body (can be a block or a single statement)
     if(check_token(parser, CAT_PAREN, PAR_LBRACE)){
         node->case_stmt->body = parse_stmt_block(parser);
@@ -377,15 +371,6 @@ node_t* parse_stmt_match(parser_t* parser)
         }
 
         node_t* case_node = parse_stmt_case(parser);
-        if(!case_node){
-            if(parser->token.current.category == CAT_OPERATOR && parser->token.current.type == OPER_ARROW){
-                advance_token(parser);
-            }
-            else {
-                advance_token(parser);
-            }
-            continue;
-        }
 
         // add to match statement
         if(!node->match_stmt->block.elems){
@@ -446,57 +431,27 @@ node_t* parse_decl_trait(parser_t* parser)
     return node;
 }
 
-node_t* parse_stmt_trycatch(parser_t* parser)
+node_t* parse_stmt_try(parser_t* parser)
 {
     size_t start_pos = get_lexer_pos(parser);
-    node_t* node = new_node(parser->ctx->ast->arena, NODE_TRYCATCH);
+    node_t* node = new_node(parser->ctx->ast->arena, NODE_TRY);
     if(!node) return NULL;
     set_node_loc(node, parser);
 
     advance_token(parser); // skip 'try'
 
-    // expect '{'
-    if(!consume_token(parser, node, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)) return NULL;
+    set_node_len(node, parser, start_pos);
+    return node;
+}
 
-    // parse try block
-    node->trycatch_stmt->try_block = parse_stmt_block(parser);
-    if(!node->trycatch_stmt->try_block) return NULL;
+node_t* parse_stmt_catch(parser_t* parser)
+{
+    size_t start_pos = get_lexer_pos(parser);
+    node_t* node = new_node(parser->ctx->ast->arena, NODE_CATCH);
+    if(!node) return NULL;
+    set_node_loc(node, parser);
 
-    // expect 'catch'
-    if(!consume_token(parser, node, CAT_KEYWORD, KW_CATCH, ERR_EXPEC_KEYWORD)) return NULL;
-
-    // expect '('
-    if(!consume_token(parser, node, CAT_PAREN, PAR_LPAREN, ERR_EXPEC_PAREN)) return NULL;
-
-    // TODO: parse catch exception variable
-    // for now, just skip the identifier if present
-    if(check_token(parser, CAT_LITERAL, LIT_IDENT)){
-        advance_token(parser);
-    }
-
-    // expect ')'
-    if(!consume_token(parser, node, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)) return NULL;
-
-    // expect '{'
-    if(!consume_token(parser, node, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)) return NULL;
-
-    // parse catch block
-    node->trycatch_stmt->catch_block = parse_stmt_block(parser);
-    if(!node->trycatch_stmt->catch_block) return NULL;
-
-    // optional 'finally' block
-    if(check_token(parser, CAT_KEYWORD, KW_FINALLY)){
-        advance_token(parser);
-
-        // expect '{'
-        if(!consume_token(parser, node, CAT_PAREN, PAR_LBRACE, ERR_EXPEC_PAREN)) return NULL;
-
-        node->trycatch_stmt->finally_block = parse_stmt_block(parser);
-        if(!node->trycatch_stmt->finally_block) return NULL;
-    }
-    else {
-        node->trycatch_stmt->finally_block = NULL;
-    }
+    advance_token(parser); // skip 'catch'
 
     set_node_len(node, parser, start_pos);
     return node;

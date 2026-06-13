@@ -13,7 +13,7 @@ typedef struct compiler_context compiler_context_t;
 
 #include "compiler/frontend/semantic/symbol.h" // symbol_table_t
 #include "compiler/middle/ir.h"     // ir_t
-#include "compiler/backend/codegen.h"   // ir_t, codegen_t
+#include "compiler/backend/codegen.h"   // codegen_t
 
 enum compile_phase {
     COMPILE_PHASE_START = 0,

@@ -391,20 +391,21 @@ static inline void print_node(node_t* node, int indent)
                 print_node(node->impl_decl->body, indent + 1);
             }
             break;
-        case NODE_TRYCATCH:
-            printf("\033[1mTRY-CATCH\033[0m\n");
-            if(node->trycatch_stmt){
-                if(node->trycatch_stmt->try_block){
-                    print_indent(indent + 1, "\033[90mTRY:\033[0m\n");
-                    print_node(node->trycatch_stmt->try_block, indent + 2);
+        case NODE_TRY:
+            printf("\033[1mTRY\033[0m\n");
+            if(node->try_stmt){
+                if(node->try_stmt->try_block){
+                    print_indent(indent + 1, "\033[90mTRY_BLOCK:\033[0m\n");
+                    print_node(node->try_stmt->try_block, indent + 2);
                 }
-                if(node->trycatch_stmt->catch_block){
-                    print_indent(indent + 1, "\033[90mCATCH:\033[0m\n");
-                    print_node(node->trycatch_stmt->catch_block, indent + 2);
-                }
-                if(node->trycatch_stmt->finally_block){
-                    print_indent(indent + 1, "\033[90mFINALLY:\033[0m\n");
-                    print_node(node->trycatch_stmt->finally_block, indent + 2);
+            }
+            break;
+        case NODE_CATCH:
+            printf("\033[1mCATCH\033[0m\n");
+            if(node->catch_stmt){
+                if(node->catch_stmt->catch_block){
+                    print_indent(indent + 1, "\033[90mCATCH_BLOCK:\033[0m\n");
+                    print_node(node->catch_stmt->catch_block, indent + 2);
                 }
             }
             break;

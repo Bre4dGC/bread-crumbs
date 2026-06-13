@@ -4,7 +4,7 @@
 #include <string.h>     // strlen
 
 #include "core/ds/hashmap.h"    // hashmap_t
-#include "compiler/frontend/lexer/tokens.h" // token_t, CAT_OPERATOR, CAT_KEYWORD, CAT_DATATYPE, CAT_MODIFIER, CAT_LITERAL, CAT_PAREN, CAT_DELIMITER
+#include "compiler/frontend/lexer/tokens.h" // token_t, CAT_OPERATOR, CAT_KEYWORD, ...
 #ifdef DEBUG
 #include "core/lang/debug.h"    // print_token
 #endif
@@ -32,7 +32,6 @@ void init_tokens(void)
         {"%=", OPER_MOD,    C_OP}, {"&&", OPER_AND,    C_OP},
         {"||", OPER_OR,     C_OP}, {"<=", OPER_LTE,    C_OP},
         {">=", OPER_GTE,    C_OP}, {"..", OPER_RANGE,  C_OP},
-        {"->", OPER_ARROW,  C_OP},
 
         /* сontrol structures */
         {"if",      KW_IF,      C_KW}, {"else",     KW_ELSE,      C_KW},
@@ -44,12 +43,10 @@ void init_tokens(void)
         {"match",   KW_MATCH,   C_KW}, {"case",     KW_CASE,      C_KW},
         {"struct",  KW_STRUCT,  C_KW}, {"enum",     KW_ENUM,      C_KW},
         {"import",  KW_IMPORT,  C_KW}, {"module",   KW_MODULE,    C_KW},
-        {"type",    KW_TYPE,    C_KW},
+        {"use",     KW_USE,     C_KW}, {"type",     KW_TYPE,      C_KW},
         {"trait",   KW_TRAIT,   C_KW}, {"impl",     KW_IMPL,      C_KW},
         {"try",     KW_TRY,     C_KW}, {"catch",    KW_CATCH,     C_KW},
-        {"finally", KW_FINALLY, C_KW},
-        {"async",   KW_ASYNC,   C_KW}, {"await",    KW_AWAIT,     C_KW},
-        {"yield",   KW_YIELD,   C_KW},
+        {"throw",   KW_THROW,   C_KW},
 
         /* data types */
         {"int",     DT_INT,     C_DT}, {"uint",    DT_UINT,       C_DT},
@@ -58,7 +55,7 @@ void init_tokens(void)
         {"char",    DT_CHAR,    C_DT}, {"byte",    DT_BYTE,       C_DT},
         {"float",   DT_FLOAT,   C_DT}, {"decimal", DT_DECIMAL,    C_DT},
         {"str",     DT_STR,     C_DT}, {"bool",    DT_BOOL,       C_DT},
-        {"void",     DT_VOID,   C_DT}, {"any",     DT_ANY,        C_DT},
+        {"void",    DT_VOID,    C_DT}, {"any",     DT_ANY,        C_DT},
 
         /* modifiers */
         {"var",     MOD_VAR,    C_MD}, {"const",   MOD_CONST,     C_MD},

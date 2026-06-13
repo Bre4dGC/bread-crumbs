@@ -1,3 +1,3 @@
-#include "runtime/lib/os.h"
+#include "runtime/lib/os.h"    // os_t
 
 // TODO: implement

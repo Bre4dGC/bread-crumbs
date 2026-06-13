@@ -1,7 +1,7 @@
 #pragma once
 
-#include "compiler/context.h"           // compiler_context_t
-#include "compiler/frontend/ast.h"      // ast_t
+#include "core/ds/hashmap.h"    // hashmap_t
+#include "compiler/frontend/ast.h"  // ast_t
 
 typedef struct {
     arena_t* arena;

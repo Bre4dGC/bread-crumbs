@@ -1,5 +1,6 @@
 #pragma once
 
+#if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #include <fcntl.h>
 #include <io.h>
@@ -14,3 +15,5 @@
 #define DLL_EXTENSION ".dll"
 #define DLL_PREFIX ""
 #define EXPORT_SYMBOL __declspec(dllexport)
+
+#endif

@@ -1,4 +1,4 @@
-#include "runtime/gc.h"
+#include "runtime/gc.h"    // garbage_collector_t
 
 garbage_collector_t* new_gc(size_t threshold)
 {

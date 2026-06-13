@@ -1,4 +1,4 @@
-#include "runtime/ffi.h"
+#include "runtime/ffi.h"    // ffi_registry_t
 
 ffi_registry_t* new_ffi_registry(void)
 {

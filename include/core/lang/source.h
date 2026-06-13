@@ -32,6 +32,7 @@ source_t* new_source(const char* filename);
 
 void new_source_manager(void);
 void free_source_manager(source_manager_t* manager);
+
 source_t* load_source_from_file(const char* filepath);
 
 bool src_set_filename(source_t* source, const char* filename);

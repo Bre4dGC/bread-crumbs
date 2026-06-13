@@ -1,0 +1,83 @@
+#[ Basic module and import system usage (may change as language design evolves)
+
+import  -- Importing modules and packages
+module  -- Declaring modules and their scope
+use     -- Using specific types or functions from an imported module
+
+        === Import syntax ===
+import <path>, <path>, <path>   -- import multiple paths in a single statement
+
+import <path> module <name>, <name>, ... -- import specific modules from a path
+
+import <path> {
+    <name>,
+    <name>,
+    ...
+}                               -- multiline import with specific modules
+
+        === Module syntax ===
+module <name>                -- module declaration
+
+module <name>                -- module declaration with scope
+{
+    ...
+}
+
+        === Module types ===
+std         -- Standard library modules
+pkg         -- External packages installed via package manager
+usr         -- User-defined packages
+
+        === Standard library ===
+inout       -- input/output operations
+system      -- system-related functions
+format      -- string formatting utilities
+collection  -- data structures and collections
+math        -- mathematical functions and constants
+thread      -- threading and concurrency
+network     -- network-related functionalities
+time        -- time and date utilities
+console     -- console input/output operations
+
+]#
+
+#   === Import recursevly ===
+import std
+
+#   === Inline import ===
+import std.inout, std.system, std.format
+
+#   === Multiline import ===
+import {
+    std.math,
+    std.thread
+}
+
+#   === Import only std modules ===
+import std.{console, time}  # import std module console, time
+
+#   === Importing std.collection and std.network content ===
+import std.{
+    network.{http, tcp},
+    collection.{list, map, set}
+}
+
+#   === Importing external packages installed via package manager ===
+import pkg.raylib
+import pkg.sqlite
+import pkg.sdl3
+import pkg.opengl
+
+# my_header.brc
+module my_module
+{
+    func main()
+    {
+        println("This is an my_module module.")
+    }
+}
+
+#   === Importing user-defined modules ===
+import my_header module my_module use main
+my_module.main() # Full import, can be used with module name prefix
+main()           # Short import, can be used if there are no name conflicts with other modules

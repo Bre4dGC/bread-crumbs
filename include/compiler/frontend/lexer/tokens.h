@@ -46,7 +46,6 @@ enum category_operator {
     OPER_SEMICOLON, // ;
     OPER_QUESTION,  // ?
     OPER_RANGE,     // ..
-    OPER_ARROW,     // ->
 };
 
 enum category_keyword {
@@ -59,9 +58,9 @@ enum category_keyword {
 
     // advanced
     KW_TRAIT,    KW_IMPL,     KW_SELF,
-    KW_IMPORT,   KW_MODULE,   KW_TYPE,
-    KW_TRY,      KW_CATCH,    KW_FINALLY,
-    KW_ASYNC,    KW_AWAIT,    KW_YIELD,
+    KW_IMPORT,   KW_MODULE,   KW_USE,
+    KW_TRY,      KW_CATCH,    KW_THROW,
+    KW_TYPE
 };
 
 enum category_paren {

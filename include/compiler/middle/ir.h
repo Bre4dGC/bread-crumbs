@@ -32,12 +32,12 @@ enum op_code {
     /* memory */
     OP_STORE,       // store <var_id>
     OP_LOAD,        // load <var_id>
-    OP_STORE_GLOB,  // store_global <name>
-    OP_LOAD_GLOB,   // load_global <name>
     OP_ALLOC,       // alloc <size>
     OP_FREE,        // free <address>
+    OP_LOOKUP,      // lookup <var_id>
 
     /* stream control */
+    OR_LABEL,       // label <name>
     OP_JUMP,        // jmp <label>
     OP_CALL,        // func_call <func_id>
     OP_RETURN,      // return
@@ -71,5 +71,8 @@ typedef struct {
 
 ir_t* new_ir(void);
 void free_ir(ir_t* ir);
+
+ir_func_t* new_ir_func(const char* name, size_t param_count, size_t local_count);
+void free_ir_func(ir_func_t* func);
 
 void ir_add_instr(ir_t* ir, enum op_code op, ir_data_t value);

@@ -1,47 +1,37 @@
-#include "core/arena.h"
-#include "core/common/source.h"
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+#include "core/ds/arena.h"
 #include "../utils/benchmark.h"
 
 int main(void)
 {
     bm_start();
 
-    arena_t* arena = new_arena(ARENA_DEFAULT_SIZE);
+    arena_t* arena = new_arena(ARENA_DEF_SIZE);
+    assert(arena != NULL);
 
-    double* value = arena_alloc(arena, sizeof(double), alignof(double));
-    if(!value){
-        printf("Something wrong with value");
-        return 1;
-    }
+    int* num1 = arena_alloc_default(arena, sizeof(int));
+    assert(num1 != NULL);
+    *num1 = 42;
+    assert(*num1 == 42);
 
-    int* numbers = arena_alloc_array(arena, sizeof(int), 10, alignof(int));
-    if(!numbers){
-        printf("Something wrong with numbers");
-        return 1;
-    }
+    char* str1 = arena_alloc_array(arena, sizeof(char), 6, alignof(char));
+    assert(str1 != NULL);
+    strcpy(str1, "Hello");
+    assert(strcmp(str1, "Hello") == 0);
 
-    char* string = arena_alloc_default(arena, 256);
-    if(!string){
-        printf("Something wrong with string");
-        return 1;
-    }
+    printf("Used: %zu bytes\n", arena_used(arena));
+    printf("Capacity: %zu bytes\n", arena_capacity(arena));
+    printf("Usage: %.2f%%\n", (double)arena_used(arena) / arena_capacity(arena) * 100);
 
-    *value = 3.1415;
-    printf("Value: %f\n", *value);
-
-    if(numbers && value && string){
-        for(int i = 0; i < 10; i++){
-            numbers[i] = i;
-            printf("%d ", numbers[i]);
-        }
-    }
-
-    strcpy(string, "hello world");
-    printf("\nstring: %s\n", string);
+    printf("Number: %d\n", *num1);
+    printf("String: %s\n", str1);
 
     free_arena(arena);
 
     bm_stop();
-    bm_print("Test arena");
+    bm_print("Arena tests");
     return 0;
 }

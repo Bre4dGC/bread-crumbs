@@ -1,0 +1,50 @@
+#[ Basic loop constructs (may change as language design evolves)
+
+<start>..<end>
+
+        === Array iteration ===
+<array-name>[<range>] {
+    ...
+}
+
+        === While loop ===
+while(<condition>) {
+    ...
+}
+
+        === For loop ===
+for(<init>; <condition>; <update>) {    -- standard
+    ...
+}
+
+for(<iterator || start>..<iterator>) {  -- range-based
+    ...
+}
+
+]#
+
+var count : int = 0
+while(count < 3) {
+    println("while loop count: ", count)
+    count += 1
+}
+
+for(i = 0; i < 3; i++) {
+    println("for loop index: ", i)
+}
+
+for(i = 0..3) {
+    println("range-based for loop index: ", i)
+}
+
+var array : int[] = {1..5}  # -- array = {1, 2, 3, 4, 5}
+
+array[..] println("array element: ", self) # equivalent: for(i = array[..])
+
+## Output:
+array element: 1
+array element: 2
+array element: 3
+array element: 4
+array element: 5
+##

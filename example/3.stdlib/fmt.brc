@@ -1,0 +1,10 @@
+#[ Standard Format library basic usage (at the design planning stage)
+
+        === Methods ===
+.print(format : str, args : ..any)     -- prints formatted string
+.println(format : str, args : ..any)   -- prints formatted string with newline
+.scan(format : str, args : ..any)      -- scans formatted input
+
+]#
+
+import std.format

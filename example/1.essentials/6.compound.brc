@@ -1,0 +1,72 @@
+#[ Basic compound types usage (may change as language design evolves)
+
+        === Type definition syntax ===
+type <name> = <
+
+        === Structure syntax ===
+struct[<generic_type>] [: <base_type>] {
+    <mod> <name> : <type> = <optional_value>
+    <mod> <name> : <type> = <optional_value>
+    ...
+}
+
+        === Enum syntax ===
+enum[<generic_type>] {
+    <variant>,
+    <variant>[(<associated_type>)],
+    <variant> = <optional_value>,
+    ...
+}
+
+        === Union syntax ===
+type <name>[<generic_type>] = <variant1> | <variant2> | ...
+
+        === Accessing members ===
+<name>.<member> 
+
+        === Method syntax ===
+func <compound_name>.<method_name>()
+{
+    ...
+}
+]#
+
+type BaseStruct = struct {
+    var base_field : int
+}
+
+type MyStruct<T> : BaseStruct = struct {
+    var field1 : str = "default value"
+    var field2 : T
+}
+
+type MyEnum = enum {
+    Variant1,
+    Variant2(int),
+    Variant3 = 42
+}
+
+type MyUnion = int | str | MyStruct
+
+func MyStruct.print_field1()
+{
+    print(self.field1)
+}
+
+func main()
+{
+    var my_struct = MyStruct {
+        field2: 10,
+        field3: 3.14
+    }
+
+    my_struct.print_field1()    # -- Output: default value
+
+    var variant1 = MyEnum.Variant1
+    var variant2 = MyEnum.Variant2(100)
+    var variant3 = MyEnum.Variant3
+    
+    print(variant1)         # -- Output: Variant1
+    print(variant2)         # -- Output: Variant2(100)
+    print(variant3)         # -- Output: 42
+}
