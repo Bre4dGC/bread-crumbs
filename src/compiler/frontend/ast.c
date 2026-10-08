@@ -13,7 +13,7 @@ ast_t* new_ast(arena_t* arena)
 node_t* new_node(arena_t* arena, enum node_kind kind)
 {
     node_t* node = arena_alloc_default(arena, sizeof(node_t));
-    if (!node) return NULL;
+    if(!node) return NULL;
 
     node->kind = kind;
     node->loc = (location_t){1, 1, 0, 0};
@@ -76,12 +76,6 @@ node_t* new_node(arena_t* arena, enum node_kind kind)
             node->lit->type = LIT_NULL;
             node->lit->value = (string_t){0};
             break;
-        case NODE_RANGE:
-            node->range = arena_alloc_default(arena, sizeof(struct node_range));
-            if(!node->range) return NULL;
-            node->range->start = NULL;
-            node->range->end = NULL;
-            break;
         case NODE_FOR:
             node->for_stmt = arena_alloc_default(arena, sizeof(struct node_for));
             if(!node->for_stmt) return NULL;
@@ -118,21 +112,11 @@ node_t* new_node(arena_t* arena, enum node_kind kind)
             node->case_stmt->condition = NULL;
             node->case_stmt->body = NULL;
             break;
-        case NODE_TRY:
-            node->try_stmt = arena_alloc_default(arena, sizeof(struct node_try));
-            if(!node->try_stmt) return NULL;
-            node->try_stmt->try_block = NULL;
-            break;
-        case NODE_CATCH:
-            node->catch_stmt = arena_alloc_default(arena, sizeof(struct node_catch));
-            if(!node->catch_stmt) return NULL;
-            node->catch_stmt->catch_block = NULL;
-            break;
         case NODE_VARIABLE:
             node->var_decl = arena_alloc_default(arena, sizeof(struct node_variable));
             if(!node->var_decl) return NULL;
             node->var_decl->modif = MOD_VAR;
-            node->var_decl->dtype = DT_INT;
+            node->var_decl->dtype = DT_VOID;
             node->var_decl->value = NULL;
             node->var_decl->name = (string_t){0};
             break;
@@ -147,6 +131,8 @@ node_t* new_node(arena_t* arena, enum node_kind kind)
             node->param_decl = arena_alloc_default(arena, sizeof(struct node_param));
             if(!node->param_decl) return NULL;
             node->param_decl->name = (string_t){0};
+            node->param_decl->is_variadic = false;
+            node->param_decl->dtype = DT_VOID;
             break;
         case NODE_FUNC:
             node->func_decl = arena_alloc_default(arena, sizeof(struct node_func));
@@ -181,38 +167,11 @@ node_t* new_node(arena_t* arena, enum node_kind kind)
             node->enum_decl->member.capacity = 0;
             node->enum_decl->name = (string_t){0};
             break;
-        case NODE_TRAIT:
-            node->trait_decl = arena_alloc_default(arena, sizeof(struct node_trait));
-            if(!node->trait_decl) return NULL;
-            node->trait_decl->body = NULL;
-            node->trait_decl->name = (string_t){0};
-            break;
-        case NODE_IMPL:
-            node->impl_decl = arena_alloc_default(arena, sizeof(struct node_impl));
-            if(!node->impl_decl) return NULL;
-            node->impl_decl->body = NULL;
-            node->impl_decl->trait_name = (string_t){0};
-            node->impl_decl->struct_name = (string_t){0};
-            break;
         case NODE_TYPE:
             node->type_decl = arena_alloc_default(arena, sizeof(struct node_type));
             if(!node->type_decl) return NULL;
             node->type_decl->body = NULL;
             node->type_decl->name = (string_t){0};
-            break;
-        case NODE_IMPORT:
-            node->import_decl = arena_alloc_default(arena, sizeof(struct node_import));
-            if(!node->import_decl) return NULL;
-            node->import_decl->count = 0;
-            node->import_decl->capacity = 16;
-            node->import_decl->modules = arena_alloc_array(arena, sizeof(string_t), node->import_decl->capacity, alignof(string_t));
-            if(!node->import_decl->modules) return NULL;
-            break;
-        case NODE_MODULE:
-            node->module_decl = arena_alloc_default(arena, sizeof(struct node_module));
-            if(!node->module_decl) return NULL;
-            node->module_decl->body = NULL;
-            node->module_decl->name = (string_t){0};
             break;
         default:
             break;

@@ -1,16 +1,17 @@
 #pragma once
 
-#include <stddef.h>     // size_t
+#include <stddef.h>
+#include <stdint.h>
 
-#include "core/ds/strings.h"    // string_t
-#include "cli/args.h"   // cli_option_set_t
+#include "core/ds/strings.h"
+#include "cli/args.h"
 
 typedef int (*command_handler_t)(int argc, char** argv, void* userdata);
 
 typedef struct {
     string_t name;
-    const char* description;
-    const char* usage;
+    string_t description;
+    string_t usage;
     cli_option_set_t options;
     command_handler_t handler;
     void* userdata;
@@ -21,13 +22,15 @@ typedef struct {
     size_t count;
 } command_list_t;
 
-command_t* new_command(
-    char* name,
-    char* description,
-    char* usage,
+command_list_t new_command_list(void);
+void free_command_list(command_list_t* list);
+
+void cmd_add(
+    command_list_t* list,
+    const char* name,
+    const char* description,
+    const char* usage,
     cli_option_set_t options,
     command_handler_t handler,
     void* userdata
 );
-command_list_t new_command_list(void);
-void free_command_list(command_list_t* list);

@@ -8,32 +8,32 @@
 }
 
         === While loop ===
-while(<condition>) {
+while(<condition>){
     ...
 }
 
         === For loop ===
-for(<init>; <condition>; <update>) {    -- standard
+for(<init>; <condition>; <update>){    -- standard
     ...
 }
 
-for(<iterator || start>..<iterator>) {  -- range-based
+for(<iterator || start>..<iterator>){  -- range-based
     ...
 }
 
 ]#
 
 var count : int = 0
-while(count < 3) {
+while(count < 3){
     println("while loop count: ", count)
     count += 1
 }
 
-for(i = 0; i < 3; i++) {
+for(i = 0; i < 3; i++){
     println("for loop index: ", i)
 }
 
-for(i = 0..3) {
+for(i = 0..3){
     println("range-based for loop index: ", i)
 }
 

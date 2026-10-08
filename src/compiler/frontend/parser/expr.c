@@ -317,7 +317,7 @@ node_t* parse_expr_binop(parser_t* parser, int min_precedence)
 
         #ifdef DEBUG
         const char* op_literal;
-        switch(op_type) {
+        switch(op_type){
             case OPER_PLUS:      op_literal = "+"; break;
             case OPER_MINUS:     op_literal = "-"; break;
             case OPER_ASTERISK:  op_literal = "*"; break;
@@ -407,7 +407,7 @@ node_t* parse_expr_unaryop(parser_t* parser)
     node->unaryop->is_postfix = false;
 #ifdef DEBUG
     // Use operator string instead of potentially NULL token literal
-    switch(op_type) {
+    switch(op_type){
         case OPER_PLUS:   node->unaryop->lit = "+"; break;
         case OPER_MINUS:  node->unaryop->lit = "-"; break;
         case OPER_NOT:    node->unaryop->lit = "!"; break;
@@ -438,12 +438,6 @@ node_t* parse_expr_array_access(parser_t* parser)
 }
 
 node_t* parse_expr_field_access(parser_t* parser)
-{
-    // TODO: implement
-    return NULL;
-}
-
-node_t* parse_expr_lambda(parser_t* parser)
 {
     // TODO: implement
     return NULL;

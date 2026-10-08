@@ -27,11 +27,7 @@ match
 case
 struct
 enum
-import
-module
 type
-trait
-try
 catch
 int
 uint
@@ -53,4 +49,3 @@ static
 true
 false
 null
-infinity

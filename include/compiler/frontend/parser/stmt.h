@@ -15,5 +15,3 @@ node_t* parse_stmt_while(parser_t* parser);
 node_t* parse_stmt_for(parser_t* parser);
 node_t* parse_stmt_case(parser_t* parser);
 node_t* parse_stmt_match(parser_t* parser);
-node_t* parse_stmt_try(parser_t* parser);
-node_t* parse_stmt_catch(parser_t* parser);

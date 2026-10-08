@@ -1,1 +1,7 @@
-#[ Tests (at the design planning stage) ]#
+#[ Tests (at the design planning stage)
+
+test "<test_name>" {
+    ...
+}
+
+]#

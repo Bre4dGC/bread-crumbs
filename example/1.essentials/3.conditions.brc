@@ -14,10 +14,10 @@
 &  - Alternative AND operator
 
         === If-Else Statements ===
-if(<condition>) {
+if(<condition>){
     ...
 }
-elif(<condition>) {
+elif(<condition>){
     ...
 }
 else {
@@ -28,9 +28,9 @@ else {
 if(<condition>) <value_if_true> elif(<condition>) else <value_if_false>
 
         === Match Statement ===
-match(<value>) {
+match(<value>){
     case(<pattern>) <result>      -- Single line pattern
-    case(<pattern>) {<result>}    -- Multi line pattern
+    case(<pattern>){<result>}    -- Multi line pattern
     ...
     default <default_result> -- Default pattern
 }
@@ -41,10 +41,10 @@ var a : int = 10
 var b : int = 20
 
 #   === If-Else Statements ===
-if(a < b) {
+if(a < b){
     println("a is less than b")
 }
-elif(a > b) {
+elif(a > b){
     println("a is greater than b")
 }
 else {
@@ -55,15 +55,15 @@ else {
 var result : str = if(a < b) "a is less than b" else "a is not less than b"
 
 #   === Alternative Operators ===
-if(a | b == 0 || a & b != 0) {
+if(a | b == 0 || a & b != 0){
     println("Either a or b is zero, or both have at least one common bit set")
 }
 
 var value : int = 5
-match(value) {
+match(value){
     case(1) println("Value is 1")
     case(2) println("Value is 2")
-    case(3) {
+    case(3){
         println("Value is 3")
     }
     default {

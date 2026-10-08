@@ -34,6 +34,8 @@ symbol_table_t* new_symbol_table(compiler_context_t* ctx)
     symbol_table_t* st = arena_alloc(ctx->memory.perm_arena, sizeof(symbol_table_t), alignof(symbol_table_t));
     if(!st) return NULL;
 
+    st->ctx = ctx;
+
     st->global = new_scope(st->ctx->memory.perm_arena, SCOPE_GLOBAL, NULL);
     if(!st->global) return NULL;
 
@@ -187,7 +189,7 @@ void free_scope(scope_t* scope)
         child = next_child;
     }
 
-    if(scope->symbols) {
+    if(scope->symbols){
         free_hashmap(scope->symbols);
         scope->symbols = NULL;
     }
@@ -202,7 +204,7 @@ void free_symbol_table(symbol_table_t* st)
 {
     if(!st) return;
 
-    if(st->global && st->global->symbols) {
+    if(st->global && st->global->symbols){
         free_hashmap(st->global->symbols);
         st->global->symbols = NULL;
     }

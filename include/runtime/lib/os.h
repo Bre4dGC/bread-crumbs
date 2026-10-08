@@ -1,5 +1,0 @@
-#pragma once
-
-#include "runtime/object.h"
-
-object_t* os_exit(object_t* args);

@@ -1,25 +1,25 @@
 # Statements
-if(true) {
+if(true){
 
 }
-elif(false) {
+elif(false){
 
 }
 else {
 
 }
 
-while(true) {
+while(true){
 
 }
 
-for(var i = 0; i < 10; i++) {
+for(var i = 0; i < 10; i++){
 
 }
 
-match(x) {
+match(x){
     case(1) break
-    case(2) {
+    case(2){
         break
     }
     default break
@@ -29,15 +29,9 @@ match(x) {
 const x = 42
 var arr : int[3] = {1, 2, 3}
 
-func foo(a:int, b:int) : int {
+func foo(a:int, b:int) : int
+{
     return a + b
 }
-
-module some
-{
-
-}
-
-import some
 
 # Expressions

@@ -29,46 +29,50 @@ set(FRONTEND_SRC
 )
 
 set(BACKEND_SRC
-    src/compiler/backend/vm/core.c
-    src/compiler/backend/vm/bytecode.c
-    src/compiler/backend/vm/runtime.c
-    src/compiler/backend/vm/memory.c
-    src/compiler/backend/jit/core.c
-    src/compiler/backend/jit/runtime.c
-    src/compiler/backend/native/core.c
-    src/compiler/backend/native/object.c
+    src/compiler/backend/jit.c
+    src/compiler/backend/native.c
 )
 
 set(MIDDLE_SRC
     src/compiler/middle/ir.c
-    src/compiler/middle/builder.c
-    src/compiler/middle/optimizer.c
 )
 
-set(RUNTIME_SRC
-    src/runtime/ffi.c
-    src/runtime/memory.c
-    src/runtime/gc.c
-    src/runtime/profiler.c
+set(CLI_SRC
+    src/cli/args.c
+    src/cli/core.c
+    src/cli/register.c
+    src/cli/commands/commands.c
+    src/cli/commands/run.c
+    src/cli/commands/build.c
+    src/cli/commands/check.c
+    src/cli/commands/repl.c
+    src/cli/commands/doc.c
+    src/cli/commands/new.c
+    src/cli/commands/init.c
+    src/cli/commands/debug.c
+    src/cli/commands/test.c
+    src/cli/commands/fmt.c
+    src/cli/commands/install.c
+    src/cli/commands/add.c
+    src/cli/commands/remove.c
 )
 
 add_library(core_lib STATIC ${CORE_SRC})
 add_library(frontend_lib STATIC ${FRONTEND_SRC})
-add_library(runtime_lib STATIC ${RUNTIME_SRC})
 
 add_library(compiler_lib STATIC ${MIDDLE_SRC} ${BACKEND_SRC})
-target_link_libraries(compiler_lib PRIVATE core_lib frontend_lib runtime_lib)
+target_link_libraries(compiler_lib PRIVATE core_lib frontend_lib)
 
-add_executable(crum src/main.c)
-target_link_libraries(crum PRIVATE compiler_lib runtime_lib)
+add_executable(crum src/main.c ${CLI_SRC})
+target_link_libraries(crum PRIVATE compiler_lib)
 
 add_executable(lexing test/integration/lexing.c)
-target_link_libraries(lexing PRIVATE core_lib frontend_lib runtime_lib)
+target_link_libraries(lexing PRIVATE core_lib frontend_lib)
 
 add_executable(parsing test/integration/parsing.c)
-target_link_libraries(parsing PRIVATE core_lib frontend_lib runtime_lib)
+target_link_libraries(parsing PRIVATE core_lib frontend_lib)
 
 add_executable(analysis test/integration/analisis.c)
-target_link_libraries(analysis PRIVATE core_lib frontend_lib runtime_lib)
+target_link_libraries(analysis PRIVATE core_lib frontend_lib)
 
 install(TARGETS crum DESTINATION /usr/local/bin)

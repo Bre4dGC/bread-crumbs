@@ -19,8 +19,6 @@ enum symbol_kind {
     SYMBOL_ENUM_VARIANT,
     SYMBOL_TYPE_ALIAS,
     SYMBOL_BUILTIN_TYPE,
-    SYMBOL_MODULE,
-    SYMBOL_GENERIC,
 };
 
 enum symbol_flags {
@@ -28,11 +26,7 @@ enum symbol_flags {
     SYM_FLAG_USED     = 1 << 0,  // symbol was referenced
     SYM_FLAG_ASSIGNED = 1 << 1,  // variable was assigned
     SYM_FLAG_GLOBAL   = 1 << 2,  // global scope
-    SYM_FLAG_EXTERN   = 1 << 3,  // external linkage
-    SYM_FLAG_STATIC   = 1 << 4,  // static storage
     SYM_FLAG_MUTABLE  = 1 << 5,  // mutable variable
-    SYM_FLAG_PRIVATE  = 1 << 8,  // private visibility
-    SYM_FLAG_PUBLIC   = 1 << 9,  // public visibility
 };
 
 enum scope_kind {

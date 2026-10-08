@@ -42,7 +42,7 @@ semantic_t* new_semantic(compiler_context_t* ctx)
     if(!sem) return NULL;
 
     // init if not already done
-    if(!type_int) init_types(ctx->memory.phase_arena);
+    if(!type_int) init_types(ctx->memory.perm_arena);
 
     sem->symbols = new_symbol_table(ctx);
     if(!sem->symbols) return NULL;
@@ -134,12 +134,19 @@ type_t* datatype_to_type(int dtype)
 {
     switch(dtype){
         case DT_VOID:   return type_void;
-        case DT_ANY:    return type_any;
         case DT_BOOL:   return type_bool;
+        case DT_CHAR:   return type_char;
+        case DT_BYTE:   return type_byte;
+        case DT_SHORT:  return type_short;
+        case DT_USHORT: return type_ushort;
+        case DT_LONG:   return type_long;
+        case DT_ULONG:  return type_ulong;
         case DT_INT:    return type_int;
         case DT_UINT:   return type_uint;
         case DT_FLOAT:  return type_float;
+        case DT_DECIMAL:return type_decimal;
         case DT_STR:    return type_str;
+        case DT_ANY:    return type_any;
         default:        return type_unknown;
     }
 }
@@ -163,7 +170,7 @@ bool check_function(semantic_t* sem, node_t* node)
         size_t param_count = func->param_decl.count;
         type_t** param_types = NULL;
         if(param_count > 0){
-            param_types = arena_alloc_array(sem->ctx->memory.phase_arena, sizeof(type_t*), param_count, alignof(type_t*));
+            param_types = arena_alloc_array(sem->ctx->memory.perm_arena, sizeof(type_t*), param_count, alignof(type_t*));
             if(!param_types) return false;
             for(size_t i = 0; i < param_count; i++){
                 node_t* p = func->param_decl.elems[i];
@@ -176,7 +183,7 @@ bool check_function(semantic_t* sem, node_t* node)
                 }
             }
         }
-        type_t* func_type = new_type_function(sem->ctx->memory.phase_arena, return_type, param_types, param_count);
+        type_t* func_type = new_type_function(sem->ctx->memory.perm_arena, return_type, param_types, param_count);
 
         symbol_t* func_sym = define_symbol(sem->symbols, func->name.data, SYMBOL_FUNC, func_type, node);
         if(!func_sym){
@@ -191,7 +198,7 @@ bool check_function(semantic_t* sem, node_t* node)
     symbol_t* func_sym = lookup_symbol(sem->symbols, func->name.data);
     if(!func_sym){
         type_t* return_type = datatype_to_type(func->return_type);
-        type_t* func_type = new_type_function(sem->ctx->memory.phase_arena, return_type, NULL, 0);
+        type_t* func_type = new_type_function(sem->ctx->memory.perm_arena, return_type, NULL, 0);
         func_sym = define_symbol(sem->symbols, func->name.data, SYMBOL_FUNC, func_type, node);
         if(!func_sym) return false;
     }
@@ -539,7 +546,7 @@ bool check_struct(semantic_t* sem, node_t* node)
         }
 
         // create struct type (will be populated in check phase)
-        type_t* struct_type = new_type_compound(sem->ctx->memory.phase_arena, TYPE_STRUCT, NULL, 0);
+        type_t* struct_type = new_type_compound(sem->ctx->memory.perm_arena, TYPE_STRUCT, NULL, 0);
         symbol_t* struct_sym = define_symbol(sem->symbols, struct_decl->name.data, SYMBOL_STRUCT, struct_type, node);
         if(!struct_sym){
             add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc);
@@ -560,14 +567,14 @@ bool check_struct(semantic_t* sem, node_t* node)
 
     for(size_t i = 0; i < struct_decl->member.count; i++){
         node_t* member = struct_decl->member.elems[i];
-        if(!member || member->kind != NODE_VARIABLE) {
+        if(!member || member->kind != NODE_VARIABLE){
             add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_INVAL_EXPR, member ? member->loc : node->loc);
             success = false;
             continue;
         }
 
         struct node_variable* var = member->var_decl;
-        if(!var || !var->name.data) {
+        if(!var || !var->name.data){
             success = false;
             continue;
         }
@@ -584,8 +591,8 @@ bool check_struct(semantic_t* sem, node_t* node)
         if(var->dtype != DT_VOID){
             member_type = datatype_to_type(var->dtype);
         }
-        else if(var->value) {
-            if(!check_node(sem, var->value)) {
+        else if(var->value){
+            if(!check_node(sem, var->value)){
                 success = false;
                 continue;
             }
@@ -597,7 +604,7 @@ bool check_struct(semantic_t* sem, node_t* node)
             continue;
         }
 
-        if(!member_type || member_type == type_error) {
+        if(!member_type || member_type == type_error){
             add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_VAR_NO_TYPE_OR_INITIALIZER, member->loc);
             success = false;
             continue;
@@ -605,7 +612,7 @@ bool check_struct(semantic_t* sem, node_t* node)
 
         // create member symbol
         symbol_t* member_sym = define_symbol(sem->symbols, var->name.data, SYMBOL_VAR, member_type, member);
-        if(!member_sym) {
+        if(!member_sym){
             add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc);
             success = false;
             continue;
@@ -640,7 +647,7 @@ bool check_enum(semantic_t* sem, node_t* node)
         }
 
         // create enum type
-        type_t* enum_type = new_type_compound(sem->ctx->memory.phase_arena, TYPE_ENUM, NULL, 0);
+        type_t* enum_type = new_type_compound(sem->ctx->memory.perm_arena, TYPE_ENUM, NULL, 0);
         symbol_t* enum_sym = define_symbol(sem->symbols, enum_decl->name.data, SYMBOL_ENUM, enum_type, node);
         if(!enum_sym){
             add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, node->loc);
@@ -662,7 +669,7 @@ bool check_enum(semantic_t* sem, node_t* node)
 
     for(size_t i = 0; i < enum_decl->member.count; i++){
         node_t* member = enum_decl->member.elems[i];
-        if(!member) {
+        if(!member){
             success = false;
             continue;
         }
@@ -671,11 +678,11 @@ bool check_enum(semantic_t* sem, node_t* node)
         int variant_value = next_value;
 
         // handle different enum member formats
-        if(member->kind == NODE_VARIABLE && member->var_decl) {
+        if(member->kind == NODE_VARIABLE && member->var_decl){
             variant_name = member->var_decl->name.data;
-            if(member->var_decl->value) {
+            if(member->var_decl->value){
                 // explicit value assignment
-                if(member->var_decl->value->kind == NODE_LITERAL) {
+                if(member->var_decl->value->kind == NODE_LITERAL){
                     variant_value = atoi(member->var_decl->value->lit->value.data);
                 }
                 else {
@@ -685,7 +692,7 @@ bool check_enum(semantic_t* sem, node_t* node)
                 }
             }
         }
-        else if(member->kind == NODE_REFERENCE && member->var_ref) {
+        else if(member->kind == NODE_REFERENCE && member->var_ref){
             variant_name = member->var_ref->name.data;
         }
         else {
@@ -694,7 +701,7 @@ bool check_enum(semantic_t* sem, node_t* node)
             continue;
         }
 
-        if(!variant_name) {
+        if(!variant_name){
             success = false;
             continue;
         }
@@ -708,7 +715,7 @@ bool check_enum(semantic_t* sem, node_t* node)
 
         // create variant symbol with int type
         symbol_t* variant_sym = define_symbol(sem->symbols, variant_name, SYMBOL_ENUM_VARIANT, type_int, member);
-        if(!variant_sym) {
+        if(!variant_sym){
             add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_FAIL_TO_DECL_VAR, member->loc);
             success = false;
             continue;

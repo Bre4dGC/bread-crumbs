@@ -8,19 +8,15 @@
 #include "compiler/backend/codegen.h"
 #include "core/lang/source.h"
 
-compiler_context_t* new_compiler_context(void)
+compiler_context_t* new_compiler_context(compiler_option_t options)
 {
     compiler_context_t* ctx = malloc(sizeof(compiler_context_t));
     if(!ctx) return NULL;
 
     memset(ctx, 0, sizeof(compiler_context_t));
 
-    ctx->phase = COMPILE_PHASE_LEXING;
-
-    ctx->options.debug = false;
-    ctx->options.verbose = false;
-    ctx->options.repl = false;
-    ctx->options.optimization = NONE;
+    ctx->phase = COMPILE_PHASE_START;
+    ctx->options = options;
 
     arena_t* perm_arena  = new_arena(ARENA_PERM_SIZE);
     arena_t* temp_arena  = new_arena(ARENA_TEMP_SIZE);
@@ -48,8 +44,6 @@ compiler_context_t* new_compiler_context(void)
 
     ctx->ast = new_ast(ctx->memory.perm_arena);
     ctx->symbols = new_symbol_table(ctx);
-    ctx->ir = new_ir();
-    ctx->codegen = new_codegen();
 
     return ctx;
 }
@@ -59,8 +53,6 @@ void free_compiler_context(compiler_context_t* ctx)
     if(!ctx) return;
 
     if(ctx->symbols) ctx->symbols = NULL;
-    if(ctx->ir->instrs) free_ir(ctx->ir);
-    if(ctx->codegen->arena || ctx->codegen->string_table) free_codegen(ctx->codegen);
     if(ctx->reports->arena) free_report_table(ctx->reports);
 
     free_hashmap(ctx->memory.global_idents);

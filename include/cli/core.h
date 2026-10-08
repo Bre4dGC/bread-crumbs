@@ -1,7 +1,10 @@
 #pragma once
 
-#include "cli/args.h"       // cli_option_set_t
-#include "cli/commands.h"   // command_list_t, command_t
+#include "cli/args.h"
+#include "cli/commands.h"
+
+#define CLI_NAME    "crum"
+#define CLI_VERSION "0.1.0"
 
 typedef struct {
     int argc;
@@ -13,4 +16,6 @@ typedef struct {
 cli_t new_cli(int argc, char** argv);
 void free_cli(cli_t* cli);
 
-command_t find_command(cli_t* cli, const char* name);
+command_t* find_command(cli_t* cli, const char* name);
+
+int cli_run(cli_t* cli);

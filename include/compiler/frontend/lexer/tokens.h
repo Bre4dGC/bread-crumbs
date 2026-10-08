@@ -50,16 +50,11 @@ enum category_operator {
 
 enum category_keyword {
     // base
-    KW_IF,       KW_ELIF,     KW_ELSE,
-    KW_FOR,      KW_DO,       KW_WHILE,
-    KW_FUNC,     KW_STRUCT,   KW_ENUM,
-    KW_MATCH,    KW_CASE,     KW_DEFAULT,
-    KW_RETURN,   KW_BREAK,    KW_CONTINUE,
-
-    // advanced
-    KW_TRAIT,    KW_IMPL,     KW_SELF,
-    KW_IMPORT,   KW_MODULE,   KW_USE,
-    KW_TRY,      KW_CATCH,    KW_THROW,
+    KW_IF,     KW_ELIF,   KW_ELSE,
+    KW_FOR,    KW_WHILE,  
+    KW_FUNC,   KW_STRUCT, KW_ENUM,
+    KW_MATCH,  KW_CASE,   KW_DEFAULT,
+    KW_RETURN, KW_BREAK,  KW_CONTINUE,
     KW_TYPE
 };
 
@@ -88,8 +83,8 @@ enum category_literal {
     LIT_IDENT,  LIT_NUMBER,
     LIT_CHAR,   LIT_STRING,
     LIT_TRUE,   LIT_FALSE,
-    LIT_FLOAT,  LIT_INFINITY,
-    LIT_HEX,    LIT_BIN,     LIT_OCT,
+    LIT_FLOAT,  LIT_HEX,    LIT_BIN,
+    LIT_SELF,
 };
 
 enum category_modifier {

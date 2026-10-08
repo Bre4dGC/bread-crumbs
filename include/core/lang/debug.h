@@ -37,8 +37,6 @@ static inline const char* token_to_str(const token_t token)
                 case LIT_FLOAT:
                 case LIT_HEX:
                 case LIT_BIN:
-                case LIT_OCT:
-                case LIT_INFINITY:
                     return "NUMBER";
                 default:
                     return "LITERAL";
@@ -365,50 +363,6 @@ static inline void print_node(node_t* node, int indent)
                 }
             }
             break;
-        case NODE_TRAIT:
-            if(node->trait_decl && node->trait_decl->name.data){
-                printf("\033[1mTRAIT\033[0m ");
-                printf("%s\033[0m\n", node->trait_decl->name.data);
-            }
-            else {
-                printf("\033[1mTRAIT\033[0m (null)\033[0m\n");
-            }
-            if(node->trait_decl && node->trait_decl->body){
-                print_node(node->trait_decl->body, indent + 1);
-            }
-            break;
-        case NODE_IMPL:
-            if(node->impl_decl && node->impl_decl->trait_name.data){
-                printf("\033[1mIMPL\033[0m ");
-                printf("%s for %s\033[0m\n",
-                       node->impl_decl->trait_name.data,
-                       node->impl_decl->struct_name.data);
-            }
-            else {
-                printf("\033[1mIMPL\033[0m (null)\033[0m\n");
-            }
-            if(node->impl_decl && node->impl_decl->body){
-                print_node(node->impl_decl->body, indent + 1);
-            }
-            break;
-        case NODE_TRY:
-            printf("\033[1mTRY\033[0m\n");
-            if(node->try_stmt){
-                if(node->try_stmt->try_block){
-                    print_indent(indent + 1, "\033[90mTRY_BLOCK:\033[0m\n");
-                    print_node(node->try_stmt->try_block, indent + 2);
-                }
-            }
-            break;
-        case NODE_CATCH:
-            printf("\033[1mCATCH\033[0m\n");
-            if(node->catch_stmt){
-                if(node->catch_stmt->catch_block){
-                    print_indent(indent + 1, "\033[90mCATCH_BLOCK:\033[0m\n");
-                    print_node(node->catch_stmt->catch_block, indent + 2);
-                }
-            }
-            break;
         case NODE_TYPE:
             if(node->type_decl && node->type_decl->name.data){
                 printf("\033[1mTYPE_ALIAS\033[0m ");
@@ -419,28 +373,6 @@ static inline void print_node(node_t* node, int indent)
             }
             if(node->type_decl && node->type_decl->body){
                 print_node(node->type_decl->body, indent + 1);
-            }
-            break;
-        case NODE_IMPORT:
-            printf("\033[1mIMPORT\033[0m (%zu modules)\033[0m\n",
-                   node->import_decl ? node->import_decl->count : 0);
-            if(node->import_decl){
-                for(size_t i = 0; i < node->import_decl->count; ++i){
-                    print_indent(indent + 1, "");
-                    printf("%s\033[0m\n", node->import_decl->modules[i].data);
-                }
-            }
-            break;
-        case NODE_MODULE:
-            if(node->module_decl && node->module_decl->name.data){
-                printf("\033[1mMODULE\033[0m ");
-                printf("%s\033[0m\n", node->module_decl->name.data);
-            }
-            else {
-                printf("\033[1mMODULE\033[0m (null)\033[0m\n");
-            }
-            if(node->module_decl && node->module_decl->body){
-                print_node(node->module_decl->body, indent + 1);
             }
             break;
     }
@@ -462,8 +394,6 @@ static inline const char* symbol_kind_to_str(enum symbol_kind kind)
         case SYMBOL_ENUM_VARIANT: return "ENUM_VARIANT";
         case SYMBOL_TYPE_ALIAS: return "TYPE_ALIAS";
         case SYMBOL_BUILTIN_TYPE: return "BUILTIN_TYPE";
-        case SYMBOL_MODULE: return "MODULE";
-        case SYMBOL_GENERIC: return "GENERIC";
         default: return "UNKNOWN";
     }
 }
@@ -471,14 +401,14 @@ static inline const char* symbol_kind_to_str(enum symbol_kind kind)
 static inline const char* scope_kind_to_str(enum scope_kind kind)
 {
     switch(kind){
-        case SCOPE_GLOBAL: return "GLOBAL";
-        case SCOPE_MODULE: return "MODULE";
+        case SCOPE_GLOBAL:   return "GLOBAL";
+        case SCOPE_MODULE:   return "MODULE";
         case SCOPE_FUNCTION: return "FUNCTION";
-        case SCOPE_BLOCK: return "BLOCK";
-        case SCOPE_STRUCT: return "STRUCT";
-        case SCOPE_ENUM: return "ENUM";
-        case SCOPE_SWITCH: return "SWITCH";
-        case SCOPE_LOOP: return "LOOP";
+        case SCOPE_BLOCK:    return "BLOCK";
+        case SCOPE_STRUCT:   return "STRUCT";
+        case SCOPE_ENUM:     return "ENUM";
+        case SCOPE_SWITCH:   return "SWITCH";
+        case SCOPE_LOOP:     return "LOOP";
         default: return "UNKNOWN";
     }
 }
@@ -509,19 +439,13 @@ static inline const char* type_kind_to_str(enum type_kind kind)
 
 static inline void print_symbol_flags(enum symbol_flags flags)
 {
-    if(flags == SYM_FLAG_NONE){
-        printf("NONE"); return;
-    }
+    if(flags == SYM_FLAG_NONE) printf("NONE"); return;
 
     bool first = true;
     if(flags & SYM_FLAG_USED)   { printf("%sUSED",    first ? "" : "|"); first = false; }
     if(flags & SYM_FLAG_ASSIGNED){printf("%sASSIGNED",first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_GLOBAL) { printf("%sGLOBAL",  first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_EXTERN) { printf("%sEXTERN",  first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_STATIC) { printf("%sSTATIC",  first ? "" : "|"); first = false; }
+    if(flags & SYM_FLAG_GLOBAL){ printf("%sGLOBAL",  first ? "" : "|"); first = false; }
     if(flags & SYM_FLAG_MUTABLE){ printf("%sMUTABLE", first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_PRIVATE){ printf("%sPRIVATE", first ? "" : "|"); first = false; }
-    if(flags & SYM_FLAG_PUBLIC) { printf("%sPUBLIC",  first ? "" : "|"); first = false; }
 }
 
 static inline void print_symbol(symbol_t* sym, int indent)

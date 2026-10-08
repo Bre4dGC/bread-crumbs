@@ -226,7 +226,6 @@ token_t handle_number(lexer_t* lexer)
         switch(peek_ch(lexer)){
             case 'x': lit = LIT_HEX; break;
             case 'b': lit = LIT_BIN; break;
-            case 'o': lit = LIT_OCT; break;
         }
     }
 
@@ -368,7 +367,6 @@ string_t read_number(lexer_t* lexer, enum category_literal *lit)
         switch(*lit){
             case LIT_HEX: if(isxdigit(ch)) accept = true; break;
             case LIT_BIN: if(ch == '0' || ch == '1') accept = true; break;
-            case LIT_OCT: if(ch >= '0' && ch <= '7') accept = true; break;
             default: break;
         }
         if(ch == '.' && *lit != LIT_FLOAT){
@@ -402,7 +400,7 @@ string_t read_number(lexer_t* lexer, enum category_literal *lit)
         read_ch(lexer);
     }
 
-    if(length > 0 && (*lit == LIT_HEX || *lit == LIT_BIN || *lit == LIT_OCT)){
+    if(length > 0 && (*lit == LIT_HEX || *lit == LIT_BIN)){
         if(isalpha(lexer->ch) || lexer->ch == '_'){
             while(isalnum(lexer->ch) || lexer->ch == '_'){
                 read_ch(lexer);

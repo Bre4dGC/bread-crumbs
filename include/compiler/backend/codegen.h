@@ -1,13 +1,14 @@
 #pragma once
 
+#include <llvm-c/Core.h> // LLVMContextRef, LLVMModuleRef, LLVMBuilderRef
+
 #include "core/ds/hashmap.h"    // hashmap_t
-#include "compiler/frontend/ast.h"  // ast_t
+#include "compiler/middle/ir.h" // ir_t
 
 typedef struct {
-    arena_t* arena;
-    hashmap_t* string_table;
+    LLVMContextRef ctx;
+    LLVMModuleRef module;
+    LLVMBuilderRef builder;
+    hashmap_t* named_values;
 } codegen_t;
 
-codegen_t* new_codegen(void);
-void free_codegen(codegen_t* codegen);
-void cg_generate(codegen_t* codegen, ast_t* ast);

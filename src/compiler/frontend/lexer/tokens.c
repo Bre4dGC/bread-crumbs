@@ -36,17 +36,13 @@ void init_tokens(void)
         /* сontrol structures */
         {"if",      KW_IF,      C_KW}, {"else",     KW_ELSE,      C_KW},
         {"elif",    KW_ELIF,    C_KW}, {"for",      KW_FOR,       C_KW},
-        {"do",      KW_DO,      C_KW}, {"while",    KW_WHILE,     C_KW},
+        {"while",   KW_WHILE,   C_KW},
         {"func",    KW_FUNC,    C_KW}, {"return",   KW_RETURN,    C_KW},
         {"break",   KW_BREAK,   C_KW}, {"continue", KW_CONTINUE,  C_KW},
         {"default", KW_DEFAULT, C_KW},
         {"match",   KW_MATCH,   C_KW}, {"case",     KW_CASE,      C_KW},
         {"struct",  KW_STRUCT,  C_KW}, {"enum",     KW_ENUM,      C_KW},
-        {"import",  KW_IMPORT,  C_KW}, {"module",   KW_MODULE,    C_KW},
-        {"use",     KW_USE,     C_KW}, {"type",     KW_TYPE,      C_KW},
-        {"trait",   KW_TRAIT,   C_KW}, {"impl",     KW_IMPL,      C_KW},
-        {"try",     KW_TRY,     C_KW}, {"catch",    KW_CATCH,     C_KW},
-        {"throw",   KW_THROW,   C_KW},
+        {"type",    KW_TYPE,    C_KW},
 
         /* data types */
         {"int",     DT_INT,     C_DT}, {"uint",    DT_UINT,       C_DT},
@@ -63,16 +59,14 @@ void init_tokens(void)
 
         /* literals */
         {"true",    LIT_TRUE,   C_LT}, {"false",    LIT_FALSE,    C_LT},
-        {"null",    LIT_NULL,   C_LT}, {"infinity", LIT_INFINITY, C_LT},
+        {"null",    LIT_NULL,   C_LT}, {"self",     LIT_SELF,     C_LT},
     };
 
     const size_t tokens_count = sizeof(tokens) / sizeof(tokens[0]);
 
     tokens_table = new_hashmap();
 
-    for(size_t i = 0; i < tokens_count; ++i){
-        hm_insert(tokens_table, tokens[i].literal, &tokens[i]);
-    }
+    for(size_t i = 0; i < tokens_count; ++i) hm_insert(tokens_table, tokens[i].literal, &tokens[i]);
 }
 
 token_t new_token(const enum category_tag category, const int type, const char *literal)

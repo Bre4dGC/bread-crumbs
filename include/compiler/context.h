@@ -55,9 +55,7 @@ struct compiler_context {
 
     ast_t* ast;
     symbol_table_t* symbols;
-    ir_t* ir;
-    codegen_t* codegen;
 };
 
-compiler_context_t* new_compiler_context(void);
+compiler_context_t* new_compiler_context(compiler_option_t options);
 void free_compiler_context(compiler_context_t* ctx);

@@ -1,6 +1,8 @@
-#include <stdlib.h>     // malloc, free
+#include <stdlib.h>
+#include <string.h>
 
-#include "cli/args.h"   // cli_option_set_t
+#include "cli/args.h"
+#include "core/ds/strings.h"
 
 cli_option_set_t new_option_list(void)
 {
@@ -15,14 +17,33 @@ void free_option_list(cli_option_set_t* opt_set)
     if(!opt_set) return;
 
     if(opt_set->items){
-        for(size_t i = 0; i < opt_set->count; ++i){
-            if(opt_set->items[i].name)          free(opt_set->items[i].name);
-            if(opt_set->items[i].description)   free(opt_set->items[i].description);
-            if(opt_set->items[i].value_name)    free(opt_set->items[i].value_name);
-            if(opt_set->items[i].default_value) free(opt_set->items[i].default_value);
-        }
+        free_string_pool(opt_set->pool);
         free(opt_set->items);
         opt_set->items = NULL;
     }
     opt_set->count = 0;
+}
+
+void option_add(
+    cli_option_set_t* set,
+    const char* name,
+    const char* description,
+    enum cli_option_kind kind,
+    const char* value_name,
+    const char* default_value,
+    bool required)
+{
+    cli_option_t* new_items = realloc(set->items, sizeof(cli_option_t) * (set->count + 1));
+    if(!new_items) return;
+
+    set->items = new_items;
+    set->items[set->count] = (cli_option_t){
+        .name = new_string(set->pool, name),
+        .description = new_string(set->pool, description),
+        .kind = kind,
+        .value_name = new_string(set->pool, value_name),
+        .default_value = new_string(set->pool, default_value),
+        .required = required
+    };
+    set->count++;
 }

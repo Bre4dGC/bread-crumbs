@@ -11,6 +11,6 @@ func divide(a:int, b:int) : int
     return if(b == 0) throw "Division by zero error" else a / b
 }
 
-try divide(10, 0) catch err {
-    println("Caught an error: ", err)
-}
+var result = divide(10, 2)!            # propagate
+var result = divide(10, 0) catch { 0 } # handle
+var result = try divide(10, 0)         # result

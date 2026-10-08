@@ -17,6 +17,7 @@ enum type_kind {
     TYPE_BOOL,
     TYPE_INT,
     TYPE_UINT,
+    TYPE_BYTE,
     TYPE_SHORT,
     TYPE_USHORT,
     TYPE_LONG,
@@ -64,10 +65,11 @@ extern type_t* type_error;
 extern type_t* type_void;
 extern type_t* type_any;
 extern type_t* type_bool;
-extern type_t* type_int;
-extern type_t* type_uint;
+extern type_t* type_byte;
 extern type_t* type_short;
 extern type_t* type_ushort;
+extern type_t* type_int;
+extern type_t* type_uint;
 extern type_t* type_long;
 extern type_t* type_ulong;
 extern type_t* type_float;
@@ -76,7 +78,6 @@ extern type_t* type_str;
 extern type_t* type_char;
 
 void init_types(arena_t* arena);
-void free_type(type_t* type);
 
 type_t* new_type(arena_t* arena, enum type_kind kind, size_t size, size_t align);
 type_t* new_type_array(arena_t* arena, type_t* elem_type, const size_t length);

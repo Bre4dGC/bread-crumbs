@@ -18,8 +18,6 @@ parse_func_t parse_table[] = {
     [KW_WHILE]    = parse_stmt_while,
     [KW_FOR]      = parse_stmt_for,
     [KW_MATCH]    = parse_stmt_match,
-    [KW_TRY]      = parse_stmt_try,
-    [KW_CATCH]    = parse_stmt_catch,
     [KW_BREAK]    = parse_stmt_ctrl,
     [KW_CONTINUE] = parse_stmt_ctrl,
     [KW_RETURN]   = parse_stmt_ctrl,
@@ -27,11 +25,7 @@ parse_func_t parse_table[] = {
     [KW_FUNC]     = parse_decl_func,
     [KW_STRUCT]   = parse_decl_struct,
     [KW_ENUM]     = parse_decl_enum,
-    [KW_TRAIT]    = parse_decl_trait,
-    [KW_IMPL]     = parse_decl_impl,
     [KW_TYPE]     = parse_decl_type,
-    [KW_MODULE]   = parse_decl_module,
-    [KW_IMPORT]   = parse_decl_import,
 };
 
 const size_t PARSE_TABLE_LENGTH = sizeof(parse_table)/sizeof(parse_table[0]);

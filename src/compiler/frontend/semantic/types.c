@@ -8,10 +8,11 @@ type_t* type_error = NULL;
 type_t* type_void = NULL;
 type_t* type_any = NULL;
 type_t* type_bool = NULL;
-type_t* type_int = NULL;
-type_t* type_uint = NULL;
+type_t* type_byte = NULL;
 type_t* type_short = NULL;
 type_t* type_ushort = NULL;
+type_t* type_int = NULL;
+type_t* type_uint = NULL;
 type_t* type_long = NULL;
 type_t* type_ulong = NULL;
 type_t* type_float = NULL;
@@ -31,21 +32,22 @@ type_t* new_type(arena_t* arena, const enum type_kind kind, const size_t size, c
 
 void init_types(arena_t* arena)
 {
-    type_unknown = new_type(arena, TYPE_UNKNOWN, DEF_TYPE_SIZE, DEF_TYPE_ALIGN);
-    type_error =   new_type(arena, TYPE_ERROR,   DEF_TYPE_SIZE, DEF_TYPE_ALIGN);
-    type_void =    new_type(arena, TYPE_VOID,    DEF_TYPE_SIZE, DEF_TYPE_ALIGN);
-    type_any =     new_type(arena, TYPE_ANY,   sizeof(void*), alignof(void*));
-    type_bool =    new_type(arena, TYPE_BOOL,  sizeof(bool),  alignof(bool));
-    type_int =     new_type(arena, TYPE_INT,   sizeof(int),   alignof(int));
-    type_uint =    new_type(arena, TYPE_UINT,  sizeof(unsigned int), alignof(unsigned int));
-    type_short =   new_type(arena, TYPE_INT,   sizeof(short), alignof(short));
-    type_ushort =  new_type(arena, TYPE_UINT,  sizeof(unsigned short), alignof(unsigned short));
-    type_long =    new_type(arena, TYPE_INT,   sizeof(long),  alignof(long));
-    type_ulong =   new_type(arena, TYPE_UINT,  sizeof(unsigned long), alignof(unsigned long));
-    type_float =   new_type(arena, TYPE_FLOAT, sizeof(float), alignof(float));
-    type_decimal = new_type(arena, TYPE_FLOAT, sizeof(long),  alignof(long));
-    type_str =     new_type(arena, TYPE_STR,   sizeof(char*), alignof(char*));
-    type_char =    new_type(arena, TYPE_CHAR,  sizeof(char),  alignof(char));
+    type_unknown = new_type(arena, TYPE_UNKNOWN, DEF_TYPE_SIZE,          DEF_TYPE_ALIGN);
+    type_error =   new_type(arena, TYPE_ERROR,   DEF_TYPE_SIZE,          DEF_TYPE_ALIGN);
+    type_void =    new_type(arena, TYPE_VOID,    DEF_TYPE_SIZE,          DEF_TYPE_ALIGN);
+    type_any =     new_type(arena, TYPE_ANY,     sizeof(void*),          alignof(void*));
+    type_bool =    new_type(arena, TYPE_BOOL,    sizeof(bool),           alignof(bool));
+    type_int =     new_type(arena, TYPE_INT,     sizeof(int),            alignof(int));
+    type_uint =    new_type(arena, TYPE_UINT,    sizeof(unsigned int),   alignof(unsigned int));
+    type_byte =    new_type(arena, TYPE_BYTE,    sizeof(unsigned char),  alignof(unsigned char));
+    type_short =   new_type(arena, TYPE_SHORT,   sizeof(short),          alignof(short));
+    type_ushort =  new_type(arena, TYPE_USHORT,  sizeof(unsigned short), alignof(unsigned short));
+    type_long =    new_type(arena, TYPE_LONG,    sizeof(long),           alignof(long));
+    type_ulong =   new_type(arena, TYPE_ULONG,   sizeof(unsigned long),  alignof(unsigned long));
+    type_float =   new_type(arena, TYPE_FLOAT,   sizeof(float),          alignof(float));
+    type_decimal = new_type(arena, TYPE_DECIMAL, sizeof(long),           alignof(long));
+    type_str =     new_type(arena, TYPE_STR,     sizeof(char*),          alignof(char*));
+    type_char =    new_type(arena, TYPE_CHAR,    sizeof(char),           alignof(char));
 }
 
 type_t* new_type_array(arena_t* arena, type_t* elem_type, const size_t length)
@@ -198,26 +200,4 @@ bool is_signed_type(const type_t* type)
         || type->kind == TYPE_SHORT
         || type->kind == TYPE_LONG
         || type->kind == TYPE_FLOAT;
-}
-
-void free_type(type_t* type)
-{
-    if(!type) return;
-
-    switch(type->kind){
-        case TYPE_ARRAY:
-            break;
-
-        case TYPE_FUNC:
-            break;
-
-        case TYPE_STRUCT:
-            break;
-
-        default: break;
-    }
-
-    type->kind = TYPE_UNKNOWN;
-    type->size = DEF_TYPE_SIZE;
-    type->align = DEF_TYPE_ALIGN;
 }

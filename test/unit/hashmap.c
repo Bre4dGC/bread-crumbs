@@ -8,11 +8,11 @@ int main(void)
 
     hashmap_t* table = new_hashmap();
     
-    char* keys[] = {"apple", "banana", "orange", "grape", "melon"};
-    char* values[] = {"red", "yellow", "orange", "purple", "green"};
+    const char* keys[] = {"apple", "banana", "orange", "grape", "melon"};
+    const char* values[] = {"red", "yellow", "orange", "purple", "green"};
 
     for(size_t i = 0; i < sizeof(keys)/sizeof(keys[0]); i++){
-        hm_insert(table, keys[i], values[i]);
+        hm_insert(table, keys[i], (void*)values[i]);
     }
 
     for(size_t i = 0; i < sizeof(keys)/sizeof(keys[0]); i++){

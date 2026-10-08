@@ -1,8 +1,8 @@
-#include <stdlib.h>     // malloc, free
+#include <stdlib.h>
 #include <string.h>
 
-#include "cli/commands.h"   // command_t, cli_option_set_t
-#include "core/ds/hashmap.h"// hm_hash
+#include "cli/commands.h"
+#include "core/ds/hashmap.h"
 
 command_list_t new_command_list(void)
 {
@@ -13,6 +13,9 @@ void free_command_list(command_list_t* list)
 {
     if(!list) return;
     if(list->items){
+        for (size_t i = 0; i < list->count; i++){
+            free_option_list(&list->items[i].options);
+        }
         free(list->items);
         list->items = NULL;
     }

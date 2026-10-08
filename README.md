@@ -1,6 +1,6 @@
 <div align="center">
     <h1>Bread Crumbs</h1>
-    <img src="logo.png" alt="Bread Crumbs Logo" width="300"/>
+    <img src="assets/logo.png" alt="Bread Crumbs Logo" width="300"/>
     <div style="margin-bottom: 20px;">
         <img src="https://m3-markdown-badges.vercel.app/issues/1/1/Bre4dGC/bread-crumbs" width="150"/>
         <img src="https://m3-markdown-badges.vercel.app/stars/8/1/Bre4dGC/bread-crumbs" width="150"/>
@@ -29,7 +29,7 @@ See [INSTALL.md](INSTALL.md) for detailed installation instructions.
 
 We welcome contributions! Here's how to get involved:
 
-Please read our [Contributing Guidelines](CONTRIBUTING.md) for details.
+Please read our [Contributing Guidelines](docs/contributing.md) for details.
 
 ## Community
 
