@@ -1,4 +1,5 @@
 #include "compiler/frontend/semantic/types.h"   // type_t, enum type_kind
+#include "compiler/frontend/lexer/tokens.h"     // DT_*
 
 #define DEF_TYPE_SIZE  0
 #define DEF_TYPE_ALIGN 1
@@ -200,4 +201,27 @@ bool is_signed_type(const type_t* type)
         || type->kind == TYPE_SHORT
         || type->kind == TYPE_LONG
         || type->kind == TYPE_FLOAT;
+}
+
+int type_to_datatype(const type_t* type)
+{
+    if(!type) return DT_VOID;
+
+    switch(type->kind){
+        case TYPE_VOID:    return DT_VOID;
+        case TYPE_ANY:     return DT_ANY;
+        case TYPE_BOOL:    return DT_BOOL;
+        case TYPE_INT:     return DT_INT;
+        case TYPE_UINT:    return DT_UINT;
+        case TYPE_BYTE:    return DT_BYTE;
+        case TYPE_SHORT:   return DT_SHORT;
+        case TYPE_USHORT:  return DT_USHORT;
+        case TYPE_LONG:    return DT_LONG;
+        case TYPE_ULONG:   return DT_ULONG;
+        case TYPE_FLOAT:   return DT_FLOAT;
+        case TYPE_DECIMAL: return DT_DECIMAL;
+        case TYPE_STR:     return DT_STR;
+        case TYPE_CHAR:    return DT_CHAR;
+        default:           return DT_VOID;
+    }
 }

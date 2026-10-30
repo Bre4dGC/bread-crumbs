@@ -8,11 +8,20 @@
 
 string_pool_t new_string_pool(const size_t capacity)
 {
-    string_pool_t pool;
-    pool.arena = new_arena(capacity);
-    pool.capacity = 16;
-    pool.elements = calloc(pool.capacity, sizeof(string_t));
-    pool.count = 0;
+    string_pool_t pool = {0};
+    const size_t element_capacity = capacity ? capacity : SP_DEF_CAPACITY;
+
+    pool.arena = new_arena(ARENA_DEF_SIZE);
+    if(!pool.arena) return pool;
+
+    pool.capacity = element_capacity;
+    pool.elements = calloc(element_capacity, sizeof(string_t));
+    if(!pool.elements){
+        free_arena(pool.arena);
+        pool.arena = NULL;
+        pool.capacity = 0;
+    }
+
     return pool;
 }
 

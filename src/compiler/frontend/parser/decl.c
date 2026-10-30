@@ -106,6 +106,11 @@ node_t* parse_decl_array(parser_t* parser)
             size_t new_cap = node->array_decl->capacity == 0 ? 4 : node->array_decl->capacity * 2;
             node_t** new_arr = arena_alloc_array(parser->ctx->ast->arena, sizeof(node_t*), new_cap, alignof(node_t*));
             if(!new_arr) return NULL;
+
+            for(size_t i = 0; i < node->array_decl->count; i++){
+                new_arr[i] = node->array_decl->elements[i];
+            }
+
             node->array_decl->elements = new_arr;
             node->array_decl->capacity = new_cap;
         }
@@ -190,16 +195,7 @@ node_t* parse_decl_func(parser_t* parser)
                 return NULL;
             }
 
-            // check if there is enough capacity
-            if(node->func_decl->param_decl.count >= node->func_decl->param_decl.capacity){
-                size_t new_capacity = node->func_decl->param_decl.capacity == 0 ? 4 : node->func_decl->param_decl.capacity * 2;
-                node_t** new_params = arena_alloc_array(parser->ctx->ast->arena, sizeof(node_t*), new_capacity, alignof(node_t*));
-                if(!new_params) return NULL;
-                node->func_decl->param_decl.elems = new_params;
-                node->func_decl->param_decl.capacity = new_capacity;
-            }
-
-            node->func_decl->param_decl.elems[node->func_decl->param_decl.count++] = param_decl;
+            if(!nodes_push(&node->func_decl->param_decl, parser->ctx->ast->arena, param_decl)) return NULL;
 
             // consume ','
             if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
@@ -210,7 +206,8 @@ node_t* parse_decl_func(parser_t* parser)
         }
     }
 
-    advance_token(parser); // consume ')'
+    // consume ')'
+    if(!consume_token(parser, node, CAT_PAREN, PAR_RPAREN, ERR_EXPEC_PAREN)) return NULL;
 
     // optional return type
     if(check_token(parser, CAT_OPERATOR, OPER_COLON)){
@@ -260,14 +257,7 @@ node_t* parse_decl_struct(parser_t* parser)
         if(!member) return NULL;
 
         // add member
-        if(node->struct_decl->member.count >= node->struct_decl->member.capacity){
-            size_t new_cap = node->struct_decl->member.capacity == 0 ? 4 : node->struct_decl->member.capacity * 2;
-            node_t** new_members = arena_alloc_array(parser->ctx->ast->arena, sizeof(node_t*), new_cap, alignof(node_t*));
-            if(!new_members) return NULL;
-            node->struct_decl->member.elems = new_members;
-            node->struct_decl->member.capacity = new_cap;
-        }
-        node->struct_decl->member.elems[node->struct_decl->member.count++] = member;
+        if(!nodes_push(&node->struct_decl->member, parser->ctx->ast->arena, member)) return NULL;
 
         // optional comma separator
         if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
@@ -353,14 +343,7 @@ node_t* parse_decl_enum(parser_t* parser)
         if(!member) return NULL;
 
         // grow array if needed
-        if(node->enum_decl->member.count >= node->enum_decl->member.capacity){
-            size_t new_cap = node->enum_decl->member.capacity == 0 ? 4 : node->enum_decl->member.capacity * 2;
-            node_t** new_members = arena_alloc_array(parser->ctx->ast->arena, sizeof(node_t*), new_cap, alignof(node_t*));
-            if(!new_members) return NULL;
-            node->enum_decl->member.elems = new_members;
-            node->enum_decl->member.capacity = new_cap;
-        }
-        node->enum_decl->member.elems[node->enum_decl->member.count++] = member;
+        if(!nodes_push(&node->enum_decl->member, parser->ctx->ast->arena, member)) return NULL;
 
         // optional comma separator
         if(check_token(parser, CAT_OPERATOR, OPER_COMMA)) advance_token(parser);

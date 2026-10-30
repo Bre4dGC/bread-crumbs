@@ -17,7 +17,6 @@ report_table_t* new_report_table(arena_t* arena)
     table->arena = new_arena(DEFAULT_REPORT_POOL_SIZE * sizeof(report_t));
     if(!table->arena) return NULL;
 
-    table->string_pool = new_string_pool(DEFAULT_REPORT_POOL_SIZE);
     table->count = 0;
 
     return table;
@@ -31,7 +30,7 @@ void add_report(
     const location_t loc
 )
 {
-    if(!rt) return;
+    if(!rt || rt->count >= MAX_REPORTS_COUNT) return;
 
     if(!arena_has_space(rt->arena, sizeof(report_t), alignof(report_t))){
         size_t cur = rt->arena->current ? rt->arena->current->capacity : 0;
@@ -44,29 +43,52 @@ void add_report(
     report_t* store_report = arena_alloc_default(rt->arena, sizeof(report_t));
     if(!store_report) return;
 
+    string_t line = {0};
+    size_t start = 0;
+    size_t end = 0;
+    const size_t line_number = loc.line ? loc.line : 1;
+
+    if(src && src_get_line_range(src, line_number, &start, &end)){
+        line.data = src->content->data + start;
+        line.length = end - start;
+    }
+
     *store_report = (report_t){
         .severity = sev,
         .code = code,
         .loc = loc,
-        .filename = src->filename,
-        .line = src->content
+        .filename = src ? src->filename : NULL,
+        .line = line
     };
     rt->count++;
 }
 
 void print_report(const report_t* report)
 {
-    if(!report || !report->line->data) return;
+    if(!report) return;
 
-    printf("\n %zu |\t%s\n", report->loc.line, report->line->data);
+    const size_t line_number = report->loc.line ? report->loc.line : 1;
+    const char* filename = report->filename && report->filename->data
+        ? report->filename->data
+        : "<unknown>";
+
+    if(report->line.data){
+        printf("\n %zu |\t%.*s\n", line_number,
+               (int)report->line.length, report->line.data);
+    }
+    else {
+        printf("\n %zu |\n", line_number);
+    }
+    int gutter = 1;
+    if(line_number >= 1000) gutter = 4;
+    else if(line_number >= 100) gutter = 3;
+    else if(line_number >= 10) gutter = 2;
+
     printf(" %*s |\t%*s\033[31m",
-        (int)report->loc.line < 10   ? 1 :
-        (int)report->loc.line < 100  ? 2 :
-        (int)report->loc.line < 1000 ? 3 : 4,
-        "", report->loc.column != 0 ? (int)report->loc.column - 1 : 0, ""
+        gutter, "", report->loc.column > 1 ? (int)report->loc.column - 1 : 0, ""
     );
 
-    if(report->loc.length == 1){
+    if(report->loc.length <= 1){
         printf("^");
     }
     else for(size_t i = 0; i < report->loc.length; ++i){
@@ -79,11 +101,11 @@ void print_report(const report_t* report)
         report->severity == SEV_NOTE ? "\033[34m[NOTE]"    :
                                        "\033[31m[UNKNOWN]",
         report_msg(report->code),
-        report->filename->data, report->loc.line, report->loc.column
+        filename, line_number, report->loc.column
     );
 }
 
-void print_report_table(const report_table_t* table)
+void print_report_table(report_table_t* table)
 {
     if(!table) return;
 
@@ -103,7 +125,6 @@ void print_report_table(const report_table_t* table)
 void free_report_table(report_table_t* table)
 {
     if(!table) return;
-    free_string_pool(&table->string_pool);
     free_arena(table->arena);
 }
 

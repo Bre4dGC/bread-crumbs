@@ -204,10 +204,7 @@ void free_symbol_table(symbol_table_t* st)
 {
     if(!st) return;
 
-    if(st->global && st->global->symbols){
-        free_hashmap(st->global->symbols);
-        st->global->symbols = NULL;
-    }
+    if(st->global) free_scope(st->global);
 
     st->global = NULL;
     st->current = NULL;

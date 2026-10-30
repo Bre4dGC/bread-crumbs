@@ -6,21 +6,30 @@
 
 cli_option_set_t new_option_list(void)
 {
-    return (cli_option_set_t){
+    cli_option_set_t set = {
         .items = NULL,
+        .pool = NULL,
         .count = 0
     };
+
+    set.pool = malloc(sizeof(*set.pool));
+    if(set.pool) *set.pool = new_string_pool(SP_DEF_CAPACITY);
+
+    return set;
 }
 
 void free_option_list(cli_option_set_t* opt_set)
 {
     if(!opt_set) return;
 
-    if(opt_set->items){
+    if(opt_set->pool){
         free_string_pool(opt_set->pool);
-        free(opt_set->items);
-        opt_set->items = NULL;
+        free(opt_set->pool);
+        opt_set->pool = NULL;
     }
+
+    free(opt_set->items);
+    opt_set->items = NULL;
     opt_set->count = 0;
 }
 

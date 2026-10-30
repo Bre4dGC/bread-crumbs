@@ -8,7 +8,7 @@ int main(void)
 {
     bm_start();
 
-    compiler_context_t* ctx = new_compiler_context((compiler_option_t){0});
+    compiler_context_t* ctx = new_compiler_context(NULL);
     assert(ctx);
 
     lexer_t* lexer = new_lexer(ctx);

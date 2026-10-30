@@ -101,16 +101,7 @@ node_t* parse_expr_func_call(parser_t* parser)
             node_t* arg = parse_expr(parser);
             if(!arg) return NULL;
 
-            // grow array if needed
-            if(node->func_call->args.count >= node->func_call->args.capacity){
-                size_t new_capacity = node->func_call->args.capacity == 0 ? 4 : node->func_call->args.capacity * 2;
-                node_t** new_args = arena_alloc_array(parser->ctx->ast->arena, sizeof(node_t*), new_capacity, alignof(node_t*));
-                if(!new_args) return NULL;
-                node->func_call->args.elems = new_args;
-                node->func_call->args.capacity = new_capacity;
-            }
-
-            node->func_call->args.elems[node->func_call->args.count++] = arg;
+            if(!nodes_push(&node->func_call->args, parser->ctx->ast->arena, arg)) return NULL;
 
             if(check_token(parser, CAT_OPERATOR, OPER_COMMA)){
                 advance_token(parser); // skip ','

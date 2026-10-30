@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "compiler/frontend/lexer/tokens.h" // KW_FUNC, KW_STRUCT, etc.
 #include "compiler/frontend/semantic.h"     // semantic_t, node_t, type_t
@@ -34,6 +35,49 @@ bool check_type_compatibility(semantic_t* sem, node_t* node, type_t* expected, t
 bool all_paths_return(node_t* node);
 bool is_unreachable_code(node_t* node);
 
+/* -------------------------------------------------------------------------- */
+/* builtins                                                                   */
+/* -------------------------------------------------------------------------- */
+
+static bool is_builtin_io(const char* name)
+{
+    if(!name) return false;
+    return strcmp(name, "print") == 0
+        || strcmp(name, "write") == 0
+        || strcmp(name, "eprint") == 0
+        || strcmp(name, "read_line") == 0
+        || strcmp(name, "read_all") == 0;
+}
+
+static void register_builtin(semantic_t* sem, const char* name,
+                             type_t* return_type, type_t* param_type, bool has_param)
+{
+    type_t** params = NULL;
+    size_t param_count = 0;
+
+    if(has_param){
+        params = arena_alloc_array(sem->ctx->memory.perm_arena, sizeof(type_t*), 1, alignof(type_t*));
+        if(!params) return;
+        params[0] = param_type ? param_type : type_any;
+        param_count = 1;
+    }
+
+    type_t* func_type = new_type_function(sem->ctx->memory.perm_arena,
+                                          return_type, params, param_count);
+    if(!func_type) return;
+
+    (void)define_symbol(sem->symbols, name, SYMBOL_FUNC, func_type, NULL);
+}
+
+static void register_builtins(semantic_t* sem)
+{
+    register_builtin(sem, "print", type_void, type_any, true);
+    register_builtin(sem, "write", type_void, type_any, true);
+    register_builtin(sem, "eprint", type_void, type_any, true);
+    register_builtin(sem, "read_line", type_str, NULL, false);
+    register_builtin(sem, "read_all", type_str, NULL, false);
+}
+
 semantic_t* new_semantic(compiler_context_t* ctx)
 {
     if(!ctx) return NULL;
@@ -52,6 +96,8 @@ semantic_t* new_semantic(compiler_context_t* ctx)
     sem->phase = PHASE_DECLARE;
 
     sem->ctx = ctx;
+
+    register_builtins(sem);
 
     return sem;
 }
@@ -104,6 +150,7 @@ void free_semantic(semantic_t* sem)
 
 bool check_node(semantic_t* sem, node_t* node)
 {
+    if(!node) return false;
     if(!sem || !node) return false;
 
     switch(node->kind){
@@ -480,6 +527,15 @@ bool check_func_call(semantic_t* sem, node_t* node)
     if(func_sym->kind != SYMBOL_FUNC){
         add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_NOT_A_FUNC, node->loc);
         return false;
+    }
+
+    if(is_builtin_io(node->func_call->name.data)){
+        size_t expected = (strcmp(node->func_call->name.data, "read_line") == 0
+                        || strcmp(node->func_call->name.data, "read_all") == 0) ? 0 : 1;
+        if(node->func_call->args.count != expected){
+            add_report(sem->ctx->reports, sem->ctx->src_manager.current, SEV_ERR, ERR_INVAL_ARG_COUNT, node->loc);
+            return false;
+        }
     }
 
     for(size_t i = 0; i < node->func_call->args.count; i++){

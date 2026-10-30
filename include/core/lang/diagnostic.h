@@ -61,7 +61,7 @@ enum report_code {
 
 typedef struct {
     string_t* filename;
-    string_t* line;
+    string_t line;          // view into the source content, not owned
 
     enum report_severity severity;
     enum report_code code;
@@ -71,7 +71,6 @@ typedef struct {
 
 typedef struct {
     arena_t* arena;
-    string_pool_t string_pool;
     size_t count;
 } report_table_t;
 
@@ -83,5 +82,5 @@ void add_report(
     const location_t loc
 );
 report_table_t* new_report_table(arena_t* arena);
-void print_report_table(const report_table_t* table);
+void print_report_table(report_table_t* table);
 void free_report_table(report_table_t* table);

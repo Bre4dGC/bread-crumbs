@@ -34,8 +34,8 @@ typedef struct {
 
 typedef struct {
     arena_t* perm_arena;     // long-lived allocations
-    arena_t* phase_arena;    // allocations during a phase
-    arena_t* temp_arena;     // temporary allocations
+    arena_t* temp_arena;     // allocations during a phase
+    arena_t* phase_arena;    // temporary allocations
 
     string_pool_t perm_strings;
     string_pool_t temp_strings;
@@ -55,7 +55,14 @@ struct compiler_context {
 
     ast_t* ast;
     symbol_table_t* symbols;
+
+    ir_t* ir;
+    codegen_t* codegen;
 };
 
-compiler_context_t* new_compiler_context(compiler_option_t options);
+compiler_context_t* new_compiler_context(const char* filename);
 void free_compiler_context(compiler_context_t* ctx);
+
+bool compile_source(compiler_context_t* ctx);
+bool compile_to_object(compiler_context_t* ctx, const char* output_path);
+bool compile_to_executable(compiler_context_t* ctx, const char* output_path);

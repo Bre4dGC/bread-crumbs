@@ -85,3 +85,6 @@ type_t* new_type_function(arena_t* arena, type_t* return_type, type_t** param_ty
 type_t* new_type_compound(arena_t* arena, enum type_kind kind, struct symbol* scope, const size_t member_count);
 
 bool types_compatible(const type_t* a, const type_t* b);
+
+/* reverse of datatype_to_type(): returns a DT_* constant */
+int type_to_datatype(const type_t* type);

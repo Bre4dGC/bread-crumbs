@@ -88,31 +88,6 @@ module my.module.name
 type my_type = int | str
 ```
 
-`trait` — Declares a contract that an object must implement.
-```
-trait my_trait { func my_method() : int }
-```
-
-`impl` — Implementation of a trait for a type
-```
-impl my_trait for my_struct { func my_method() : int {...} }
-```
-
-`try` — Starts a block of code that will be tested for exceptions.
-```
-try failing_function()
-```
-
-`catch` — Handles a thrown exception.
-```
-failing_function() catch (e){...}
-```
-
-`throw` — Throws an exception with a specified value.
-```
-throw "Something went wrong"
-```
-
 ### Types
 
 `int`     — Integer type
@@ -134,7 +109,6 @@ throw "Something went wrong"
 `var`    — Declares a mutable variable.
 `const`  — Declares an immutable variable that must be initialized at the time of declaration.
 `final`  — Declares a variable that can only be assigned once, but does not require initialization at the time of declaration.
-`ref`    — Declares a reference to an existing variable, allowing for aliasing and shared mutability.
 
 ### Literals
 

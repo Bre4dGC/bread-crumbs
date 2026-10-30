@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdbool.h>    // bool
-#include <stddef.h>     // size_t
+#include <stddef.h>     // size_t, ptrdiff_t
 
 #include "core/ds/strings.h"    // string_pool_t
 
@@ -22,15 +22,18 @@ typedef struct {
 } source_t;
 
 typedef struct {
-    source_t* sources;
+    source_t** sources;
     source_t* current;
     string_pool_t* string_pool;
     size_t count;
+    size_t capacity;
 } source_manager_t;
 
 source_t* new_source(const char* filename);
+void free_source(source_t* source);
 
-void new_source_manager(void);
+source_manager_t* new_source_manager(string_pool_t* pool);
+source_t* source_manager_load(source_manager_t* manager, const char* filepath);
 void free_source_manager(source_manager_t* manager);
 
 source_t* load_source_from_file(const char* filepath);
@@ -40,9 +43,9 @@ bool src_set_content(source_t* source, const char* content, size_t length);
 
 int is_source_correct_extension(const char* filepath);
 
-size_t src_get_line(source_t* source, size_t offset);
-size_t src_get_column(source_t* source, size_t offset);
-bool src_get_line_range(source_t* source, size_t line, size_t* start, size_t* end);
+size_t src_get_line(const source_t* source, size_t offset);
+size_t src_get_column(const source_t* source, size_t offset);
+bool src_get_line_range(const source_t* source, size_t line, size_t* start, size_t* end);
 
 location_t new_location(void);
-location_t loc_copy(location_t loc, size_t len);
+location_t loc_copy(location_t loc, ptrdiff_t delta);

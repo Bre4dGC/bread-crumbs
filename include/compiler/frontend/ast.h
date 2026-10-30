@@ -213,3 +213,7 @@ typedef struct {
 ast_t* new_ast(arena_t* arena);
 void free_ast(ast_t* ast);
 node_t* new_node(arena_t* arena, enum node_kind kind);
+
+/* Append an element to a growable node list. The list storage comes from the
+ * arena, so growing copies the existing elements into the new block. */
+bool nodes_push(nodes_t* nodes, arena_t* arena, node_t* value);

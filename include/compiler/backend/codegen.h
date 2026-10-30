@@ -1,3 +1,4 @@
+#include <stdio.h>
 #pragma once
 
 #include <llvm-c/Core.h> // LLVMContextRef, LLVMModuleRef, LLVMBuilderRef
@@ -12,3 +13,9 @@ typedef struct {
     hashmap_t* named_values;
 } codegen_t;
 
+codegen_t* codegen_new(void);
+void codegen_free(codegen_t* cg);
+bool codegen_emit(codegen_t* cg, ir_t* ir);
+void codegen_dump(codegen_t* cg, FILE* out);
+bool codegen_write_ll(codegen_t* cg, const char* path);
+bool codegen_write_bitcode(codegen_t* cg, const char* path);

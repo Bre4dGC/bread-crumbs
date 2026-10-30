@@ -28,7 +28,9 @@ command_t* find_command(cli_t* cli, const char* name)
     if(!cli || !name) return NULL;
 
     for (size_t i = 0; i < cli->commands.count; ++i){
-        if(cli->commands.items[i].name.hash == hm_hash(name)){
+        const string_t* cmd_name = &cli->commands.items[i].name;
+        if(cmd_name->data && cmd_name->hash == hm_hash(name) &&
+           strcmp(cmd_name->data, name) == 0){
             return &cli->commands.items[i];
         }
     }
@@ -79,9 +81,14 @@ int cli_run(cli_t* cli)
     if(show_help || cmd_index < 0){
         command_t* help = find_command(cli, "help");
         if(!help) return 0;
-        int argc = (cmd_index > 0) ? 1 : 0;
-        char* args = (cmd_index > 0) ? cli->argv[cmd_index] : NULL;
-        return help->handler(argc, args ? &args : NULL, help->userdata);
+
+        char* help_argv[1] = {0};
+        int help_argc = 0;
+        if(cmd_index > 0){
+            help_argv[0] = cli->argv[cmd_index];
+            help_argc = 1;
+        }
+        return help->handler(help_argc, help_argc ? help_argv : NULL, help->userdata);
     }
 
     command_t* cmd = find_command(cli, cli->argv[cmd_index]);

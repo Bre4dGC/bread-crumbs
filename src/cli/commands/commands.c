@@ -22,6 +22,12 @@ void free_command_list(command_list_t* list)
     list->count = 0;
 }
 
+static string_t string_view(const char* str)
+{
+    if(!str) return (string_t){0};
+    return (string_t){str, strlen(str), hm_hash(str)};
+}
+
 void cmd_add(
     command_list_t* list,
     const char* name,
@@ -32,15 +38,18 @@ void cmd_add(
     void* userdata)
 {
     command_t cmd = {
-        .name = {name, 0, hm_hash(name)},
-        .description = description,
-        .usage = usage,
+        .name = string_view(name),
+        .description = string_view(description),
+        .usage = string_view(usage),
         .options = options,
         .handler = handler,
         .userdata = userdata
     };
 
-    list->items = realloc(list->items, sizeof(command_t) * (list->count + 1));
+    command_t* items = realloc(list->items, sizeof(command_t) * (list->count + 1));
+    if(!items) return;
+
+    list->items = items;
     list->items[list->count] = cmd;
     list->count++;
 }

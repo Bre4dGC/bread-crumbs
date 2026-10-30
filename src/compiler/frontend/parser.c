@@ -45,10 +45,17 @@ ast_t* parse_program(parser_t* parser)
 {
     if(!parser) return NULL;
 
-    parser->ctx->ast = arena_alloc_default(parser->ctx->memory.perm_arena, sizeof(ast_t));
-    if(!parser->ctx->ast) return NULL;
+    if(!parser->ctx->ast){
+        parser->ctx->ast = new_ast(parser->ctx->memory.perm_arena);
+        if(!parser->ctx->ast) return NULL;
+    } else if(!parser->ctx->ast->arena){
+        parser->ctx->ast->arena = parser->ctx->memory.perm_arena;
+    }
 
-    while(!is_eof(parser->token.next)){
+    /* create program block node */
+    node_t* program_block = new_node(parser->ctx->ast->arena, NODE_BLOCK);
+    parser->ctx->ast->nodes = program_block;
+    while(!is_eof(parser->token.current)){
         token_t prev_token = parser->token.current;
 
         node_t* stmt = parse_stmt(parser);
@@ -115,9 +122,14 @@ size_t get_lexer_pos(parser_t* parser)
 
 void advance_token(parser_t* parser)
 {
-    if(!parser || is_eof(parser->token.next)) return;
+    if(!parser || is_eof(parser->token.current)) return;
+
     parser->token.current = parser->token.next;
-    parser->token.next = next_token(parser->lexer);
+
+    /* Do not lex past the end of the file: keep EOF as the lookahead. */
+    if(!is_eof(parser->token.current)){
+        parser->token.next = next_token(parser->lexer);
+    }
 }
 
 bool consume_token(parser_t* parser, node_t* node, const enum category_tag expec_category, const int expec_type, const enum report_code err)

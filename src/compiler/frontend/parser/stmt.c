@@ -39,17 +39,7 @@ bool add_stmt_block(parser_t* parser, node_t* node, node_t* stmt)
 {
     if(node->kind != NODE_BLOCK) return false;
 
-    if(node->block->statement.count >= node->block->statement.capacity){
-        size_t new_capacity = node->block->statement.capacity == 0 ? 4 : node->block->statement.capacity * 2;
-        node_t** new_statements = arena_alloc_array(parser->ctx->ast->arena, sizeof(node_t*), new_capacity, alignof(node_t*));
-        if(!new_statements) return false;
-
-        node->block->statement.elems = new_statements;
-        node->block->statement.capacity = new_capacity;
-    }
-
-    node->block->statement.elems[node->block->statement.count++] = stmt;
-    return true;
+    return nodes_push(&node->block->statement, parser->ctx->ast->arena, stmt);
 }
 
 node_t* parse_stmt_block(parser_t* parser)
@@ -371,25 +361,10 @@ node_t* parse_stmt_match(parser_t* parser)
         }
 
         node_t* case_node = parse_stmt_case(parser);
+        if(!case_node) return NULL;
 
         // add to match statement
-        if(!node->match_stmt->block.elems){
-            node->match_stmt->block.elems = arena_alloc_array(parser->ctx->ast->arena, sizeof(node_t*), 4, alignof(node_t*));
-            if(!node->match_stmt->block.elems) return NULL;
-            node->match_stmt->block.capacity = 4;
-        }
-        else if(node->match_stmt->block.count >= node->match_stmt->block.capacity){
-            size_t new_capacity = node->match_stmt->block.capacity * 2;
-            node_t** new_cases = arena_alloc_array(parser->ctx->ast->arena, sizeof(node_t*), new_capacity, alignof(node_t*));
-            if(!new_cases) return NULL;
-
-            for(size_t i = 0; i < node->match_stmt->block.count; i++){
-                new_cases[i] = node->match_stmt->block.elems[i];
-            }
-            node->match_stmt->block.elems = new_cases;
-            node->match_stmt->block.capacity = new_capacity;
-        }
-        node->match_stmt->block.elems[node->match_stmt->block.count++] = case_node;
+        if(!nodes_push(&node->match_stmt->block, parser->ctx->ast->arena, case_node)) return NULL;
     }
 
     // expect '}'

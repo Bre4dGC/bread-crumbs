@@ -484,12 +484,12 @@ static inline void print_scope_symbols(scope_t* scope, int indent)
     printf("\033[32mSymbols (%zu):\033[0m\n", scope->count);
 
     hashmap_t* entry = scope->symbols;
-    while(scope->symbols->next){
+    while(entry){
         if(entry->key.data && entry->value){
             symbol_t* sym = entry->value;
             print_symbol(sym, indent + 1);
         }
-        entry = scope->symbols->next;
+        entry = entry->next;
     }
 }
 

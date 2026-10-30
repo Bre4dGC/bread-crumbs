@@ -10,6 +10,27 @@ ast_t* new_ast(arena_t* arena)
     return ast;
 }
 
+bool nodes_push(nodes_t* nodes, arena_t* arena, node_t* value)
+{
+    if(!nodes || !arena || !value) return false;
+
+    if(nodes->count >= nodes->capacity){
+        size_t new_capacity = nodes->capacity == 0 ? 4 : nodes->capacity * 2;
+        node_t** grown = arena_alloc_array(arena, sizeof(node_t*), new_capacity, alignof(node_t*));
+        if(!grown) return false;
+
+        for(size_t i = 0; i < nodes->count; ++i){
+            grown[i] = nodes->elems[i];
+        }
+
+        nodes->elems = grown;
+        nodes->capacity = new_capacity;
+    }
+
+    nodes->elems[nodes->count++] = value;
+    return true;
+}
+
 node_t* new_node(arena_t* arena, enum node_kind kind)
 {
     node_t* node = arena_alloc_default(arena, sizeof(node_t));
